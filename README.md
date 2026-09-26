@@ -31,19 +31,6 @@ The prototype explores four connected product surfaces:
 These are product concepts, not claims that the prototype has deployed a
 network, verified credentials, or measured employment outcomes.
 
-## Experience at a glance
-
-<p align="center">
-  <img src="public/references/homepg.png" alt="SkillBridge homepage" width="800">
-</p>
-<p align="center"><em>Homepage reference image from the project.</em></p>
-
-The repository also contains reference images for individual product surfaces:
-
-| Career Bridge | Curriculum Time Machine | Evidence | Multiplier Effect |
-| --- | --- | --- | --- |
-| ![Career Bridge reference](public/references/skillbridge-career-bridge-hero-static.png) | ![Curriculum Time Machine reference](public/references/curriculum-campus-banner.png) | ![Evidence reference](public/references/evidencebanner.png) | ![Multiplier Effect reference](public/references/multiplierbg.png) |
-
 ## What makes the approach distinctive
 
 - **A connected journey:** roadmap planning, curriculum adaptation, and proof
