@@ -1,0 +1,456 @@
+{
+  "benchmark_type": "synthetic/representative controlled cases",
+  "warning": "Not a production precision estimate; cases are derived from the current skill vocabulary.",
+  "n_cases": 20,
+  "naive": {
+    "precision": 0.6779661016949152,
+    "structural_hits": 40,
+    "flagged_gaps": 59
+  },
+  "signal_engine": {
+    "precision": 1.0,
+    "structural_hits": 40,
+    "flagged_gaps": 40
+  },
+  "cases": [
+    {
+      "role": "data_science",
+      "naive_gap_count": 3,
+      "signal_gap_count": 2,
+      "naive_structural_hits": 2,
+      "signal_structural_hits": 2,
+      "naive_precision": 0.6666666666666666,
+      "signal_precision": 1.0,
+      "naive_gaps": [
+        "deep learning",
+        "machine learning",
+        "scikit-learn"
+      ],
+      "signal_gaps": [
+        "deep learning",
+        "machine learning"
+      ],
+      "true_structural": [
+        "deep learning",
+        "machine learning"
+      ]
+    },
+    {
+      "role": "data_science",
+      "naive_gap_count": 3,
+      "signal_gap_count": 2,
+      "naive_structural_hits": 2,
+      "signal_structural_hits": 2,
+      "naive_precision": 0.6666666666666666,
+      "signal_precision": 1.0,
+      "naive_gaps": [
+        "machine learning",
+        "python",
+        "statistics"
+      ],
+      "signal_gaps": [
+        "machine learning",
+        "python"
+      ],
+      "true_structural": [
+        "machine learning",
+        "python"
+      ]
+    },
+    {
+      "role": "data_science",
+      "naive_gap_count": 3,
+      "signal_gap_count": 2,
+      "naive_structural_hits": 2,
+      "signal_structural_hits": 2,
+      "naive_precision": 0.6666666666666666,
+      "signal_precision": 1.0,
+      "naive_gaps": [
+        "excel",
+        "python",
+        "sql"
+      ],
+      "signal_gaps": [
+        "python",
+        "sql"
+      ],
+      "true_structural": [
+        "python",
+        "sql"
+      ]
+    },
+    {
+      "role": "data_science",
+      "naive_gap_count": 3,
+      "signal_gap_count": 2,
+      "naive_structural_hits": 2,
+      "signal_structural_hits": 2,
+      "naive_precision": 0.6666666666666666,
+      "signal_precision": 1.0,
+      "naive_gaps": [
+        "artificial intelligence",
+        "sql",
+        "tensorflow"
+      ],
+      "signal_gaps": [
+        "sql",
+        "tensorflow"
+      ],
+      "true_structural": [
+        "sql",
+        "tensorflow"
+      ]
+    },
+    {
+      "role": "data_science",
+      "naive_gap_count": 3,
+      "signal_gap_count": 2,
+      "naive_structural_hits": 2,
+      "signal_structural_hits": 2,
+      "naive_precision": 0.6666666666666666,
+      "signal_precision": 1.0,
+      "naive_gaps": [
+        "data science",
+        "pandas",
+        "tensorflow"
+      ],
+      "signal_gaps": [
+        "pandas",
+        "tensorflow"
+      ],
+      "true_structural": [
+        "pandas",
+        "tensorflow"
+      ]
+    },
+    {
+      "role": "data_science",
+      "naive_gap_count": 3,
+      "signal_gap_count": 2,
+      "naive_structural_hits": 2,
+      "signal_structural_hits": 2,
+      "naive_precision": 0.6666666666666666,
+      "signal_precision": 1.0,
+      "naive_gaps": [
+        "deep learning",
+        "generative ai",
+        "pandas"
+      ],
+      "signal_gaps": [
+        "deep learning",
+        "pandas"
+      ],
+      "true_structural": [
+        "deep learning",
+        "pandas"
+      ]
+    },
+    {
+      "role": "data_science",
+      "naive_gap_count": 3,
+      "signal_gap_count": 2,
+      "naive_structural_hits": 2,
+      "signal_structural_hits": 2,
+      "naive_precision": 0.6666666666666666,
+      "signal_precision": 1.0,
+      "naive_gaps": [
+        "deep learning",
+        "llm",
+        "machine learning"
+      ],
+      "signal_gaps": [
+        "deep learning",
+        "machine learning"
+      ],
+      "true_structural": [
+        "deep learning",
+        "machine learning"
+      ]
+    },
+    {
+      "role": "data_science",
+      "naive_gap_count": 3,
+      "signal_gap_count": 2,
+      "naive_structural_hits": 2,
+      "signal_structural_hits": 2,
+      "naive_precision": 0.6666666666666666,
+      "signal_precision": 1.0,
+      "naive_gaps": [
+        "forecasting",
+        "machine learning",
+        "python"
+      ],
+      "signal_gaps": [
+        "machine learning",
+        "python"
+      ],
+      "true_structural": [
+        "machine learning",
+        "python"
+      ]
+    },
+    {
+      "role": "data_science",
+      "naive_gap_count": 3,
+      "signal_gap_count": 2,
+      "naive_structural_hits": 2,
+      "signal_structural_hits": 2,
+      "naive_precision": 0.6666666666666666,
+      "signal_precision": 1.0,
+      "naive_gaps": [
+        "mlops",
+        "python",
+        "sql"
+      ],
+      "signal_gaps": [
+        "python",
+        "sql"
+      ],
+      "true_structural": [
+        "python",
+        "sql"
+      ]
+    },
+    {
+      "role": "data_science",
+      "naive_gap_count": 2,
+      "signal_gap_count": 2,
+      "naive_structural_hits": 2,
+      "signal_structural_hits": 2,
+      "naive_precision": 1.0,
+      "signal_precision": 1.0,
+      "naive_gaps": [
+        "sql",
+        "tensorflow"
+      ],
+      "signal_gaps": [
+        "sql",
+        "tensorflow"
+      ],
+      "true_structural": [
+        "sql",
+        "tensorflow"
+      ]
+    },
+    {
+      "role": "backend_ml_engineer",
+      "naive_gap_count": 3,
+      "signal_gap_count": 2,
+      "naive_structural_hits": 2,
+      "signal_structural_hits": 2,
+      "naive_precision": 0.6666666666666666,
+      "signal_precision": 1.0,
+      "naive_gaps": [
+        "django",
+        "java",
+        "react"
+      ],
+      "signal_gaps": [
+        "java",
+        "react"
+      ],
+      "true_structural": [
+        "java",
+        "react"
+      ]
+    },
+    {
+      "role": "backend_ml_engineer",
+      "naive_gap_count": 3,
+      "signal_gap_count": 2,
+      "naive_structural_hits": 2,
+      "signal_structural_hits": 2,
+      "naive_precision": 0.6666666666666666,
+      "signal_precision": 1.0,
+      "naive_gaps": [
+        "java",
+        "mongodb",
+        "node.js"
+      ],
+      "signal_gaps": [
+        "java",
+        "node.js"
+      ],
+      "true_structural": [
+        "java",
+        "node.js"
+      ]
+    },
+    {
+      "role": "backend_ml_engineer",
+      "naive_gap_count": 3,
+      "signal_gap_count": 2,
+      "naive_structural_hits": 2,
+      "signal_structural_hits": 2,
+      "naive_precision": 0.6666666666666666,
+      "signal_precision": 1.0,
+      "naive_gaps": [
+        "node.js",
+        "react",
+        "rest api"
+      ],
+      "signal_gaps": [
+        "node.js",
+        "react"
+      ],
+      "true_structural": [
+        "node.js",
+        "react"
+      ]
+    },
+    {
+      "role": "backend_ml_engineer",
+      "naive_gap_count": 3,
+      "signal_gap_count": 2,
+      "naive_structural_hits": 2,
+      "signal_structural_hits": 2,
+      "naive_precision": 0.6666666666666666,
+      "signal_precision": 1.0,
+      "naive_gaps": [
+        "java",
+        "react",
+        "spring boot"
+      ],
+      "signal_gaps": [
+        "java",
+        "react"
+      ],
+      "true_structural": [
+        "java",
+        "react"
+      ]
+    },
+    {
+      "role": "backend_ml_engineer",
+      "naive_gap_count": 3,
+      "signal_gap_count": 2,
+      "naive_structural_hits": 2,
+      "signal_structural_hits": 2,
+      "naive_precision": 0.6666666666666666,
+      "signal_precision": 1.0,
+      "naive_gaps": [
+        "aws",
+        "java",
+        "node.js"
+      ],
+      "signal_gaps": [
+        "java",
+        "node.js"
+      ],
+      "true_structural": [
+        "java",
+        "node.js"
+      ]
+    },
+    {
+      "role": "backend_ml_engineer",
+      "naive_gap_count": 3,
+      "signal_gap_count": 2,
+      "naive_structural_hits": 2,
+      "signal_structural_hits": 2,
+      "naive_precision": 0.6666666666666666,
+      "signal_precision": 1.0,
+      "naive_gaps": [
+        "docker",
+        "node.js",
+        "react"
+      ],
+      "signal_gaps": [
+        "node.js",
+        "react"
+      ],
+      "true_structural": [
+        "node.js",
+        "react"
+      ]
+    },
+    {
+      "role": "backend_ml_engineer",
+      "naive_gap_count": 3,
+      "signal_gap_count": 2,
+      "naive_structural_hits": 2,
+      "signal_structural_hits": 2,
+      "naive_precision": 0.6666666666666666,
+      "signal_precision": 1.0,
+      "naive_gaps": [
+        "java",
+        "react",
+        "spring"
+      ],
+      "signal_gaps": [
+        "java",
+        "react"
+      ],
+      "true_structural": [
+        "java",
+        "react"
+      ]
+    },
+    {
+      "role": "backend_ml_engineer",
+      "naive_gap_count": 3,
+      "signal_gap_count": 2,
+      "naive_structural_hits": 2,
+      "signal_structural_hits": 2,
+      "naive_precision": 0.6666666666666666,
+      "signal_precision": 1.0,
+      "naive_gaps": [
+        "java",
+        "microservices",
+        "node.js"
+      ],
+      "signal_gaps": [
+        "java",
+        "node.js"
+      ],
+      "true_structural": [
+        "java",
+        "node.js"
+      ]
+    },
+    {
+      "role": "backend_ml_engineer",
+      "naive_gap_count": 3,
+      "signal_gap_count": 2,
+      "naive_structural_hits": 2,
+      "signal_structural_hits": 2,
+      "naive_precision": 0.6666666666666666,
+      "signal_precision": 1.0,
+      "naive_gaps": [
+        "azure",
+        "node.js",
+        "react"
+      ],
+      "signal_gaps": [
+        "node.js",
+        "react"
+      ],
+      "true_structural": [
+        "node.js",
+        "react"
+      ]
+    },
+    {
+      "role": "backend_ml_engineer",
+      "naive_gap_count": 3,
+      "signal_gap_count": 2,
+      "naive_structural_hits": 2,
+      "signal_structural_hits": 2,
+      "naive_precision": 0.6666666666666666,
+      "signal_precision": 1.0,
+      "naive_gaps": [
+        "artificial intelligence",
+        "java",
+        "react"
+      ],
+      "signal_gaps": [
+        "java",
+        "react"
+      ],
+      "true_structural": [
+        "java",
+        "react"
+      ]
+    }
+  ]
+}

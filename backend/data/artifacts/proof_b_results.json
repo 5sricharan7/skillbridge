@@ -1,0 +1,113 @@
+{
+  "reference_description": "NASSCOM public AI/skills material; manually normalized reference set",
+  "reference_urls": [
+    "https://community.nasscom.in/communities/data-science-ai-community/state-data-science-ai-skills-india",
+    "https://community.nasscom.in/communities/talent-skills/reskilling-relevance-how-ai-redefining-it-skill-landscape"
+  ],
+  "results": [
+    {
+      "role_category": "backend_ml_engineer",
+      "skill": "react",
+      "frequency": 0.4567901234567901,
+      "external_match": false,
+      "note": "Not present in the selected reference set; absence is not evidence that the skill is unimportant."
+    },
+    {
+      "role_category": "backend_ml_engineer",
+      "skill": "java",
+      "frequency": 0.4444444444444444,
+      "external_match": false,
+      "note": "Not present in the selected reference set; absence is not evidence that the skill is unimportant."
+    },
+    {
+      "role_category": "backend_ml_engineer",
+      "skill": "node.js",
+      "frequency": 0.4444444444444444,
+      "external_match": false,
+      "note": "Not present in the selected reference set; absence is not evidence that the skill is unimportant."
+    },
+    {
+      "role_category": "data_science",
+      "skill": "deep learning",
+      "frequency": 0.45982142857142855,
+      "external_match": true,
+      "note": "Present in independent NASSCOM reference material."
+    },
+    {
+      "role_category": "data_science",
+      "skill": "machine learning",
+      "frequency": 0.4375,
+      "external_match": true,
+      "note": "Present in independent NASSCOM reference material."
+    },
+    {
+      "role_category": "data_science",
+      "skill": "python",
+      "frequency": 0.42857142857142855,
+      "external_match": true,
+      "note": "Present in independent NASSCOM reference material."
+    },
+    {
+      "role_category": "data_science",
+      "skill": "sql",
+      "frequency": 0.42857142857142855,
+      "external_match": true,
+      "note": "Present in independent NASSCOM reference material."
+    },
+    {
+      "role_category": "data_science",
+      "skill": "tensorflow",
+      "frequency": 0.42410714285714285,
+      "external_match": false,
+      "note": "Not present in the selected reference set; absence is not evidence that the skill is unimportant."
+    },
+    {
+      "role_category": "data_science",
+      "skill": "pandas",
+      "frequency": 0.41517857142857145,
+      "external_match": false,
+      "note": "Not present in the selected reference set; absence is not evidence that the skill is unimportant."
+    },
+    {
+      "role_category": "other",
+      "skill": "node.js",
+      "frequency": 0.6666666666666666,
+      "external_match": false,
+      "note": "Not present in the selected reference set; absence is not evidence that the skill is unimportant."
+    },
+    {
+      "role_category": "other",
+      "skill": "react",
+      "frequency": 0.625,
+      "external_match": false,
+      "note": "Not present in the selected reference set; absence is not evidence that the skill is unimportant."
+    },
+    {
+      "role_category": "other",
+      "skill": "docker",
+      "frequency": 0.4583333333333333,
+      "external_match": false,
+      "note": "Not present in the selected reference set; absence is not evidence that the skill is unimportant."
+    }
+  ],
+  "summary": [
+    {
+      "role_category": "backend_ml_engineer",
+      "top10_count": 3,
+      "matched": 0,
+      "overlap_pct": 0.0
+    },
+    {
+      "role_category": "data_science",
+      "top10_count": 6,
+      "matched": 4,
+      "overlap_pct": 66.66666666666667
+    },
+    {
+      "role_category": "other",
+      "top10_count": 3,
+      "matched": 0,
+      "overlap_pct": 0.0
+    }
+  ]
+}

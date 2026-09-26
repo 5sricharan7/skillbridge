@@ -1,0 +1,66 @@
+{
+  "data_science": {
+    "python": [],
+    "sql": [],
+    "statistics": [],
+    "pandas": [
+      "python"
+    ],
+    "machine learning": [
+      "python",
+      "statistics"
+    ],
+    "deep learning": [
+      "python",
+      "machine learning"
+    ],
+    "tensorflow": [
+      "python",
+      "machine learning"
+    ],
+    "llm": [
+      "python",
+      "machine learning"
+    ],
+    "generative ai": [
+      "python",
+      "llm"
+    ],
+    "mlops": [
+      "python",
+      "machine learning"
+    ]
+  },
+  "backend_ml_engineer": {
+    "java": [],
+    "node.js": [],
+    "react": [],
+    "databases": [],
+    "mongodb": [
+      "databases"
+    ],
+    "rest api": [
+      "databases"
+    ],
+    "spring": [
+      "java"
+    ],
+    "spring boot": [
+      "java",
+      "spring"
+    ],
+    "docker": [
+      "rest api"
+    ],
+    "aws": [
+      "docker"
+    ],
+    "microservices": [
+      "rest api",
+      "docker"
+    ],
+    "django": [
+      "python"
+    ]
+  }
+}

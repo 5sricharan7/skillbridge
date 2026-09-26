@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { navigate } from '../router'
 
 const LINKS = [
@@ -6,9 +6,10 @@ const LINKS = [
   { label: 'Career Bridge', to: '/career-bridge' },
   { label: 'Curriculum Time Machine', to: '/curriculum-time-machine' },
   { label: 'Evidence', to: '/evidence' },
+  { label: 'Multiplier Effect', to: '/multiplier-effect' },
 ]
 
-export default function Navbar({ navRef, path }) {
+export default function Navbar({ navRef, path, onCinematicNav }) {
   const ref = useRef(null)
 
   useEffect(() => {
@@ -34,6 +35,12 @@ export default function Navbar({ navRef, path }) {
       return
     }
     event.preventDefault()
+    if (to === '/multiplier-effect') {
+      if (onCinematicNav) {
+        onCinematicNav(to)
+        return
+      }
+    }
     navigate(to)
   }
 
@@ -59,17 +66,29 @@ export default function Navbar({ navRef, path }) {
         <span>SkillBridge</span>
       </a>
       <nav className="nav-center" aria-label="Primary">
-        {LINKS.map((link) => (
-          <a
-            key={link.to}
-            href={link.to}
-            className={`nav-link${path === link.to ? ' is-active' : ''}`}
-            onClick={(e) => handleNav(e, link.to)}
-          >
-            {link.label}
-            <i className="nav-dot" aria-hidden="true" />
-          </a>
-        ))}
+        {LINKS.map((link) => {
+          const isMe = link.to === '/multiplier-effect'
+          const isActive = path === link.to
+
+          return (
+            <a
+              key={link.to}
+              href={link.to}
+              className={`nav-link${isMe ? ' nav-link-multiplier' : ''}${isActive ? ' is-active' : ''}`}
+              onClick={(e) => handleNav(e, link.to)}
+            >
+              <span className="nav-label-wrap">
+                {link.label}
+                {isMe && (
+                  <span className="nav-signal-line" aria-hidden="true">
+                    <span className="nav-signal-node" />
+                  </span>
+                )}
+              </span>
+              <i className="nav-dot" aria-hidden="true" />
+            </a>
+          )
+        })}
       </nav>
       <a className="nav-cta" href="/career-bridge" onClick={(e) => handleNav(e, '/career-bridge')}>
         Get Started

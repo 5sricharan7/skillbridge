@@ -1,0 +1,56 @@
+{
+  "dataset_rows": 329,
+  "date_min": "2022-05-28",
+  "date_max": "2026-09-26",
+  "usable_slices": [
+    "2025-H1",
+    "2025-H2",
+    "2026-H1",
+    "2026-H2"
+  ],
+  "proof_a_candidates": {
+    "rising": "artificial intelligence",
+    "declining": null
+  },
+  "proof_a_results": [
+    {
+      "skill": "artificial intelligence",
+      "external_hypothesis": "rising",
+      "engine_result": [
+        "rising",
+        1.0,
+        "backend_ml_engineer"
+      ]
+    }
+  ],
+  "live_window": {
+    "recent_start": "2026-08-28",
+    "recent_end": "2026-09-26",
+    "prior_start": "2026-05-30",
+    "prior_end": "2026-08-27",
+    "recent_rows": 32,
+    "prior_rows": 72
+  },
+  "trajectory_rows": [
+    {
+      "role_category": "data_science",
+      "time_slice": "2026-H1",
+      "skill": "artificial intelligence",
+      "mentions": 2,
+      "total_postings": 75,
+      "frequency": 0.02666666666666667,
+      "hypothesis": "independently documented rising",
+      "selected_role": "data_science"
+    },
+    {
+      "role_category": "data_science",
+      "time_slice": "2026-H2",
+      "skill": "artificial intelligence",
+      "mentions": 11,
+      "total_postings": 56,
+      "frequency": 0.19642857142857142,
+      "hypothesis": "independently documented rising",
+      "selected_role": "data_science"
+    }
+  ]
+}

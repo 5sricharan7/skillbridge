@@ -1,0 +1,134 @@
+[
+  {
+    "role_category": "data_science",
+    "skill": "python",
+    "hours": 12,
+    "source": "heuristic; public Python/backend roadmaps"
+  },
+  {
+    "role_category": "data_science",
+    "skill": "sql",
+    "hours": 10,
+    "source": "heuristic; public data/backend roadmaps"
+  },
+  {
+    "role_category": "data_science",
+    "skill": "statistics",
+    "hours": 14,
+    "source": "heuristic; public data-science curricula"
+  },
+  {
+    "role_category": "data_science",
+    "skill": "pandas",
+    "hours": 8,
+    "source": "heuristic; public Python/data curricula"
+  },
+  {
+    "role_category": "data_science",
+    "skill": "machine learning",
+    "hours": 20,
+    "source": "heuristic; public ML course structure"
+  },
+  {
+    "role_category": "data_science",
+    "skill": "deep learning",
+    "hours": 24,
+    "source": "heuristic; public ML/DL learning paths"
+  },
+  {
+    "role_category": "data_science",
+    "skill": "tensorflow",
+    "hours": 16,
+    "source": "heuristic; framework practice after ML foundations"
+  },
+  {
+    "role_category": "data_science",
+    "skill": "llm",
+    "hours": 16,
+    "source": "heuristic; applied LLM practice"
+  },
+  {
+    "role_category": "data_science",
+    "skill": "generative ai",
+    "hours": 18,
+    "source": "heuristic; applied GenAI project work"
+  },
+  {
+    "role_category": "data_science",
+    "skill": "mlops",
+    "hours": 20,
+    "source": "heuristic; deployment/MLOps learning path"
+  },
+  {
+    "role_category": "backend_ml_engineer",
+    "skill": "java",
+    "hours": 16,
+    "source": "heuristic; backend learning path"
+  },
+  {
+    "role_category": "backend_ml_engineer",
+    "skill": "node.js",
+    "hours": 12,
+    "source": "heuristic; backend learning path"
+  },
+  {
+    "role_category": "backend_ml_engineer",
+    "skill": "react",
+    "hours": 16,
+    "source": "heuristic; frontend learning path"
+  },
+  {
+    "role_category": "backend_ml_engineer",
+    "skill": "databases",
+    "hours": 10,
+    "source": "heuristic; backend/database foundations"
+  },
+  {
+    "role_category": "backend_ml_engineer",
+    "skill": "mongodb",
+    "hours": 10,
+    "source": "heuristic; database practice"
+  },
+  {
+    "role_category": "backend_ml_engineer",
+    "skill": "rest api",
+    "hours": 10,
+    "source": "heuristic; backend/API learning path"
+  },
+  {
+    "role_category": "backend_ml_engineer",
+    "skill": "spring",
+    "hours": 10,
+    "source": "heuristic; Java/Spring learning path"
+  },
+  {
+    "role_category": "backend_ml_engineer",
+    "skill": "spring boot",
+    "hours": 14,
+    "source": "heuristic; Spring Boot practice"
+  },
+  {
+    "role_category": "backend_ml_engineer",
+    "skill": "docker",
+    "hours": 10,
+    "source": "heuristic; containerization practice"
+  },
+  {
+    "role_category": "backend_ml_engineer",
+    "skill": "aws",
+    "hours": 18,
+    "source": "heuristic; cloud deployment practice"
+  },
+  {
+    "role_category": "backend_ml_engineer",
+    "skill": "microservices",
+    "hours": 18,
+    "source": "heuristic; distributed backend practice"
+  },
+  {
+    "role_category": "backend_ml_engineer",
+    "skill": "django",
+    "hours": 12,
+    "source": "heuristic; Python backend framework practice"
+  }
+]

@@ -14,7 +14,6 @@
   --cb-violet-pale: #f2effc;
   --cb-line: #e5e2e4;
   --cb-line-soft: #ece9e6;
-  --cb-hand: var(--font-note, 'Kalam', cursive);
   --cb-font-display: var(--font-display, 'Space Grotesk', 'Segoe UI', system-ui, sans-serif);
   --cb-font-body: var(--font-body, 'Public Sans', 'Segoe UI', system-ui, sans-serif);
 
@@ -51,318 +50,238 @@
 
 /* Hero ---------------------------------------------------------------------- */
 
+/* The hero is an approved static raster asset (1580x260). It is laid out as-is
+   at its native aspect ratio. Nothing here redraws, approximates or animates
+   the artwork — the wash gradients, dashed blobs, floating skill cards,
+   handwritten annotations, arrows and student are all baked into the image. */
+
 .cb-intro {
   position: relative;
-  height: clamp(348px, 42vh, 396px);
-  min-height: 348px;
-  display: flex;
-  align-items: center;
+  margin: 0;
 }
 
-.cb-hero-field {
+.cb-hero-figure {
+  display: block;
+  margin: 0;
+  line-height: 0;
+}
+
+.cb-hero-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 1580px;
+  margin: 0 auto;
+}
+
+/* The artwork already contains the hero typography, so the live copy is hidden
+   from view but kept in the accessibility tree and in the document outline. */
+.cb-hero-sr {
   position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
-.cb-wash {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
+/* Application shell — global top nav, then sidebar + main content --------- */
+
+/* The shell starts directly below the fixed 80px navbar. The sidebar is sticky
+   at that offset and runs the full viewport height, so it stays beside every
+   section of content; the main column holds the hero and all of it. */
+/* The shell spans the full viewport rather than a centred 1480px container, so
+   the workspace fills the application window the way the reference does. Gutter
+   responsibility moves into each column: the sidebar pads itself on both sides,
+   the main column carries a modest inset. */
+.cb-shell {
+  display: grid;
+  grid-template-columns: clamp(216px, 16vw, 244px) minmax(0, 1fr);
+  align-items: start;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
-.cb-wash-a {
-  width: 420px;
-  height: 420px;
-  left: 44%;
-  top: -12%;
-  background: radial-gradient(circle, rgba(91, 70, 216, 0.13) 0%, rgba(91, 70, 216, 0) 66%);
-}
-
-.cb-wash-b {
-  width: 380px;
-  height: 380px;
-  left: -6%;
-  bottom: -10%;
-  background: radial-gradient(circle, rgba(189, 171, 219, 0.14) 0%, rgba(189, 171, 219, 0) 64%);
-}
-
-.cb-blob {
-  position: absolute;
-  border: 1px dashed var(--cb-lilac);
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.cb-blob-a {
-  width: 180px;
-  height: 180px;
-  right: 34%;
-  top: 4%;
-  border-radius: 42% 58% 60% 40% / 50% 44% 56% 50%;
-}
-
-.cb-blob-b {
-  width: 120px;
-  height: 120px;
-  left: 3%;
-  bottom: 14%;
-  border-radius: 58% 42% 44% 56% / 46% 58% 42% 54%;
-  opacity: 0.4;
-}
-
-/* hand-drawn annotation arrows (thin guide curve, matching homepage language) */
-
-.cb-arrows-svg {
-  position: absolute;
-  inset: 0 auto auto 0;
-  z-index: 5;
-  pointer-events: none;
-  overflow: visible;
-}
-
-.cb-handline {
-  stroke: #8b8597;
-  stroke-width: 1.6;
-  fill: none;
-  stroke-linecap: round;
-}
-
-#cb-hand-head path {
-  fill: #8b8597;
-}
-
-/* floating skill cards */
-
-.cb-card {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  width: clamp(104px, 9.2vw, 132px);
-  background: var(--cb-card);
-  border: 1px solid var(--cb-line);
-  border-radius: 12px;
-  padding: 8px 10px;
-  box-shadow: 0 12px 26px rgba(21, 19, 28, 0.09);
+/* Column padding is deliberately tight and near-symmetric so the 230px sidebar
+   spends its width on navigation rather than on gutters. The shell column width
+   is unchanged. */
+.cb-sidebar {
+  position: sticky;
+  top: 80px;
+  height: calc(100vh - 80px);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  animation: cb-card-in 0.55s ease both;
-  transition: opacity 0.4s ease;
+  min-width: 0;
+  padding: 20px 14px 20px 16px;
+  border-right: 1px solid var(--cb-line-soft);
 }
 
-@keyframes cb-card-in {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -50%) translateY(8px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) translateY(0) scale(1);
-  }
+.cb-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.cb-card-dim {
-  opacity: 0.62;
+.cb-sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.cb-card-front {
-  z-index: 4;
-  opacity: 1;
+.cb-sidebar-group.is-separated {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--cb-line-soft);
 }
 
-.cb-card-core {
-  z-index: 5;
-  opacity: 1;
-  border-color: var(--cb-lilac);
-  box-shadow:
-    0 18px 36px rgba(91, 70, 216, 0.16),
-    0 6px 14px rgba(21, 19, 28, 0.08);
+.cb-sidebar-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--cb-muted);
+  padding: 0 11px 8px;
 }
 
-.cb-card-core .cb-card-name {
-  color: var(--cb-violet);
-}
-
-.cb-card-top {
+.cb-sidebar-link {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 9px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 11px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font-family: var(--cb-font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: left;
+  color: var(--cb-ink-2);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
 }
 
-.cb-card-ic {
-  width: 20px;
-  height: 20px;
-  border-radius: 7px;
-  flex: none;
-  background: var(--cb-violet-pale);
-  color: var(--cb-violet);
+.cb-sidebar-ic {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--cb-muted);
+  transition: color 0.18s ease, transform 0.18s ease;
 }
 
-.cb-card-ic svg {
+.cb-sidebar-ic svg {
+  width: 15px;
+  height: 15px;
+}
+
+.cb-sidebar-link:hover {
+  background: var(--cb-violet-pale);
+  color: var(--cb-ink);
+}
+
+.cb-sidebar-link:hover .cb-sidebar-ic {
+  color: var(--cb-violet);
+  transform: translateX(1px);
+}
+
+.cb-sidebar-link.is-active {
+  background: var(--cb-violet-pale);
+  border-color: var(--cb-violet-soft);
+  color: var(--cb-violet);
+}
+
+.cb-sidebar-link.is-active .cb-sidebar-ic {
+  color: var(--cb-violet);
+  transform: translateX(2px);
+}
+
+.cb-sidebar-link:focus-visible {
+  outline: 2px solid var(--cb-violet);
+  outline-offset: 2px;
+}
+
+/* Sidebar promotional card — presentational, quiet, no destination. */
+.cb-promo {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 11px;
+  border: 1px solid var(--cb-violet-soft);
+  border-radius: 12px;
+  background: var(--cb-violet-pale);
+}
+
+.cb-promo-ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: var(--cb-card);
+  border: 1px solid var(--cb-violet-soft);
+  color: var(--cb-violet);
+}
+
+.cb-promo-ic svg {
   width: 13px;
   height: 13px;
 }
 
-.cb-card-name {
-  display: block;
-  font-family: var(--cb-font-display);
-  font-size: 11.5px;
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
-  color: var(--cb-ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.cb-card-bottom {
+.cb-promo-text {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 6px;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
 }
 
-.cb-card-spark {
-  width: 44px;
-  height: 18px;
-  stroke: var(--cb-violet);
-  stroke-width: 1.6;
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.cb-card-stat {
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--cb-violet);
-  white-space: nowrap;
-}
-
-/* handwritten annotations */
-
-.cb-note {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  z-index: 7;
-  font-family: var(--cb-hand);
-  font-size: 15px;
-  font-weight: 400;
-  line-height: 1.35;
-  letter-spacing: 0.01em;
-  color: #5d5868;
-  white-space: pre-line;
-  text-align: left;
-  animation: cb-note-in 0.5s ease both;
-}
-
-.cb-note-top {
-  transform: translate(-50%, -50%) rotate(-2deg);
-  animation-delay: 0.35s;
-}
-
-.cb-note-right {
-  transform: translate(-50%, -50%) rotate(1.5deg);
-  animation-delay: 0.5s;
-}
-
-.cb-note-bottom {
-  transform: translate(-50%, -50%) rotate(-1deg);
-  animation-delay: 0.65s;
-}
-
-.cb-note-left {
-  transform: translate(-50%, -50%) rotate(2deg);
-  animation-delay: 0.8s;
-}
-
-@keyframes cb-note-in {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%);
-  }
-}
-
-/* large student character, right aligned */
-
-.cb-hero-character {
-  position: absolute;
-  right: clamp(6px, 1.5vw, 26px);
-  bottom: 0;
-  z-index: 3;
-  pointer-events: none;
-  line-height: 0;
-}
-
-.cb-student {
-  width: clamp(190px, 19vw, 234px);
-  height: auto;
-  display: block;
-}
-
-/* hero copy */
-
-.cb-hero-copy {
-  position: relative;
-  z-index: 6;
-  max-width: min(560px, 44%);
-}
-
-.cb-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 9px;
+.cb-promo-sm {
   font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--cb-ink-2);
+  color: var(--cb-muted);
 }
 
-.cb-eyebrow-mark {
-  width: 22px;
-  height: 3px;
-  border-radius: 3px;
-  background: var(--cb-violet);
-}
-
-.cb-title {
+.cb-promo-lg {
   font-family: var(--cb-font-display);
+  font-size: 12.5px;
   font-weight: 700;
-  font-size: clamp(1.9rem, 2.7vw, 2.5rem);
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-  margin: clamp(7px, 1vh, 11px) 0 0;
-}
-
-.cb-title span {
-  display: block;
-  color: var(--cb-ink);
-}
-
-.cb-title em {
-  display: block;
-  font-style: italic;
+  letter-spacing: -0.01em;
   color: var(--cb-violet);
 }
 
-.cb-lead {
-  font-family: var(--cb-font-body);
-  font-size: clamp(14px, 1.25vw, 15.5px);
-  line-height: 1.55;
-  color: var(--cb-ink-2);
-  max-width: 44ch;
-  margin: clamp(8px, 1.2vh, 12px) 0 0;
+.cb-promo-arrow {
+  display: inline-flex;
+  margin-left: auto;
+  flex: none;
+  color: var(--cb-violet);
+  opacity: 0.75;
+}
+
+.cb-promo-arrow svg {
+  width: 13px;
+  height: 13px;
+}
+
+.cb-main-col {
+  min-width: 0;
+  padding: 20px clamp(20px, 2vw, 28px) 24px;
+}
+
+/* The hero band now owns the page gutters, so the content column sits flush
+   inside the shell rather than repeating the same padding twice. */
+.cb-main-col > .cb-inner {
+  padding: 0;
+  width: 100%;
 }
 
 /* Input row ---------------------------------------------------------------- */
@@ -371,9 +290,13 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: clamp(12px, 1.4vw, 18px);
-  margin-top: 10px;
+  margin-top: 15px;
 }
 
+/* The row is a grid, so all three cards share the height of the tallest one —
+   the time card. Content therefore starts from a common top baseline and the
+   status line is pushed down, rather than the short cards centring their text
+   and leaving dead space above and below it. */
 .cb-summary-card {
   position: relative;
   background: var(--cb-card);
@@ -385,7 +308,7 @@
     0 4px 12px rgba(16, 16, 16, 0.04);
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 102px;
 }
 
@@ -429,9 +352,10 @@
   letter-spacing: -0.01em;
   color: var(--cb-ink);
   margin: 6px 0 2px;
-  padding-right: 80px;
 }
 
+/* Normal flow: the status/detail line follows the value directly. Pinning it to
+   the bottom left a dead band in the middle of the two short cards. */
 .cb-summary-foot {
   display: flex;
   flex-direction: column;
@@ -449,10 +373,11 @@
   color: var(--cb-muted);
 }
 
+/* Sits in the header row rather than floating over the card, so the title below
+   needs no clearance padding. */
 .cb-reupload {
-  position: absolute;
-  top: 10px;
-  right: 10px;
+  margin-left: auto;
+  flex: none;
   font-family: var(--cb-font-body);
   font-size: 10.5px;
   font-weight: 600;
@@ -552,12 +477,89 @@
   box-shadow: 0 0 0 3px rgba(91, 70, 216, 0.22);
 }
 
-.cb-slider-scale {
-  display: flex;
-  justify-content: space-between;
+/* Recalibration marks + committed/remaining readout ----------------------- */
+
+/* The track is 5px and the thumb 15px, so a tick at --pct is inset by half the
+   thumb on both ends to land under the thumb when the slider is at that value. */
+.cb-marks {
+  position: relative;
+  height: 13px;
+  margin-top: 1px;
+}
+
+.cb-mark {
+  position: absolute;
+  top: 0;
+  left: calc(7.5px + var(--pct) * (100% - 15px));
+  width: 1px;
+  height: 4px;
+  background: var(--cb-lilac);
+  opacity: 0.55;
+  transition:
+    height 0.18s ease,
+    background 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.cb-mark.is-active {
+  height: 7px;
+  background: var(--cb-violet);
+  opacity: 1;
+}
+
+.cb-mark-edge {
+  position: absolute;
+  bottom: 0;
   font-size: 9px;
   color: var(--cb-muted);
-  margin-top: 3px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cb-mark-min {
+  left: 0;
+}
+
+.cb-mark-max {
+  right: 0;
+}
+
+.cb-budget {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 2px 0 3px;
+}
+
+.cb-budget-track {
+  display: block;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--cb-line-soft);
+  overflow: hidden;
+}
+
+.cb-budget-used {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--cb-violet);
+  transition: width 0.28s ease;
+}
+
+.cb-budget-readout {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 10.5px;
+  color: var(--cb-muted);
+}
+
+.cb-budget-readout b {
+  font-family: var(--cb-font-display);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--cb-ink);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Main workspace — two columns --------------------------------------------- */
@@ -639,25 +641,44 @@
 
 /* Roadmap routes ------------------------------------------------------------ */
 
+/* The route reads as a journey, not a table: each stop is a numbered node on a
+   single vertical rail. The rail spans node-centre to node-centre (row border 1 +
+   padding 8 + half of the 26px node = 22px) so it never overhangs the ends. */
 .cb-routes {
+  position: relative;
   list-style: none;
   margin: 2px 0 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
+.cb-routes::before {
+  content: '';
+  position: absolute;
+  left: 22px;
+  top: 22px;
+  bottom: 22px;
+  width: 1px;
+  background: var(--cb-line);
+}
+
+/* The stagger lives in a custom property rather than directly in
+   animation-delay, so the node and row content below can inherit the same offset
+   and stay in step with the row they belong to. */
 .cb-routes li {
+  --cb-row-delay: 0s;
   animation: cb-row-in 0.4s ease both;
+  animation-delay: var(--cb-row-delay);
 }
 
-.cb-routes li:nth-child(2) { animation-delay: 0.045s; }
-.cb-routes li:nth-child(3) { animation-delay: 0.09s; }
-.cb-routes li:nth-child(4) { animation-delay: 0.135s; }
-.cb-routes li:nth-child(5) { animation-delay: 0.18s; }
-.cb-routes li:nth-child(6) { animation-delay: 0.225s; }
-.cb-routes li:nth-child(7) { animation-delay: 0.27s; }
-.cb-routes li:nth-child(8) { animation-delay: 0.315s; }
+.cb-routes li:nth-child(2) { --cb-row-delay: 0.04s; }
+.cb-routes li:nth-child(3) { --cb-row-delay: 0.08s; }
+.cb-routes li:nth-child(4) { --cb-row-delay: 0.12s; }
+.cb-routes li:nth-child(5) { --cb-row-delay: 0.16s; }
+.cb-routes li:nth-child(6) { --cb-row-delay: 0.2s; }
+.cb-routes li:nth-child(7) { --cb-row-delay: 0.24s; }
+.cb-routes li:nth-child(8) { --cb-row-delay: 0.28s; }
 
 @keyframes cb-row-in {
   from {
@@ -671,18 +692,19 @@
 }
 
 .cb-route {
+  position: relative;
   width: 100%;
   display: grid;
-  grid-template-columns: 25px minmax(0, 1fr) auto auto auto;
+  grid-template-columns: 26px minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: clamp(7px, 0.9vw, 11px);
   font-family: var(--cb-font-body);
   text-align: left;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 9px;
-  padding: 6px 8px;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  border-radius: 10px;
+  padding: 8px;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .cb-route:hover {
@@ -694,12 +716,61 @@
   transform: translateY(-1px);
 }
 
+/* The node forms first, then the row content settles in behind it. Both inherit
+   the row's stagger offset, so the three parts of a stop always move together. */
+
+/* The step node. It sits above the rail, so the line passes behind it. */
 .cb-route-rank {
+  position: relative;
+  z-index: 1;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--cb-card);
+  border: 1px solid var(--cb-line);
+  color: var(--cb-muted);
   font-family: var(--cb-font-display);
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--cb-violet);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  animation: cb-node-in 0.34s ease-out backwards;
+  animation-delay: var(--cb-row-delay);
 }
+
+.cb-route-name,
+.cb-route-hours,
+.cb-route .cb-chip,
+.cb-route .cb-trendmark {
+  animation: cb-row-content-in 0.32s ease-out backwards;
+  animation-delay: calc(var(--cb-row-delay) + 0.07s);
+}
+
+@keyframes cb-node-in {
+  from {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes cb-row-content-in {
+  from {
+    opacity: 0;
+    transform: translateX(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 
 .cb-route-name {
   font-size: 13px;
@@ -719,10 +790,19 @@
 .cb-route.is-active {
   background: var(--cb-violet-pale);
   border-color: var(--cb-violet);
+  box-shadow: 0 6px 16px rgba(91, 70, 216, 0.08);
 }
 
 .cb-route.is-active .cb-route-name {
   color: var(--cb-violet);
+}
+
+/* The selected stop is the one the detail panel is describing, so its node is
+   filled rather than outlined. */
+.cb-route.is-active .cb-route-rank {
+  background: var(--cb-violet);
+  border-color: var(--cb-violet);
+  color: var(--cb-card);
 }
 
 /* Chips + trend marks --------------------------------------------------------- */
@@ -827,8 +907,10 @@
 
 /* Skill detail ------------------------------------------------------------------ */
 
+/* Runs on mount and again whenever the selected stop changes, because the panel
+   is keyed by skill id. */
 .cb-detail {
-  animation: cb-detail-in 0.32s ease both;
+  animation: cb-detail-in 0.22s ease-out both;
 }
 
 @keyframes cb-detail-in {
@@ -892,13 +974,104 @@
   margin-top: 8px;
 }
 
+/* The explanation leads the panel, so it gets the rule the description used to
+   own; the description drops to a secondary voice beneath it. */
+.cb-detail-why {
+  margin-top: 10px;
+  border-left: 3px solid var(--cb-lilac);
+  padding-left: 12px;
+}
+
+.cb-detail-why p {
+  font-family: var(--cb-font-display);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: var(--cb-ink);
+  margin-top: 4px;
+}
+
 .cb-detail-desc {
   font-size: 12.5px;
   line-height: 1.5;
   color: var(--cb-ink-2);
-  margin: 9px 0 0;
-  border-left: 3px solid var(--cb-lilac);
-  padding-left: 12px;
+  margin: 8px 0 0;
+}
+
+.cb-detail-more {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--cb-line-soft);
+  margin-top: 10px;
+}
+
+.cb-disclosure-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--cb-line-soft);
+  padding: 7px 2px;
+  margin-top: -1px;
+  font-family: var(--cb-font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--cb-muted);
+  cursor: pointer;
+  transition: color 0.18s ease;
+}
+
+.cb-disclosure-btn:hover {
+  color: var(--cb-violet);
+}
+
+.cb-disclosure-chev {
+  display: inline-flex;
+  margin-left: auto;
+  color: var(--cb-violet);
+  transition: transform 0.2s ease;
+}
+
+.cb-disclosure-chev svg {
+  width: 13px;
+  height: 13px;
+}
+
+.cb-disclosure-btn[aria-expanded='true'] {
+  color: var(--cb-violet);
+}
+
+.cb-disclosure-btn[aria-expanded='true'] .cb-disclosure-chev {
+  transform: rotate(180deg);
+}
+
+.cb-disclosure-body {
+  padding: 2px 0 8px;
+  animation: cb-disclosure-in 0.24s ease both;
+}
+
+@keyframes cb-disclosure-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Velocity is a two-point comparison rather than a single figure, so it takes the
+   full row under the fact pairs instead of leaving an orphan cell. */
+.cb-fact-wide {
+  grid-column: 1 / -1;
+  padding-top: 8px;
+  border-top: 1px solid var(--cb-line-soft);
 }
 
 .cb-detail-facts {
@@ -945,17 +1118,11 @@
   margin-top: 3px;
 }
 
-.cb-detail-topics {
-  margin-top: 10px;
-  border-top: 1px solid var(--cb-line-soft);
-  padding-top: 10px;
-}
-
 .cb-topics {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
-  margin-top: 6px;
+  margin-top: 7px;
 }
 
 .cb-topic {
@@ -968,13 +1135,9 @@
   padding: 3px 9px;
 }
 
-.cb-detail-resources {
-  margin-top: 0;
-}
-
 .cb-resources {
   list-style: none;
-  margin: 6px 0 0;
+  margin: 7px 0 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 3px 14px;
@@ -1012,13 +1175,418 @@
   opacity: 1;
 }
 
-.cb-detail-topics + .cb-detail-resources {
-  margin-top: 10px;
-  border-top: 1px solid var(--cb-line-soft);
-  padding-top: 10px;
+/* Workspace views ---------------------------------------------------------- */
+
+/* Each destination reuses the panel, chip, trend and resource vocabulary above;
+   only the layout of rows that has no equivalent in the Overview is new. */
+.cb-view-split {
+  display: grid;
+  grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
+  gap: clamp(12px, 1.4vw, 18px);
+  align-items: start;
+  margin-top: 12px;
+}
+
+.cb-view-note {
+  border: 1px solid var(--cb-line-soft);
+  border-radius: 12px;
+  background: var(--cb-paper);
+  padding: 12px 14px;
+}
+
+.cb-view-note p {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--cb-ink-2);
+  margin: 6px 0 0;
+}
+
+.cb-view-note p + p {
+  margin-top: 5px;
+}
+
+.cb-view-list {
+  list-style: none;
+  margin: 12px 0 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cb-view-list > li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 2px;
+  border-bottom: 1px solid var(--cb-line-soft);
+}
+
+.cb-view-list > li:last-child {
+  border-bottom: none;
+}
+
+.cb-view-rank {
+  font-family: var(--cb-font-display);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--cb-violet);
+  flex: none;
+  width: 22px;
+}
+
+.cb-view-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cb-ink);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cb-view-why {
+  display: block;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--cb-muted);
+  margin-top: 2px;
+}
+
+.cb-view-hours,
+.cb-view-demand {
+  font-family: var(--cb-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--cb-ink-2);
+  margin-left: auto;
+  flex: none;
+}
+
+.cb-view-demand {
+  color: var(--cb-violet);
+}
+
+/* The reason sits between the name and the metrics on the insight rows, so it
+   takes the remaining width instead of pushing the trend mark off the row. */
+.cb-view-list-wide .cb-view-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.cb-view-list-wide .cb-view-body .cb-view-why {
+  margin-top: 0;
+}
+
+.cb-view-pick {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-family: var(--cb-font-body);
+  text-align: left;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.cb-view-pick:hover {
+  background: var(--cb-violet-pale);
+  border-color: var(--cb-lilac);
+}
+
+.cb-view-pick:focus-visible {
+  outline: 2px solid var(--cb-violet);
+  outline-offset: 2px;
+}
+
+.cb-view-pick .cb-view-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.cb-view-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
+.cb-view-resources {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px 20px;
+  margin-top: 12px;
+}
+
+.cb-view-resources .cb-resources {
+  margin-top: 5px;
+  grid-template-columns: 1fr;
+}
+
+.cb-view-empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 18px 16px;
+  border: 1px dashed var(--cb-line);
+  border-radius: 12px;
+  background: var(--cb-paper);
+}
+
+.cb-view-empty-ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--cb-violet-pale);
+  border: 1px solid var(--cb-violet-soft);
+  color: var(--cb-violet);
+}
+
+.cb-view-empty-ic svg {
+  width: 18px;
+  height: 18px;
+}
+
+.cb-view-empty p {
+  font-size: 13px;
+  color: var(--cb-ink-2);
+  margin: 0;
+}
+
+/* Overview summary tiles ---------------------------------------------------- */
+
+/* Same surface recipe as the panels and input cards, at tile scale. */
+.cb-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(12px, 1.4vw, 18px);
+  margin-top: clamp(12px, 1.6vh, 18px);
+}
+
+.cb-tile {
+  background: var(--cb-card);
+  border: 1px solid var(--cb-line);
+  border-radius: 14px;
+  padding: 12px 14px 14px;
+  box-shadow:
+    0 16px 32px rgba(91, 70, 216, 0.05),
+    0 4px 12px rgba(16, 16, 16, 0.04);
+  min-width: 0;
+  transition:
+    transform 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease;
+  animation: cb-tile-in 0.5s cubic-bezier(0.22, 0.7, 0.3, 1) backwards;
+}
+
+.cb-tile:nth-child(1) { animation-delay: 0.58s; }
+.cb-tile:nth-child(2) { animation-delay: 0.64s; }
+.cb-tile:nth-child(3) { animation-delay: 0.7s; }
+
+@keyframes cb-tile-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cb-tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--cb-violet-soft);
+  box-shadow:
+    0 20px 38px rgba(91, 70, 216, 0.08),
+    0 6px 14px rgba(16, 16, 16, 0.05);
+}
+
+.cb-tile-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--cb-line-soft);
+}
+
+.cb-tile-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--cb-muted);
+}
+
+.cb-tile-ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 17px;
+  height: 17px;
+  border-radius: 6px;
+  background: var(--cb-violet-pale);
+  color: var(--cb-violet);
+}
+
+.cb-tile-ic svg {
+  width: 12px;
+  height: 12px;
+}
+
+.cb-tile-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  font-family: var(--cb-font-body);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--cb-violet);
+  background: transparent;
+  border: none;
+  padding: 2px;
+  transition: color 0.18s ease;
+}
+
+.cb-tile-action svg {
+  width: 11px;
+  height: 11px;
+}
+
+.cb-tile-action:hover {
+  color: var(--cb-violet-deep);
+}
+
+.cb-tile-action:focus-visible {
+  outline: 2px solid var(--cb-violet);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.cb-tile-lead {
+  font-family: var(--cb-font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--cb-ink);
+  margin: 10px 0 0;
+}
+
+.cb-tile-sub {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--cb-muted);
+  margin: 3px 0 0;
+}
+
+.cb-tile-bars {
+  list-style: none;
+  margin: 11px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cb-tile-bars > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 54px auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.cb-tile-bar-name {
+  font-size: 11.5px;
+  color: var(--cb-ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cb-tile-meter {
+  display: block;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--cb-line-soft);
+  overflow: hidden;
+}
+
+.cb-tile-bar {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--cb-rise);
+}
+
+.cb-tile-bar.is-fall {
+  background: var(--cb-fall);
+}
+
+.cb-tile-bar-val {
+  font-family: var(--cb-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--cb-rise);
+  text-align: right;
+}
+
+.cb-tile-bar-val.is-fall {
+  color: var(--cb-fall);
+}
+
+.cb-tile-resources {
+  list-style: none;
+  margin: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cb-tile-resources > li {
+  padding: 7px 0;
+  border-bottom: 1px solid var(--cb-line-soft);
+}
+
+.cb-tile-resources > li:last-child {
+  border-bottom: none;
+}
+
+.cb-tile-res-name {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--cb-ink);
+}
+
+.cb-tile-res-meta {
+  display: block;
+  font-size: 10.5px;
+  color: var(--cb-muted);
+  margin-top: 1px;
 }
 
 /* Evidence & insights — compact toggle --------------------------------------- */
+
+/* The toggle is wrapped in an h2 for document outline, so the heading box itself
+   must not introduce a text node of its own. */
+.cb-evidence-heading {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
 
 .cb-evidence {
   margin-top: 8px;
@@ -1122,18 +1690,39 @@
 }
 
 .cb-proof {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 12px;
-  border-radius: 12px;
   border: 1px solid var(--cb-line-soft);
+  border-radius: 12px;
   background: var(--cb-violet-pale);
+  transition: border-color 0.2s ease;
+}
+
+.cb-proof.is-open {
+  border-color: var(--cb-lilac);
+}
+
+.cb-proof-heading {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.cb-proof-toggle {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 12px;
+  font-family: var(--cb-font-body);
+  cursor: pointer;
 }
 
 .cb-proof-ico {
   width: 30px;
   height: 30px;
+  flex: none;
   border-radius: 8px;
   background: var(--cb-card);
   border: 1px solid var(--cb-violet-soft);
@@ -1148,45 +1737,66 @@
   height: 16px;
 }
 
-.cb-proof h3 {
+.cb-proof-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cb-proof-title {
   font-family: var(--cb-font-display);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--cb-ink);
-  margin: 10px 0 5px;
 }
 
-.cb-proof p {
-  font-size: 12px;
-  line-height: 1.5;
+.cb-proof-summary {
+  font-size: 11.5px;
+  line-height: 1.45;
   color: var(--cb-ink-2);
-  margin-bottom: 9px;
 }
 
-.cb-proof-link {
-  margin-top: auto;
-  font-family: var(--cb-font-body);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--cb-violet);
-  background: transparent;
-  border: none;
-  padding: 0;
+.cb-proof-state {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: gap 0.2s ease, color 0.2s ease;
+  margin-left: auto;
+  flex: none;
+  color: var(--cb-violet);
+  transition: transform 0.2s ease;
+  padding-top: 7px;
 }
 
-.cb-proof-link svg {
-  width: 12px;
-  height: 12px;
+.cb-proof-state svg {
+  width: 14px;
+  height: 14px;
 }
 
-.cb-proof-link:hover {
-  gap: 10px;
-  color: var(--cb-violet-deep);
+.cb-proof.is-open .cb-proof-state {
+  transform: rotate(180deg);
+}
+
+.cb-proof-body {
+  padding: 0 12px 12px 52px;
+  animation: cb-disclosure-in 0.24s ease both;
+}
+
+.cb-proof-body p {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--cb-ink-2);
+}
+
+.cb-proof-figure {
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid var(--cb-line);
+  color: var(--cb-ink) !important;
+}
+
+.cb-proof-figure b {
+  font-family: var(--cb-font-display);
+  font-weight: 700;
 }
 
 /* Footer ----------------------------------------------------------------------- */
@@ -1203,23 +1813,123 @@
   color: var(--cb-muted);
 }
 
+/* Focus ---------------------------------------------------------------------- */
+
+/* Closes the DESIGN.md 14 [KNOWN GAP]: the workspace's own controls inherited the
+   global marketing indigo outline. They now use the workspace violet, at the same
+   2px / 2px-offset geometry so the ring never touches the border. The slider keeps
+   its own box-shadow ring, which is why the track is 5px tall. */
+.cb-route:focus-visible,
+.cb-evidence-toggle:focus-visible,
+.cb-reupload:focus-visible,
+.cb-proof-toggle:focus-visible,
+.cb-disclosure-btn:focus-visible {
+  outline: 2px solid var(--cb-violet);
+  outline-offset: 2px;
+}
+
+.cb-reupload:focus-visible,
+.cb-disclosure-btn:focus-visible {
+  border-radius: 4px;
+}
+
+/* Entrance choreography ------------------------------------------------------ */
+
+/* The workspace resolves in one pass: the shell settles, the hero rises, the
+   input cards form, then the roadmap and the summary tiles. Every entrance uses
+   `backwards`, so once it finishes each element falls back to its normal styles
+   and nothing can be left stranded invisible. All timing is transform/opacity. */
+
+.cb-shell {
+  animation: cb-shell-in 0.3s ease-out backwards;
+}
+
+.cb-intro {
+  animation: cb-rise-in 0.62s cubic-bezier(0.22, 0.7, 0.3, 1) backwards;
+  animation-delay: 0.12s;
+}
+
+.cb-summary-card {
+  animation: cb-card-in 0.52s cubic-bezier(0.22, 0.7, 0.3, 1) backwards;
+}
+
+.cb-summary-card:nth-child(1) { animation-delay: 0.24s; }
+.cb-summary-card:nth-child(2) { animation-delay: 0.3s; }
+
+/* Learning time lives inside the second input card, so it forms last of the
+   three rather than getting a sibling slot in the grid. */
+.cb-time-card .cb-slider {
+  animation: cb-rise-in 0.5s cubic-bezier(0.22, 0.7, 0.3, 1) backwards;
+  animation-delay: 0.42s;
+}
+
+.cb-route-panel {
+  animation: cb-rise-in 0.55s cubic-bezier(0.22, 0.7, 0.3, 1) backwards;
+  animation-delay: 0.44s;
+}
+
+/* The summary tiles stagger themselves, so the container does not move. */
+.cb-view {
+  animation: cb-rise-in 0.45s cubic-bezier(0.22, 0.7, 0.3, 1) backwards;
+}
+
+@keyframes cb-shell-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cb-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cb-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Reduced motion ------------------------------------------------------------- */
+
+/* The page ships keyframe animations and several transitions. DESIGN.md 12
+   requires a reduced-motion override for any new motion; this covers the whole
+   workspace rather than only the animations added in this pass. Delays are
+   zeroed as well as durations: an entrance that keeps its delay while its
+   duration collapses would still hold its `backwards` from-state — invisible
+   content — for the length of that delay. */
+@media (prefers-reduced-motion: reduce) {
+  .career-bridge *,
+  .career-bridge *::before,
+  .career-bridge *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Responsive --------------------------------------------------------------------- */
 
 @media (max-width: 1120px) {
-  .cb-hero-field {
-    display: none;
-  }
-
-  .cb-hero-copy {
-    max-width: 58%;
-  }
-
   .cb-intro {
-    height: clamp(300px, 40vh, 360px);
-  }
-
-  .cb-student {
-    width: clamp(150px, 17vw, 190px);
+    height: auto;
   }
 }
 
@@ -1236,23 +1946,108 @@
   .cb-proofs {
     grid-template-columns: 1fr;
   }
+
+  /* The sidebar becomes a horizontal strip of the same four destinations rather
+     than disappearing, so application navigation survives on small screens. */
+  .cb-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cb-sidebar {
+    position: static;
+    height: auto;
+    overflow: visible;
+    padding: 14px clamp(16px, 4vw, 28px) 0;
+    border-right: none;
+    border-bottom: 1px solid var(--cb-line-soft);
+  }
+
+  .cb-sidebar-group {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .cb-sidebar-group.is-separated {
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+
+  .cb-sidebar-label {
+    padding: 0 0 2px;
+    width: 100%;
+  }
+
+  .cb-sidebar-link {
+    min-height: 34px;
+    width: auto;
+  }
+
+  .cb-promo {
+    display: none;
+  }
+
+  /* Once the shell is a single column the column padding is the only thing
+     keeping content off the viewport edge, so it must not collapse to zero. */
+  .cb-main-col {
+    padding: 16px clamp(16px, 4vw, 28px) 20px;
+  }
+
+  .cb-view-split {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
-  .cb-hero-copy {
-    max-width: 100%;
+  /* The artwork is a ~6:1 banner, so proportional scaling alone would shrink its
+     baked-in text past legibility. Scroll it at a readable minimum width instead
+     of cropping it or redrawing it. */
+  .cb-hero-figure {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
-  .cb-student {
-    width: clamp(96px, 30vw, 120px);
+  .cb-hero-art {
+    width: 760px;
+    max-width: none;
   }
 
+  /* The priority chip is hidden here, which leaves four grid children. Three
+     columns would push the trend mark onto an implicit second row. */
   .cb-route {
-    grid-template-columns: 24px minmax(0, 1fr) auto;
+    grid-template-columns: 24px minmax(0, 1fr) auto auto;
   }
 
   .cb-route .cb-chip {
     display: none;
+  }
+
+  .cb-tiles {
+    grid-template-columns: 1fr;
+  }
+
+  .cb-view-pick {
+    flex-wrap: wrap;
+  }
+
+  /* Hit areas: the desktop pill, disclosure row and tile link are all well under
+     a comfortable touch target, so they grow only at this width. */
+  .cb-reupload {
+    padding: 6px 10px;
+  }
+
+  .cb-disclosure-btn {
+    padding: 10px 2px;
+  }
+
+  .cb-tile-action {
+    min-height: 32px;
+    padding: 4px 2px;
+  }
+
+  .cb-sidebar-link {
+    min-height: 40px;
   }
 
   .cb-resources {

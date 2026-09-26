@@ -1,0 +1,6 @@
+{
+  "core_min_frequency": 0.393,
+  "noise_max_frequency": 0.012,
+  "similarity_cutoff": 0.248,
+  "embedding_backend_used_when_tuned": "sentence-transformers"
+}

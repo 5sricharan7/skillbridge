@@ -1,0 +1,1150 @@
+/* -----------------------------------------------------------------------
+   SkillBridge Evidence Workspace — Stylesheet
+   Scoped to .ev-page; does not pollute global tokens.
+   ----------------------------------------------------------------------- */
+
+.ev-page {
+  --ev-paper: #f8f7f3;
+  --ev-card: #ffffff;
+  --ev-ink: #15131c;
+  --ev-ink-2: #4c4859;
+  --ev-muted: #8d8794;
+  --ev-violet: #5b46d8;
+  --ev-violet-deep: #4433b0;
+  --ev-lilac: #a79bf0;
+  --ev-violet-soft: #e7e2fb;
+  --ev-violet-pale: #f2effc;
+  --ev-line: #e5e2e4;
+  --ev-line-soft: #ece9e6;
+  --ev-rise: #1e7a4f;
+  --ev-rise-bg: #e6f1eb;
+  --ev-fall: #c2503b;
+  --ev-fall-bg: #f8e9e5;
+
+  position: relative;
+  background: var(--ev-paper);
+  color: var(--ev-ink);
+  padding-top: 80px;
+  min-height: 100vh;
+}
+
+/* ------------------------------------------------------------------ */
+/* Layout Shell — Full Width Workspace                                */
+/* ------------------------------------------------------------------ */
+
+.ev-shell {
+  display: grid;
+  grid-template-columns: clamp(210px, 16vw, 244px) minmax(0, 1fr);
+  align-items: start;
+  width: 100%;
+}
+
+/* ------------------------------------------------------------------ */
+/* Sidebar                                                             */
+/* ------------------------------------------------------------------ */
+
+.ev-sidebar {
+  position: sticky;
+  top: 80px;
+  height: calc(100vh - 80px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 12px 20px 16px;
+  border-right: 1px solid var(--ev-line-soft);
+  min-width: 0;
+}
+
+.ev-sidebar-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ev-muted);
+  padding: 0 10px 8px;
+}
+
+.ev-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ev-sidebar-btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: left;
+  color: var(--ev-ink-2);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.ev-sidebar-ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--ev-muted);
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.ev-sidebar-ic svg {
+  width: 15px;
+  height: 15px;
+}
+
+.ev-sidebar-btn:hover {
+  background: var(--ev-violet-pale);
+  color: var(--ev-ink);
+}
+
+.ev-sidebar-btn:hover .ev-sidebar-ic {
+  color: var(--ev-violet);
+  transform: translateX(1px);
+}
+
+.ev-sidebar-btn.is-active {
+  background: var(--ev-violet-pale);
+  border-color: var(--ev-violet-soft);
+  color: var(--ev-violet);
+}
+
+.ev-sidebar-btn.is-active .ev-sidebar-ic {
+  color: var(--ev-violet);
+  transform: translateX(2px);
+}
+
+.ev-sidebar-btn:focus-visible {
+  outline: 2px solid var(--ev-violet);
+  outline-offset: 2px;
+}
+
+.ev-sidebar-badge {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 11px;
+  border: 1px solid var(--ev-violet-soft);
+  border-radius: 12px;
+  background: var(--ev-violet-pale);
+}
+
+.ev-sidebar-badge-ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: var(--ev-card);
+  border: 1px solid var(--ev-violet-soft);
+  color: var(--ev-violet);
+}
+
+.ev-sidebar-badge-ic svg {
+  width: 13px;
+  height: 13px;
+}
+
+.ev-sidebar-badge-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.ev-sidebar-badge-sm {
+  font-size: 10px;
+  color: var(--ev-muted);
+}
+
+.ev-sidebar-badge-lg {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ev-violet);
+}
+
+/* ------------------------------------------------------------------ */
+/* Main Content Column                                                 */
+/* ------------------------------------------------------------------ */
+
+.ev-main {
+  min-width: 0;
+  padding: 0 0 54px;
+}
+
+/* Shallow Hero Section */
+.ev-hero {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--ev-line-soft);
+}
+
+.ev-hero-figure {
+  display: block;
+  margin: 0;
+  line-height: 0;
+  position: relative;
+}
+
+.ev-hero-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 160px;
+  max-height: 200px;
+  object-fit: cover;
+  object-position: center 30%;
+}
+
+.ev-hero-copy {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(16px, 2.5vw, 28px) clamp(20px, 3vw, 36px);
+  background: linear-gradient(
+    to right,
+    rgba(248, 247, 243, 0.98) 0%,
+    rgba(248, 247, 243, 0.92) 38%,
+    rgba(248, 247, 243, 0.45) 60%,
+    rgba(248, 247, 243, 0) 75%
+  );
+}
+
+.ev-hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ev-violet);
+  margin-bottom: 6px;
+  background: var(--ev-violet-pale);
+  border: 1px solid var(--ev-violet-soft);
+  border-radius: 999px;
+  padding: 2px 9px;
+  width: max-content;
+}
+
+.ev-hero-headline {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 2.5vw, 2.1rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--ev-ink);
+  margin-bottom: 6px;
+}
+
+.ev-hero-headline em {
+  font-style: normal;
+  color: var(--ev-violet);
+}
+
+.ev-hero-lead {
+  font-size: clamp(12px, 1.1vw, 13.5px);
+  line-height: 1.45;
+  color: var(--ev-ink-2);
+  max-width: 48ch;
+}
+
+/* Inner Content Area */
+.ev-content {
+  padding: 20px clamp(20px, 2.5vw, 32px);
+}
+
+/* Top 4 Highlights Row */
+.ev-highlights {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+  animation: ev-fade-up 0.35s ease both;
+}
+
+.ev-highlight-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--ev-card);
+  border: 1px solid var(--ev-line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 4px 12px rgba(16, 16, 16, 0.04);
+}
+
+.ev-highlight-ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--ev-violet-pale);
+  border: 1px solid var(--ev-violet-soft);
+  color: var(--ev-violet);
+}
+
+.ev-highlight-ic svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ev-highlight-num {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ev-ink);
+  margin-bottom: 1px;
+}
+
+.ev-highlight-desc {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--ev-ink-2);
+}
+
+/* ------------------------------------------------------------------ */
+/* Compact Overview Grid                                               */
+/* ------------------------------------------------------------------ */
+
+.ev-overview-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: ev-fade-up 0.3s ease both;
+}
+
+.ev-section-head h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 1.6vw, 1.3rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ev-ink);
+  margin-bottom: 2px;
+}
+
+.ev-section-head p {
+  font-size: 12.5px;
+  color: var(--ev-ink-2);
+}
+
+.ev-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.ev-overview-card {
+  background: var(--ev-card);
+  border: 1px solid var(--ev-line);
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 24px rgba(91, 70, 216, 0.04), 0 2px 6px rgba(16, 16, 16, 0.03);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ev-overview-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--ev-lilac);
+  box-shadow: 0 14px 32px rgba(91, 70, 216, 0.08), 0 4px 10px rgba(16, 16, 16, 0.04);
+}
+
+.ev-ov-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.ev-ov-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ev-violet);
+  background: var(--ev-violet-pale);
+  border: 1px solid var(--ev-violet-soft);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.ev-ov-card-title {
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ev-ink);
+  margin-bottom: 6px;
+}
+
+.ev-ov-card-summary {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ev-ink-2);
+  margin-bottom: 12px;
+  flex: 1;
+}
+
+.ev-ov-metric-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-top: 1px solid var(--ev-line-soft);
+  padding: 8px 0 10px;
+  margin-bottom: 8px;
+}
+
+.ev-ov-metric-lbl {
+  font-size: 11px;
+  color: var(--ev-muted);
+}
+
+.ev-ov-metric-val {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ev-violet);
+}
+
+.ev-ov-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--ev-violet-soft);
+  background: var(--ev-violet-pale);
+  color: var(--ev-violet);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.ev-ov-btn:hover {
+  background: var(--ev-violet);
+  border-color: var(--ev-violet);
+  color: #fff;
+}
+
+.ev-ov-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* Methodology Teaser */
+.ev-methodology-teaser {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: var(--ev-card);
+  border: 1px solid var(--ev-line);
+  border-radius: 14px;
+  padding: 16px 20px;
+  box-shadow: 0 8px 24px rgba(91, 70, 216, 0.04);
+}
+
+.ev-meta-kicker {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ev-violet);
+  margin-bottom: 2px;
+  display: block;
+}
+
+.ev-methodology-teaser h3 {
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--ev-ink);
+  margin-bottom: 2px;
+}
+
+.ev-methodology-teaser p {
+  font-size: 12px;
+  color: var(--ev-ink-2);
+  max-width: 54ch;
+}
+
+.ev-methodology-teaser .btn {
+  flex: none;
+  font-size: 13px;
+  padding: 9px 18px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Generic Proof Panels                                               */
+/* ------------------------------------------------------------------ */
+
+.ev-panel {
+  background: var(--ev-card);
+  border: 1px solid var(--ev-line);
+  border-radius: 16px;
+  padding: clamp(16px, 1.8vw, 24px);
+  box-shadow: 0 16px 32px rgba(91, 70, 216, 0.05), 0 4px 12px rgba(16, 16, 16, 0.04);
+  margin-bottom: 20px;
+}
+
+.ev-proof-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--ev-line-soft);
+  padding-bottom: 14px;
+}
+
+.ev-proof-badge-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ev-violet-pale);
+  border: 1px solid var(--ev-violet-soft);
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ev-violet);
+}
+
+.ev-proof-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ev-ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ev-proof-tagline {
+  font-size: 12.5px;
+  color: var(--ev-ink-2);
+  margin-top: 4px;
+}
+
+.ev-meta-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--ev-muted);
+  background: var(--ev-paper);
+  border: 1px solid var(--ev-line-soft);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+.ev-meta-note svg {
+  width: 12px;
+  height: 12px;
+  color: var(--ev-violet);
+  flex: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Proof A — Trend Chart                                              */
+/* ------------------------------------------------------------------ */
+
+.ev-chart-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+}
+
+.ev-chart-container {
+  position: relative;
+  background: var(--ev-paper);
+  border: 1px solid var(--ev-line-soft);
+  border-radius: 12px;
+  padding: 16px 18px 12px;
+}
+
+.ev-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.ev-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ev-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.ev-legend-dot.is-rising {
+  background: var(--ev-violet);
+}
+
+.ev-legend-dot.is-declining {
+  background: var(--ev-fall);
+}
+
+.ev-chart-svg {
+  width: 100%;
+  height: 180px;
+  overflow: visible;
+}
+
+/* Takeaway bullets */
+.ev-takeaways {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ev-takeaways-title {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ev-muted);
+}
+
+.ev-takeaway-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ev-ink-2);
+}
+
+.ev-takeaway-ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: var(--ev-violet-pale);
+  color: var(--ev-violet);
+  flex: none;
+  margin-top: 1px;
+}
+
+.ev-takeaway-ic svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Proof B — Comparison Bars & Gauge                                  */
+/* ------------------------------------------------------------------ */
+
+.ev-proof-b-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.8fr);
+  gap: 20px;
+  align-items: center;
+}
+
+.ev-bar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ev-bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ev-bar-row-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ev-ink);
+}
+
+.ev-bar-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ev-dual-bar {
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--ev-line-soft);
+  display: flex;
+}
+
+.ev-dual-fill-sb {
+  height: 100%;
+  background: var(--ev-violet);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.ev-dual-fill-ext {
+  height: 100%;
+  background: var(--ev-lilac);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.ev-gauge-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: var(--ev-paper);
+  border: 1px solid var(--ev-line-soft);
+  border-radius: 14px;
+  padding: 20px 16px;
+}
+
+.ev-gauge-circle {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  margin-bottom: 8px;
+}
+
+.ev-gauge-circle svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ev-gauge-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ev-violet);
+  font-variant-numeric: tabular-nums;
+}
+
+.ev-gauge-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ev-ink);
+}
+
+.ev-gauge-sub {
+  font-size: 10.5px;
+  color: var(--ev-muted);
+  margin-top: 2px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Proof C — Baseline Metric Cards                                    */
+/* ------------------------------------------------------------------ */
+
+.ev-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.ev-metric-card {
+  background: var(--ev-paper);
+  border: 1px solid var(--ev-line-soft);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ev-metric-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ev-metric-name {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ev-muted);
+}
+
+.ev-metric-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--ev-rise);
+  background: var(--ev-rise-bg);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.ev-metric-values {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.ev-val-sb {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ev-violet);
+  font-variant-numeric: tabular-nums;
+}
+
+.ev-val-base {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ev-muted);
+  text-decoration: line-through;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ */
+/* Proof E — Time-Budget Comparison 3-Up Columns                       */
+/* ------------------------------------------------------------------ */
+
+.ev-budgets-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.ev-budget-col {
+  background: var(--ev-paper);
+  border: 1px solid var(--ev-line-soft);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.ev-budget-col:hover {
+  border-color: var(--ev-lilac);
+  transform: translateY(-2px);
+}
+
+.ev-budget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.ev-budget-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ev-violet);
+  background: var(--ev-violet-pale);
+  border: 1px solid var(--ev-violet-soft);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.ev-budget-tier {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ev-ink);
+  margin-bottom: 4px;
+}
+
+.ev-budget-focus {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--ev-ink-2);
+  margin-bottom: 12px;
+  min-height: 32px;
+}
+
+.ev-budget-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  border-top: 1px solid var(--ev-line-soft);
+  padding-top: 10px;
+}
+
+.ev-budget-skill {
+  font-size: 11.5px;
+  color: var(--ev-ink);
+  line-height: 1.35;
+}
+
+.ev-budget-strategy {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--ev-muted);
+  margin-top: auto;
+  border-top: 1px dashed var(--ev-line-soft);
+  padding-top: 8px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Methodology & Parameters                                            */
+/* ------------------------------------------------------------------ */
+
+.ev-params-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.ev-param-card {
+  background: var(--ev-paper);
+  border: 1px solid var(--ev-line-soft);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.ev-param-type {
+  display: inline-flex;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ev-violet);
+  background: var(--ev-violet-pale);
+  border-radius: 999px;
+  padding: 1px 7px;
+  margin-bottom: 6px;
+}
+
+.ev-param-name {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ev-ink);
+  margin-bottom: 2px;
+}
+
+.ev-param-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ev-violet);
+  margin-bottom: 4px;
+}
+
+.ev-param-desc {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--ev-ink-2);
+}
+
+.ev-pipeline-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.ev-pipe-step {
+  background: var(--ev-card);
+  border: 1px solid var(--ev-line);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.ev-pipe-num {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ev-violet);
+  margin-bottom: 4px;
+}
+
+.ev-pipe-title {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ev-ink);
+  margin-bottom: 3px;
+}
+
+.ev-pipe-desc {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--ev-ink-2);
+}
+
+/* ------------------------------------------------------------------ */
+/* Animations & Transitions                                            */
+/* ------------------------------------------------------------------ */
+
+@keyframes ev-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ev-panel {
+  animation: ev-fade-up 0.32s ease both;
+}
+
+/* ------------------------------------------------------------------ */
+/* Responsive Behavior                                                */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 1024px) {
+  .ev-highlights {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ev-overview-grid {
+    grid-template-columns: 1fr;
+  }
+  .ev-budgets-grid {
+    grid-template-columns: 1fr;
+  }
+  .ev-params-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ev-pipeline-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 880px) {
+  .ev-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .ev-sidebar {
+    position: static;
+    height: auto;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 10px 14px;
+    border-right: none;
+    border-bottom: 1px solid var(--ev-line-soft);
+    gap: 4px;
+  }
+
+  .ev-sidebar-label,
+  .ev-sidebar-badge {
+    display: none;
+  }
+
+  .ev-sidebar-nav {
+    flex-direction: row;
+    gap: 4px;
+    flex-wrap: nowrap;
+  }
+
+  .ev-chart-split,
+  .ev-proof-b-grid,
+  .ev-methodology-teaser {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .ev-page {
+    padding-top: 64px;
+  }
+
+  .ev-hero-copy {
+    position: static;
+    background: var(--ev-paper);
+    padding: 14px 18px;
+  }
+
+  .ev-highlights {
+    grid-template-columns: 1fr;
+  }
+
+  .ev-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ev-params-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ev-pipeline-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Reduced Motion                                                      */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .ev-highlights,
+  .ev-panel,
+  .ev-budget-col,
+  .ev-overview-card {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .ev-budget-col:hover,
+  .ev-sidebar-btn:hover,
+  .ev-overview-card:hover {
+    transform: none;
+  }
+}

@@ -1,0 +1,10 @@
+[
+  {
+    "skill": "java",
+    "role": "backend_ml_engineer",
+    "hours_requested": 16,
+    "validated": true,
+    "curriculum": "Offline fallback for java (16h):\n- Review prerequisite state: prerequisites represented in the Notebook 4 DAG\n- Learn the core concepts for java\n- Complete one small project applying java\n- Target role: backend_ml_engineer\nEstimated plan: 16 hours.",
+    "api_mode": "offline_fallback"
+  }
+]
