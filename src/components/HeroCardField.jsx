@@ -187,7 +187,7 @@ function SkillIcon({ name }) {
   }
 }
 
-export default function HeroCardField() {
+export default function HeroCardField({ introActive = true }) {
   const fieldRef = useRef(null)
 
   useEffect(() => {
@@ -388,6 +388,9 @@ export default function HeroCardField() {
     // entrance: cards stay hidden while the headline composes, then the band
     // fades in, settles into its rest position and eases up to full speed so
     // the first frame is already clean. (1000-1600ms cards · arrows follow.)
+    // `startT` is 0 here and the clock below only starts on the first frame
+    // AFTER the intro gate opens, so this ramp is always measured from the
+    // gate, never from component mount.
     field.style.opacity = '0'
 
     function frame(now) {
@@ -454,8 +457,27 @@ export default function HeroCardField() {
       })
     }
 
+    // HARD GATE. While introActive is true this frame loop does not exist: no
+    // requestAnimationFrame, no pointer listeners, and — critically — the
+    // elapsed-time clock `startT` is never started. The entrance ramp below
+    // (fadeIn, speedRamp, per-bar entry) and the travel position `st.flow` are
+    // therefore both still at their original frame-zero values for the whole
+    // cinematic intro, so when the gate opens the wall plays its real entrance
+    // from the beginning on screen instead of resuming mid-flight. Defaulting
+    // to `true` means a missing prop can never animate early.
+    if (introActive) {
+      // Paint the genuine first frame — cards at their initial slot positions,
+      // bars at zero, sitting 26px low on the settle curve — so the frozen
+      // state is the entrance's frame zero, not an unlaid-out stack.
+      settleY = 26
+      paint(0, 0, [0, 0, 0, 0, 0], 1)
+      settleY = 0
+      return () => window.removeEventListener('resize', measure)
+    }
+
+    const onLeave = () => (selIdx = -1)
     hero?.addEventListener('pointerdown', onPointerDown)
-    hero?.addEventListener('pointerleave', () => (selIdx = -1))
+    hero?.addEventListener('pointerleave', onLeave)
     window.addEventListener('pointermove', onPointerMoveDrag)
     window.addEventListener('pointerup', onPointerUp)
     window.addEventListener('pointercancel', onPointerUp)
@@ -465,7 +487,7 @@ export default function HeroCardField() {
       cancelAnimationFrame(rafHandle)
       window.removeEventListener('resize', measure)
       hero?.removeEventListener('pointerdown', onPointerDown)
-      hero?.removeEventListener('pointerleave', () => (selIdx = -1))
+      hero?.removeEventListener('pointerleave', onLeave)
       window.removeEventListener('pointermove', onPointerMoveDrag)
       window.removeEventListener('pointerup', onPointerUp)
       window.removeEventListener('pointercancel', onPointerUp)
@@ -474,7 +496,7 @@ export default function HeroCardField() {
         el.removeEventListener('mouseleave', hoverHandlers[i].leave)
       })
     }
-  }, [])
+  }, [introActive])
 
   return (
     <div className="hero-field" ref={fieldRef} aria-hidden="true">

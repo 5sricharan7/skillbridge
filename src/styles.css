@@ -6,6 +6,38 @@
 /* no gradients · no glassmorphism · no invented decoration            */
 /* ------------------------------------------------------------------ */
 
+/* Cinematic intro active — homepage is frozen underneath the overlay.
+   Pointer events are disabled so no mouse interaction reaches the hero.
+   The hero student's --al (opacity) var stays at 0 so it doesn't drift.
+   This class is added by App.jsx on mount and removed after transition. */
+body.co-intro-active .page {
+  pointer-events: none;
+}
+/* Ambient decorative loops (card chevrons, High Demand dots, the nav signal
+   traverse) are pure CSS keyframe animations that would otherwise tick away
+   underneath the overlay. Paused here, resumed on release. */
+body.co-intro-active .sc-arr,
+body.co-intro-active .sc-dot,
+body.co-intro-active .nav-signal-node {
+  animation-play-state: paused;
+}
+body.co-intro-active .hero {
+  /* Freeze the hero's CSS-var-driven animations at resting state */
+  --px: 0px;
+  --py: 0px;
+  --hx: 0px;
+  --hy: 0px;
+  --fx: 0px;
+  --gx: 0px;
+  --gy: 0px;
+  --al: 0;
+  --sp-field: 0px;
+  --sp-st: 0px;
+  --sp-hl: 0px;
+  --sp-note: 0px;
+  --sp-floor-y: 0px;
+}
+
 :root {
   --paper: #f7f7f7;
   --paper-2: #f0f0f0;

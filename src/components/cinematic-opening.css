@@ -1,0 +1,881 @@
+/* ==========================================================================
+   cinematic-opening.css — SkillBridge cinematic intro overlay
+   Scoped to .co-* only. Never touches :root or --cb-* tokens.
+   No blur. No backdrop-filter. No character animation. No card behind the
+   copy. One full-viewport opaque element only (.co-vwipe) and it always
+   unmounts.
+
+   Z-INDEX LADDER (back → front):
+     0  .co-canvas        deep blue sky gradient
+     1  .co-layer-bg      cinematic-bg-reference.png (cloud city)
+     2  .co-layer-ruins   ruins-frame.png (foreground columns/stairs)
+     3  .co-layer-student student-reference.png — ONE student, ±2px parallax
+     4  .co-layer-hand    hand-reference.png    — ONE hand,    ±2px parallax
+     5  .co-spark         golden spark + contained electrical filaments
+     6  .co-fx            atmospheric motes canvas
+     7  .co-copy          HTML typography (above every decorative layer)
+     8  .co-transition    energy event: cream surface + violet signal
+     9  .co-loading       loading screen
+   ========================================================================== */
+
+/* ── Design tokens (cinematic scope only) ───────────────────────────────── */
+.co-root {
+  --co-sky:         #0b1c45;
+  --co-sky-mid:     #0e2154;
+  --co-sky-light:   #15358a;
+  --co-gold:        #e8a830;
+  --co-gold-light:  #f5cc70;
+  --co-gold-pale:   #fde9a8;
+  --co-sb-cream:    #F7F3EA;
+  --co-sb-violet:   #5b46d8;
+  --co-type-white:  #f7f3ea;
+  --co-type-gold:   #d9a52a;
+  --co-type-muted:  rgba(247, 243, 234, 0.92);
+
+  /* The headline set is a high-contrast editorial SERIF. Nothing in the
+     project's font stack is a serif (Space Grotesk / Public Sans are both
+     geometric-humanist sans), so this resolves to the locally installed
+     high-contrast serifs — Iowan Old Style, Palatino Linotype, Book Antiqua,
+     Hoefler Text, Georgia, Times New Roman. Zero network requests, zero new
+     dependency, and it lands on a genuine editorial serif on every desktop. */
+  --co-font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino,
+                   'Book Antiqua', 'Hoefler Text', Georgia, 'Times New Roman', serif;
+
+  /* Transition origin, measured from the rendered spark by JS. */
+  --co-sx: 60%;
+  --co-sy: 37%;
+}
+
+/* ── Root — hard viewport lock ───────────────────────────────────────────── */
+.co-root {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  z-index: 1000;
+  overflow: hidden;
+  /* The transition canvas. This is the ONLY backdrop colour the root ever
+     paints, and it is byte-for-byte the same cream as .co-vwipe's base. It is
+     never visible during the cinematic phase because .co-canvas (.co-sky) and
+     .co-loading sit opaque on top of it; it only becomes the visible backdrop
+     after runExit's 1.44s handoff, at which point the root goes transparent
+     and the real homepage shows through. There is therefore no frame in which
+     a dark, grey, or second-white backdrop can be seen. */
+  background: #F7F3EA;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  contain: layout style paint;
+}
+
+/* ── Deep blue sky canvas ────────────────────────────────────────────────── */
+.co-canvas {
+  position: absolute;
+  inset: -8px;
+  z-index: 0;
+  background: radial-gradient(
+    ellipse 120% 75% at 52% 28%,
+    var(--co-sky-light) 0%,
+    var(--co-sky-mid)   42%,
+    var(--co-sky)       100%
+  );
+  pointer-events: none;
+}
+
+/* ── Shared layer base ───────────────────────────────────────────────────── */
+.co-layer {
+  position: absolute;
+  pointer-events: none;
+  will-change: opacity;   /* opacity only — no transform will-change */
+}
+
+/* ── LAYER 1: Background — cinematic-bg-reference.png ─────────────────────
+   Cloud city transparent PNG. Oversized so pointer parallax never clips.
+   ──────────────────────────────────────────────────────────────────────── */
+.co-layer-bg {
+  inset: -8% -10%;
+  z-index: 1;
+  will-change: opacity, transform; /* pointer parallax writes transform only */
+}
+
+.co-layer-bg img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 62%;
+}
+
+/* ── LAYER 2: Ruins foreground frame ─────────────────────────────────────
+   Full-viewport transparent frame. Columns/stairs at edges.
+   Behind both character layers.
+   OVER-SCAN: the box is bled 24px past the viewport on every side — and clipped
+   by .co-root — purely so the pointer parallax (±20px) can never expose a strip
+   of sky at an edge. The image stays centre-bottom anchored and is only
+   slightly oversized, preserving the visible frame at its neutral pose.
+   ──────────────────────────────────────────────────────────────────────── */
+.co-layer-ruins {
+  inset: -24px;
+  z-index: 2;
+  will-change: opacity, transform; /* pointer parallax writes transform only */
+}
+
+.co-layer-ruins img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center bottom;
+}
+
+/* ── LAYER 3: Student ───────────────────────────────────────────────────────
+   Composition reference measurements:
+   • Student torso center ≈ 40% from left edge
+   • Figure bottom touches ~98% from top (bleeds off viewport)
+   • Figure height ≈ 62% of viewport height
+   • The PNG asset is portrait (1417×1110); the arm extends upper-right
+   • left:50% + translate(-72%) centres torso at ~40% of viewport
+   The character keeps its composition and receives at most ±2px of environmental
+   parallax; it is never faded during the exit handoff.
+   ──────────────────────────────────────────────────────────────────────── */
+.co-layer-student {
+  bottom: -2%;
+  left: 50%;
+  z-index: 3;
+  height: clamp(50vh, 62vh, 70vh);
+  width: auto;
+  /* Static composition plus a tightly bounded, environment-led parallax offset. */
+  transform: translateX(-72%) translate3d(var(--co-parallax-x, 0px), var(--co-parallax-y, 0px), 0);
+}
+
+.co-layer-student img {
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: none;
+  filter: drop-shadow(0 18px 44px rgba(6, 14, 42, 0.48));
+}
+
+/* ── LAYER 4: Reaching hand ─────────────────────────────────────────────────
+   Composition reference:
+   • Arm/hand enters from top-right corner, draped fabric at corner
+   • Fingertips extend toward the spark; JS measures the real bbox
+   • right: -2%, top: -2%, width ≈ 42vw
+   The hand receives at most ±2px of environmental parallax and is never faded
+   during the exit handoff.
+   ──────────────────────────────────────────────────────────────────────── */
+.co-layer-hand {
+  top: -2%;
+  right: -2%;
+  z-index: 4;
+  width: clamp(280px, 42vw, 660px);
+  height: auto;
+  transform: translate3d(var(--co-parallax-x, 0px), var(--co-parallax-y, 0px), 0);
+}
+
+.co-layer-hand img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 12px 32px rgba(6, 14, 42, 0.25));
+}
+
+/* ── Spark ───────────────────────────────────────────────────────────────────
+   Positioned exactly between the two fingertips. --co-sx / --co-sy are
+   overwritten by JS from the measured bboxes; 60% / 37% is only the
+   pre-measurement default. The whole electrical event stays inside ~55px of
+   this point on any viewport.
+   ──────────────────────────────────────────────────────────────────────── */
+.co-spark {
+  position: absolute;
+  left: var(--co-sx);
+  top: var(--co-sy);
+  width: 48px;
+  height: 48px;
+  z-index: 5;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  will-change: opacity;
+}
+
+/* Outer soft glow — small, warm */
+.co-spark-glow {
+  position: absolute;
+  inset: -80%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 228, 130, 0.60) 0%,
+    rgba(240, 172,  55, 0.28) 38%,
+    rgba(200, 120,  28, 0.08) 65%,
+    transparent 82%
+  );
+  pointer-events: none;
+  transform-origin: center;
+}
+
+/* PHASE 1 — contained thunder core. Sits over the wide soft glow and under
+   the filaments, so the discharge reads as bright at its source and falls off
+   toward the tips. `currentColor` is tweened by the JS gold→violet ramp, so
+   this core takes the same amber→mauve→lavender→violet route. */
+.co-spark-storm {
+  position: absolute;
+  inset: -52%;
+  border-radius: 50%;
+  color: var(--co-gold-light);
+  background: radial-gradient(
+    circle at 50% 50%,
+    currentColor 0%,
+    currentColor 6%,
+    transparent 58%
+  );
+  opacity: 0;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+/* Core warm point — contracts into the violet core during the morph */
+.co-spark-core {
+  position: absolute;
+  inset: 36%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    #fffeec 0%,
+    var(--co-gold-pale)  32%,
+    var(--co-gold-light) 64%,
+    var(--co-gold)       100%
+  );
+  box-shadow:
+    0 0  4px 1px rgba(255, 240, 128, 1.0),
+    0 0 10px 4px rgba(240, 192,  68, 0.80),
+    0 0 20px 8px rgba(210, 142,  30, 0.45);
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+/* PHASE 2 — the violet counterpart. Opens wide and pale, then closes inward
+   over the gold core so violet forms around the gold's edges rather than
+   replacing it. The gold core stays lit — and shrinking — until violet has
+   almost covered it, which is what keeps the morph continuous. */
+.co-spark-violet {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    #efeaff 0%,
+    #8f7bf0 26%,
+    rgba(91, 70, 216, 0.58) 46%,
+    rgba(91, 70, 216, 0.20) 68%,
+    rgba(91, 70, 216, 0) 84%
+  );
+  box-shadow: 0 0 12px 3px rgba(91, 70, 216, 0.45);
+  transform-origin: center;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* PHASE 1 — a few tiny motes, contained inside the spark box only.
+   Seven dots, gone inside 330ms. Restrained, not a particle storm. */
+.co-spark-motes {
+  position: absolute;
+  inset: 0;
+  color: var(--co-gold-pale);
+  opacity: 0;
+}
+
+.co-spark-mote {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 5px 1px currentColor;
+}
+
+.co-spark-mote-1 { left: 20%; top: 12%; }
+.co-spark-mote-2 { right: 14%; top: 26%; width: 2.5px; height: 2.5px; }
+.co-spark-mote-3 { left: 30%; bottom: 8%; width: 2px; height: 2px; }
+.co-spark-mote-4 { right: 26%; bottom: 18%; }
+.co-spark-mote-5 { left: 8%;  top: 44%; width: 2.5px; height: 2.5px; }
+.co-spark-mote-6 { right: 8%; top: 8%; width: 2px; height: 2px; }
+.co-spark-mote-7 { left: 46%; top: 5%; width: 2.5px; height: 2.5px; }
+
+/* Delicate branch lines. Stroke is currentColor so the filaments can be
+   tweened gold → violet continuously by animating `color` on this element.
+   The box is oversized to -66% so 96 user units map to ~111px (≈1.16 px per
+   unit): the discharge can be genuinely visible while still occupying only a
+   ~110px neighbourhood around the spark. */
+.co-spark-streaks {
+  position: absolute;
+  inset: -66%;
+  overflow: visible;
+  color: var(--co-gold-pale);
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  opacity: 0.5;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+/* Four weights of the same geometry. The halo carries the volume, the hot
+   segments brighten the near-source half, the core draws the filament, and
+   the secondary filaments sit at a third of the brightness so the eye reads
+   depth instead of a flat starburst. */
+.co-bolt-halo { stroke-width: 4.4;  stroke-opacity: 0.14; }
+.co-bolt-hot  { stroke-width: 2.4;  stroke-opacity: 0.82; }
+.co-bolt-core { stroke-width: 1.35; stroke-opacity: 1; }
+.co-bolt-sec  { stroke-width: 0.85; stroke-opacity: 0.48; }
+
+/* Small secondary sparks. Same box and viewBox as the main filaments, but a
+   separate SVG so JS can flicker them independently. `color` is tweened on
+   the inner group by the same gold→violet ramp, so they morph with everything
+   else. transform-box: view-box makes the group's scale pivot the spark. */
+.co-spark-sparks {
+  position: absolute;
+  inset: -66%;
+  overflow: visible;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  pointer-events: none;
+}
+
+.co-spark-sparks g {
+  color: var(--co-gold-pale);
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-opacity: 0.95;
+  opacity: 0;
+  transform-box: view-box;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+/* ── Atmospheric motes ────────────────────────────────────────────────────── */
+.co-fx {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.co-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Typography ─────────────────────────────────────────────────────────────
+   The text group is ANCHORED, not centred. It sits at 22.25vw / 10.0vh with a
+   32vw measure capped at 570px, which reproduces the reference composition's
+   relationships proportionally at any desktop width:
+
+     text group    left 22.25vw        top 10.0vh
+     white headline                    margin 0
+     gold headline                     margin-top 14px   (visually connected)
+     supporting copy  indent 2.6vw     margin-top ~5.4vh  (its own beat)
+
+   At the 1792×856 reference viewport those land at left 399 / top 86 for the
+   group, 14px of air between the white and gold lines, and a supporting block
+   indented to 445 — the reference hierarchy:
+
+        You don't lack
+          potential.
+
+        You lack guidance.
+
+   The right skills. The right path. The right opportunities.
+             You're just one step away.
+
+   REVEAL STRUCTURE. Every line is its own `.co-mask > .co-line` pair, giving
+   five individually positioned elements. Nothing depends on the browser
+   wrapping. The padding/margin pair gives descender + ascender headroom so the
+   clip never shaves a glyph, while the outer box keeps the exact line-height
+   rhythm. The inner .co-line travels.
+   ──────────────────────────────────────────────────────────────────────── */
+.co-copy {
+  position: absolute;
+  left: 22.25vw;
+  top: 10.0vh;
+  z-index: 7;
+  width: 32vw;
+  max-width: 570px;
+  text-align: left;
+  pointer-events: none;
+}
+
+/* Legibility wash. A soft, edge-free darkening anchored to the block so the
+   small supporting copy can never dissolve into the ruins behind it. Not a
+   card: no edge, no border, no blur, and the gradient reaches full zero alpha
+   well inside its own box. */
+.co-copy::before {
+  content: '';
+  position: absolute;
+  inset: -66px -150px -84px -64px;
+  z-index: -1;
+  background: radial-gradient(
+    ellipse 74% 66% at 26% 46%,
+    rgba(8, 18, 44, 0.46) 0%,
+    rgba(8, 18, 44, 0.28) 46%,
+    rgba(8, 18, 44, 0.09) 74%,
+    rgba(8, 18, 44, 0) 100%
+  );
+  pointer-events: none;
+}
+
+/* Overflow clip for the editorial line reveal. Padding is headroom only;
+   the negative margin cancels it so line spacing is unaffected. */
+.co-mask {
+  display: block;
+  overflow: hidden;
+  padding: 0.24em 0.14em 0.30em 0;
+  margin: -0.24em -0.14em -0.30em 0;
+}
+
+.co-line {
+  display: block;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+/* White headline — two deliberate lines in a high-contrast editorial serif.
+   Sized to ≈72px at the 1792px reference and capped so it can never reach
+   the left ruins column. */
+.co-copy-h1 {
+  margin: 0;
+  font-family: var(--co-font-serif);
+  font-size: clamp(44px, 4.05vw, 73px);
+  font-weight: 700;
+  line-height: 0.90;
+  letter-spacing: -0.035em;
+  color: var(--co-type-white);
+}
+
+/* Gold headline — one single italic serif line, visually connected to the
+   white headline by a deliberate 14px gap and one step smaller. Held on one
+   line at every desktop width; the mask is sized to the line itself so the
+   nowrap overflow is never clipped. */
+.co-copy-h2 {
+  margin: 14px 0 0;
+  font-family: var(--co-font-serif);
+  font-size: clamp(38px, 3.45vw, 62px);
+  font-weight: 700;
+  font-style: italic;
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+  color: var(--co-type-gold);
+}
+
+.co-copy-h2 .co-mask {
+  width: max-content;
+  max-width: none;
+}
+
+/* Supporting copy — two deliberate lines, indented 2.6vw so it sits centred
+   in the optical space of the headline block, with its own larger beat above
+   it. Kept clear of the student, the raised arm, the spark and the ruins, and
+   held at 92% white so it keeps contrast over the artwork. */
+.co-copy-support {
+  margin: clamp(30px, 5.4vh, 48px) 0 0;
+  padding-left: 2.6vw;
+  max-width: 470px;
+  font-family: var(--co-font-serif);
+  font-size: clamp(14px, 0.92vw, 16.5px);
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--co-type-muted);
+}
+
+.co-copy-support .co-mask {
+  width: max-content;
+  max-width: none;
+}
+
+/* ── Transition layer ───────────────────────────────────────────────────────
+   ONE continuous energy event, ~1940ms total, eight overlapping phases. The
+   cream is a full, clearly perceptible phase of its own before the signal
+   begins to draw.
+
+   This file must never grow a SECOND full-viewport opaque element. The only
+   one is .co-vwipe (the cream SkillBridge surface). It is revealed by a
+   clip-path circle grown from the measured violet core — never a horizontal
+   wipe and never a rising rectangle — and the JS runExit holds a 3.4s failsafe
+   that always unmounts the overlay, so it cannot be stranded over the page.
+   Because .co-vwipe's own base colour is the cream and the root backdrop is the
+   same cream, the area outside the growing circle is never an uncovered dark
+   strip: the clip reveals cream over cream. The same circle is then continued
+   in reverse — eroding to zero centred on the signal's endpoint — so the
+   homepage arrives as a growing aperture rather than an opacity crossfade.
+
+     .co-vwipe          the clean cream surface — base exactly #F7F3EA
+     .co-sb-signal      the violet signal: clipped to the SAME circle while the
+                        cream blooms, then unclipped so it can span the receding
+                        cream/hompage boundary it is bridging
+       .co-sb-trace     the main flow: one authored curve, drawn by dash
+         .co-sb-trace-wash  a wide, faint aura that rides the wavefront
+       .co-sb-micros    6 tiny filaments shed perpendicular off the trace
+       .co-sb-branches  4 short secondary branches growing off the trace
+       .co-sb-nodes     5 pinpoint nodes at selected intersections
+       .co-sb-particles  five brief lights travelling short path segments
+       .co-sb-travel    one light travelling the cached path
+   ──────────────────────────────────────────────────────────────────────── */
+.co-transition {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  /* Not painted at all until runExit opens it. Opacity alone is not enough:
+     a fully transparent element still composites as a layer, and any inline
+     clip-path/background/opacity left behind by an interrupted tween would
+     still be capable of painting. `visibility: hidden` makes "no transition
+     pixels during the cinematic scene" structural rather than a value that has
+     to be exactly right on every frame. */
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* The cream SkillBridge surface — the only full-viewport opaque element, and
+   the single source of the transition colour. JS owns its `clip-path`; there is
+   deliberately NO transform or clip-path in CSS here. */
+.co-vwipe {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: #F7F3EA;
+  opacity: 0;
+  will-change: clip-path, opacity;
+}
+
+/* The signal layer. Clipped by JS to exactly the same circle as the cream, so
+   the signal is geometrically incapable of rendering over the artwork. It is a
+   sibling of the surface, not a child, so it can outlive the cream and
+   resolve over the homepage. */
+.co-sb-signal {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  opacity: 0;
+  will-change: clip-path, opacity;
+}
+
+.co-sb-trace {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  opacity: 0;
+}
+
+.co-sb-web,
+.co-sb-orbits,
+.co-sb-particles {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.co-sb-web {
+  fill: none;
+}
+
+.co-sb-chord {
+  fill: none;
+  stroke: rgba(91, 70, 216, 0.40);
+  stroke-width: 0.8;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.co-sb-orbit {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 48px;
+  height: 48px;
+  margin: -24px 0 0 -24px;
+}
+
+.co-sb-orbit svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.co-sb-orbit-ring {
+  fill: none;
+  stroke: rgba(91, 70, 216, 0.34);
+  stroke-width: 0.8;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.co-sb-orbit-destination {
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+}
+
+.co-sb-trace path {
+  fill: none;
+  stroke: var(--co-sb-violet);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The travelling violet aura. Same curve as the main trace, 3× wider with a
+   short dash window that rides along the path; it stays subordinate to the
+   core and exists only immediately around the wavefront. */
+.co-sb-trace .co-sb-trace-wash {
+  stroke: rgba(122, 99, 236, 0.14);
+  stroke-width: 6;
+  stroke-opacity: 1;
+}
+
+.co-sb-trace .co-sb-trace-main { stroke-width: 2; }
+
+/* Micro-filaments. Lighter and thinner than the main path so they stay
+   subordinate; the dash budget is measured and drawn down to zero by JS. */
+.co-sb-trace .co-sb-micro {
+  stroke: rgba(91, 70, 216, 0.46);
+  stroke-width: 0.7;
+}
+
+/* Branches and nodes are plain HTML positioned in real pixels along the
+   measured trace, so no stroke is stretched by viewport width. */
+.co-sb-branches,
+.co-sb-nodes {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.co-sb-branch {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 30px;
+  height: 24px;
+  overflow: visible;
+}
+
+.co-sb-branch path {
+  fill: none;
+  stroke: rgba(91, 70, 216, 0.70);
+  stroke-width: 0.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.co-sb-node {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3.4px;
+  height: 3.4px;
+  margin: -1.7px 0 0 -1.7px;
+  border-radius: 50%;
+  background: var(--co-sb-violet);
+}
+
+.co-sb-particle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--co-sb-violet);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.co-sb-pulse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border: 1px solid rgba(91, 70, 216, 0.36);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.35);
+}
+
+/* The origin node sits on the measured spark — it is where the signal is
+   born, so it is slightly larger and brighter. */
+.co-sb-node-origin {
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  background: #7a63ec;
+  box-shadow: 0 0 7px 1px rgba(109, 85, 239, 0.55);
+}
+
+/* One small light travels along cached path samples using transform-only
+   tweens. Its restrained glow stays local to the moving point. */
+.co-sb-travel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f2eeff;
+  box-shadow:
+    0 0 4px 1px rgba(240, 235, 255, 0.85),
+    0 0 7px 2px rgba(91, 70, 216, 0.32);
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* ── Loading screen ──────────────────────────────────────────────────────── */
+.co-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: clamp(32px, 5vh, 64px);
+  pointer-events: none;
+  background: var(--co-sky);
+}
+
+.co-loading-sky {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 120% 75% at 52% 28%,
+    var(--co-sky-light) 0%,
+    var(--co-sky-mid)   42%,
+    var(--co-sky)       100%
+  );
+}
+
+.co-loading-indicator {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.co-loading-bar-track {
+  width: clamp(68px, 8vw, 120px);
+  height: 1px;
+  background: rgba(180, 200, 240, 0.16);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.co-loading-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: rgba(180, 200, 240, 0.48);
+  border-radius: 1px;
+  transition: width 0.10s linear;
+}
+
+.co-loading-text {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: clamp(10px, 0.9vw, 12px);
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(190, 210, 240, 0.50);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────────
+   Desktop holds the reference composition exactly. Below 900px the measure
+   widens, the type scales down and wrapping is allowed again — the gold line
+   is held single-line only while there is room for it. Spark and artwork
+   positions stay driven by the measured bboxes and are never overridden, and
+   are never adjusted to suit the text.
+   ──────────────────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .co-layer-student { height: clamp(46vh, 58vh, 64vh); }
+  .co-layer-hand    { width: clamp(240px, 46vw, 520px); }
+}
+
+@media (max-width: 900px) {
+  .co-copy {
+    left: 6vw;
+    top: 7vh;
+    width: 88vw;
+    max-width: 620px;
+  }
+  .co-copy-h1      { font-size: clamp(32px, 7.6vw, 52px); }
+  .co-copy-h2      { font-size: clamp(28px, 6.4vw, 44px); margin-top: 12px; }
+  .co-copy-h2 .co-mask { width: auto; max-width: 100%; }
+  .co-copy-h2 .co-line { white-space: normal; }
+  .co-copy-support {
+    margin-top: 26px;
+    padding-left: 0;
+    max-width: none;
+    font-size: clamp(13px, 3.1vw, 15px);
+  }
+  .co-copy-support .co-mask { width: auto; max-width: 100%; }
+  .co-copy-support .co-line { white-space: normal; }
+}
+
+@media (max-width: 768px) {
+  .co-layer-student {
+    height: clamp(40vh, 52vh, 58vh);
+    transform: translateX(-65%) translate3d(var(--co-parallax-x, 0px), var(--co-parallax-y, 0px), 0);
+  }
+  .co-layer-hand    { width: clamp(180px, 50vw, 360px); }
+}
+
+@media (max-width: 480px) {
+  .co-layer-hand { width: clamp(140px, 54vw, 250px); }
+  .co-layer-student {
+    height: clamp(36vh, 48vh, 54vh);
+    transform: translateX(-60%) translate3d(var(--co-parallax-x, 0px), var(--co-parallax-y, 0px), 0);
+  }
+}
+
+@media (max-height: 520px) {
+  .co-layer-student { height: clamp(64vh, 76vh, 86vh); }
+  .co-copy          { top: 5vh; }
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .co-layer,
+  .co-spark,
+  .co-spark-glow,
+  .co-spark-core,
+  .co-spark-violet,
+  .co-spark-storm,
+  .co-line,
+  .co-vwipe,
+  .co-sb-web,
+  .co-sb-orbits,
+  .co-sb-particles,
+  .co-sb-signal,
+  .co-sb-travel,
+  .co-sb-pulse,
+  .co-loading {
+    transition: none !important;
+    animation:  none !important;
+  }
+}
