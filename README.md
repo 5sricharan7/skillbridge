@@ -65,8 +65,8 @@ system or a production scheduling service.
 
 Evidence presents proof and validation concepts, including example evidence
 types and evaluation views. The frontend content is illustrative. Backend
-`/proofs` and `/vendor-flags` endpoints currently return empty lists; no
-external credential provider or evaluator is connected.
+`/proofs` serves normalized Notebook artifact records; `/vendor-flags` currently
+returns an empty list. No external credential provider or evaluator is connected.
 
 ### Multiplier Effect
 
@@ -92,18 +92,26 @@ flowchart LR
     end
     subgraph BackendRuntime["FastAPI service"]
         Routes[Roadmap and read endpoints]
-        Engines[Role signals, velocity, optimizer]
-        ArtifactReader[Isolated read-only artifact loader]
+        Engines[Signal, velocity, and optimizer engines]
+        RoleAdapter[Explicit role adapter]
+        ProofAdapter[Proof normalizer]
+        ArtifactReader[Read-only artifact loader]
         Routes --> Engines
-        ArtifactReader -. separate from API and engines .-> ArtifactFiles[(Local artifacts)]
+        Routes --> RoleAdapter
+        RoleAdapter --> Engines
+        RoleAdapter --> ArtifactReader
+        Routes --> ProofAdapter
+        ProofAdapter --> ArtifactReader
+        ArtifactReader --> ArtifactFiles[(Local artifacts)]
     end
     Adapter -. HTTP when configured .-> Routes
     Static[Public images and static assets] --> UI
 ```
 
 The frontend and backend are intentionally separate in the current setup. The
-artifact loader is also isolated: it reads local artifact files and is not
-currently consumed by the API routes or roadmap engines.
+read-only artifact loader remains independent of the engines; the Stage 4
+adapter layer explicitly reads its data for role-scoped roadmap enrichment and
+the proof endpoint. The default frontend continues to use local mock data.
 
 ## Data flow
 
@@ -114,7 +122,8 @@ flowchart TD
     Mock --> Render[Rendered roadmap, plan, or proof concept]
     Route -. only after explicit adapter selection .-> Request[Career Bridge API request]
     Request --> Service[FastAPI endpoint]
-    Service --> Result[Deterministic prototype response]
+    Service --> Adapter[Role adapter only for explicit target_role]
+    Adapter --> Result[Deterministic prototype response]
     Result --> Render
     Note[Default experience uses local data; no API request is made] -.-> Mock
 ```
@@ -131,7 +140,10 @@ flowchart LR
     Request[Roadmap request] --> Normalize[Normalize role and skill inputs]
     Normalize --> Signals[Extract role skill signals]
     Signals --> Velocity[Estimate skill learning velocity]
-    Velocity --> Gaps[Compare current skills with role needs]
+    Velocity --> OptionalRole{target_role supplied?}
+    OptionalRole -- no --> Gaps[Keep legacy signal path]
+    OptionalRole -- yes --> RoleAdapter[Attach role priors, hours, resolved DAG]
+    RoleAdapter --> Gaps[Compare current skills with role needs]
     Gaps --> Optimize[Prioritize work within time budget]
     Optimize --> Roadmap[Ranked roadmap response]
 ```
@@ -163,7 +175,7 @@ flowchart LR
     Proof --> LearnerView[Learner-facing Evidence surface]
     Proof --> EmployerView[Potential employer inspection]
     Demo[Illustrative frontend examples] -. current UI content .-> LearnerView
-    EmptyAPI[Proof endpoint currently returns an empty list] -. current backend boundary .-> Proof
+    API[Backend normalizes Proof B, C, and E artifacts] -. separate from frontend demo .-> Proof
 ```
 
 The diagram is a conceptual model. The current prototype does not establish
@@ -226,7 +238,7 @@ Routing is implemented with the browser History API in
 ```text
 .
 ├── backend/
-│   ├── data/                 # Isolated local artifact readers and data
+│   ├── data/                 # Read-only artifacts and explicit adapters
 │   ├── engines/              # Roadmap signals, velocity, and optimization
 │   ├── tests/                # Backend tests
 │   ├── main.py               # FastAPI application and endpoints
@@ -292,20 +304,41 @@ python -m uvicorn backend.main:app --reload
 ```
 
 The interactive API schema is available at `http://127.0.0.1:8000/docs`.
-Available endpoints include:
+### Implemented backend endpoints
 
 | Method | Path | Current purpose |
 | --- | --- | --- |
-| `POST` | `/roadmap` | Generate a roadmap prototype response |
-| `GET` | `/velocity/{skill}` | Return a skill-velocity estimate |
-| `GET` | `/vendor-flags` | Vendor flags; currently an empty list |
-| `GET` | `/proofs` | Proof records; currently an empty list |
+| `GET` | `/health` | Minimal liveness response: `{"status":"ok"}` |
+| `POST` | `/roadmap` | Generate a roadmap; optional `target_role` enables artifact enrichment |
+| `GET` | `/velocity/{skill}` | Existing velocity response, currently backed by deterministic development fixtures |
+| `GET` | `/proofs` | Normalized, role-scoped Proof B plus Proof C and Proof E artifact records |
+
+### Placeholder / not implemented
+
+`GET /vendor-flags` exists but currently returns an empty list. It does not
+perform vendor detection.
+
+### Frontend data boundary
+
+The frontend currently uses mock data. It does not call these backend
+endpoints by default; enabling the frontend API adapter is a separate future
+integration step.
+
+Supported artifact roles are `data_science`, `backend_ml_engineer`, and
+`other`. Only the first two are plannable because they have both role-scoped
+hours and DAG data. Unknown roles and `other` are rejected when explicitly
+requested; omitting `target_role` preserves the original roadmap path.
 
 The frontend source adapter includes a configurable API base URL, but the
 default source is `mock`. To develop against the service, explicitly select
 the API source in `src/data/careerBridgeSource.js` and set
 `VITE_CAREER_BRIDGE_API` to the backend URL before starting Vite. The frontend
 does not automatically switch to the API when the service is running.
+
+Local Vite origins `http://localhost:5173` and `http://127.0.0.1:5173` are
+allowed by the backend CORS middleware. Configure a comma-separated allowlist
+with `SKILLBRIDGE_CORS_ORIGINS` when the frontend uses a different development
+origin; CORS credentials are disabled.
 
 ### Tests
 
@@ -328,8 +361,15 @@ There is no configured frontend test, lint, or type-check script.
   systems.
 - Evidence examples and evaluation benchmarks are illustrative; no production
   verification provider or audited outcomes are represented.
-- `/proofs` and `/vendor-flags` currently return empty lists.
-- The artifact loader is isolated from the API and engine modules.
+- `/vendor-flags` currently returns an empty list. `/proofs` exposes only the
+  existing Proof B, C, and E artifacts; it does not imply production
+  verification or include backtest data as proof.
+- `/velocity/{skill}` retains its existing deterministic sample-fixture
+  behavior; artifact-derived velocity history is internal and does not alter
+  that endpoint's response.
+- Artifact velocity history is enabled internally only after it reproduces all
+  stored velocity scores within `1e-9`; it does not create a trend label or
+  change the `/velocity/{skill}` response.
 - Authentication, persistent learner accounts, and production deployment
   configuration are outside the current prototype.
 
