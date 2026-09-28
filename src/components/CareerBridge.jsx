@@ -496,7 +496,7 @@ function JobDescriptionInputCard({ value, onChange, size = 'compact' }) {
         aria-describedby={`${inputId}-hint ${inputId}-count`}
       />
       <p className="cb-input-hint" id={`${inputId}-hint`}>
-        Kept in page state only. It is not sent for analysis in this stage.
+        Kept in page state while you type. When you generate a roadmap, it is sent to the SkillBridge service as plain text.
       </p>
 
       <div className="cb-summary-foot">
@@ -1141,6 +1141,14 @@ function TopMatchingRolesCard({ profile, roadmapLength, onOpen }) {
 }
 
 function JobMarketInsightsCard({ roadmap, onOpen }) {
+  if (!roadmap.length) {
+    return (
+      <SummaryTile title="Job market insights" icon={<GlobeIcon />}>
+        <p className="cb-detail-empty">No demand signals yet. Generate a roadmap to see them here.</p>
+      </SummaryTile>
+    )
+  }
+
   const ranked = [...roadmap].sort((a, b) => b.velocity.percentage_change - a.velocity.percentage_change)
   const peak = Math.max(1, ...ranked.map((skill) => skill.velocity.percentage_change))
   const rising = roadmap.filter((skill) => skill.trend === 'Rising').length
@@ -1814,8 +1822,8 @@ export default function CareerBridge() {
             </>
           ) : (
             <>
-              <span>Real input mode / not analyzed</span>
-              <span>Analysis is not connected in this stage.</span>
+              <span>Real input mode · live service</span>
+              <span>Generate roadmap sends your resume text, job description and hours to the SkillBridge service.</span>
             </>
           )}
         </footer>

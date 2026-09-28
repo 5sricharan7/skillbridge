@@ -8,7 +8,9 @@ const API_ROUTES = ['/roadmap', '/velocity', '/proofs', '/vendor-flags', '/healt
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_')
-  const target = (env.VITE_CAREER_BRIDGE_API ?? '').trim().replace(/\/+$/, '')
+  /* The documented dev default. An explicit VITE_CAREER_BRIDGE_API always wins,
+     so production and same-origin setups are unaffected. */
+  const target = (env.VITE_CAREER_BRIDGE_API ?? 'http://127.0.0.1:8000').trim().replace(/\/+$/, '')
 
   return {
     plugins: [react()],
