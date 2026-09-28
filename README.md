@@ -7,10 +7,11 @@ learner's current skills to a target role, a practical learning plan, and
 evidence that can be evaluated. It brings learner planning, curriculum
 adaptation, and proof concepts together in one experience.
 
-> **Project status:** The frontend is a working, mock-first product demo. The
-> FastAPI service is a separate backend prototype; the app does not call it by
-> default. Demo content and illustrative benchmarks are not live labor-market
-> data or independently verified outcomes.
+> **Project status:** The frontend is a working product demo. It calls the FastAPI
+> service by default and can be switched to local mock data with
+> `VITE_CAREER_BRIDGE_MODE=mock`. Demo content and illustrative benchmarks are not
+> live labor-market data or independently verified outcomes; the served proof
+> records carry their own synthetic and role-scoped caveats.
 
 ## Product thesis
 
@@ -111,7 +112,8 @@ flowchart LR
 The frontend and backend are intentionally separate in the current setup. The
 read-only artifact loader remains independent of the engines; the Stage 4
 adapter layer explicitly reads its data for role-scoped roadmap enrichment and
-the proof endpoint. The default frontend continues to use local mock data.
+the proof endpoint. The frontend calls it through
+`src/data/careerBridgeSource.js` when `VITE_CAREER_BRIDGE_MODE` is `api`.
 
 ## Data flow
 
@@ -320,9 +322,17 @@ perform vendor detection.
 
 ### Frontend data boundary
 
-The frontend currently uses mock data. It does not call these backend
-endpoints by default; enabling the frontend API adapter is a separate future
-integration step.
+The frontend reads the backend through `src/data/careerBridgeSource.js`, which owns
+every `fetch` call, the `VITE_CAREER_BRIDGE_*` configuration and the response
+normalizers. The mode is chosen with `VITE_CAREER_BRIDGE_MODE`: `api` (the default)
+calls the endpoints below, and `mock` reads the local checked-in data and issues no
+requests. See `.env.example` for the variables. A failed request surfaces as an
+error state; it never falls back to mock data.
+
+Note that the product's own target role, `Embedded Systems Engineer`, is not one of
+the backend's artifact roles, so `POST /roadmap` returns 422 for it by default. Set
+`VITE_CAREER_BRIDGE_TARGET_ROLE` to a plannable category such as `data_science` to
+plan against the live service.
 
 Supported artifact roles are `data_science`, `backend_ml_engineer`, and
 `other`. Only the first two are plannable because they have both role-scoped

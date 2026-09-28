@@ -77,12 +77,20 @@ Read before you edit. Minimum inspection for any change:
 
 Facts that are easy to get wrong — confirm them again if they matter:
 
-- **The frontend does not call the backend.** There is no `fetch`, no axios, no
-  `VITE_*`, no `import.meta.env` anywhere in `src/`. The UI runs entirely on mock
-  data from `src/data/careerBridgeMock.js`. `backend/` is a working, separately
-  tested FastAPI service that is **not yet wired to the UI**. Do not write code
-  that assumes they are connected, and do not "fix" the mock data to match the API
-  unless that is the explicit task.
+- **The frontend calls the backend through one module.** All service access goes
+  through `src/data/careerBridgeSource.js`, which owns the `fetch` calls, the
+  `VITE_CAREER_BRIDGE_*` config, and the response normalizers. No component calls
+  `fetch` directly, and there is no axios. The mode is
+  `VITE_CAREER_BRIDGE_MODE` (`api` by default, `mock` to opt out); mock mode issues
+  no requests and reads `src/data/careerBridgeMock.js`. An API failure surfaces as
+  an error state and **never** falls back to mock data, so do not add a silent
+  fallback. See `.env.example` for the variables. Do not "fix" the mock data to match
+  the API unless that is the explicit task.
+- **The live backend cannot plan the product's own target role.**
+  `Embedded Systems Engineer` is not an artifact role, so `POST /roadmap` answers 422
+  for it and the UI says so. Plan against a supported category such as
+  `VITE_CAREER_BRIDGE_TARGET_ROLE=data_science`. Do not paper over this by inventing
+  a roadmap for the unsupported role.
 - **The hero 3D scene is dead code.** `src/three/*` imports `three` internally but
   **nothing in `src/components/` imports it**. The live hero is `HeroCardField.jsx`
   (DOM + CSS) plus a static raster asset in `public/references/`. The

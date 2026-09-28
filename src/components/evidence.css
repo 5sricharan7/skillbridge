@@ -1148,3 +1148,106 @@
     transform: none;
   }
 }
+
+/* Proof record state ----------------------------------------------------------------
+   /proofs is a service call, so the page needs a waiting state, a failure state and
+   a standing note about where the records came from. Each reuses the violet-pale
+   surface already used by the Proof E benchmark strip, and the failure copy is
+   written for a reader rather than echoing a backend exception. */
+
+.ev-status {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--ev-violet-pale);
+  border: 1px solid var(--ev-violet-soft);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ev-ink-2);
+}
+
+.ev-status-title {
+  display: block;
+  font-weight: 600;
+  color: var(--ev-ink);
+  margin-bottom: 3px;
+}
+
+.ev-status-body {
+  margin: 0;
+}
+
+.ev-status-note {
+  margin: 6px 0 0;
+  color: var(--ev-muted);
+}
+
+.ev-source-line {
+  margin: 0 0 14px;
+  font-size: 11.5px;
+  color: var(--ev-muted);
+}
+
+/* The synthetic warning is the first thing a reader should meet on Proof C. */
+.ev-caveat {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--ev-violet-pale);
+  border: 1px solid var(--ev-violet-soft);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ev-ink-2);
+}
+
+.ev-caveat-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  font-weight: 600;
+  color: var(--ev-violet);
+}
+
+.ev-caveat-label svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Proof B is role-scoped, so the scope is named above the figures it governs. */
+.ev-role-scope {
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--ev-muted);
+}
+
+.ev-role-scope-rest {
+  margin-left: 6px;
+  color: var(--ev-muted);
+}
+
+.ev-source-urls {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.ev-source-urls a {
+  color: var(--ev-violet);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ev-not-provided {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--ev-muted);
+}

@@ -204,6 +204,16 @@
   transform: translateX(2px);
 }
 
+.cb-sidebar-link:disabled {
+  color: var(--cb-muted);
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.cb-sidebar-link:disabled:hover {
+  background: transparent;
+}
+
 .cb-sidebar-link:focus-visible {
   outline: 2px solid var(--cb-violet);
   outline-offset: 2px;
@@ -392,6 +402,286 @@
 .cb-reupload:hover {
   background: var(--cb-violet-pale);
   border-color: var(--cb-violet);
+}
+
+.cb-input-card {
+  gap: 4px;
+}
+
+.cb-summary-top {
+  position: relative;
+}
+
+.cb-reupload {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  cursor: pointer;
+}
+
+.cb-fileinput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.cb-fileinput:focus-visible ~ .cb-reupload {
+  outline: 2px solid var(--cb-violet);
+  outline-offset: 2px;
+}
+
+.cb-summary-top .cb-summary-label {
+  cursor: default;
+}
+
+.cb-summary-foot {
+  min-width: 0;
+}
+
+.cb-input-card .cb-summary-title {
+  overflow-wrap: anywhere;
+}
+
+.cb-file-facts,
+.cb-file-state {
+  font-size: 11px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.cb-file-facts {
+  color: var(--cb-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.cb-file-state {
+  color: var(--cb-ink-2);
+}
+
+.cb-input-hint {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--cb-ink-2);
+}
+
+.cb-input-error {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--cb-fall);
+}
+
+.cb-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-left: auto;
+  padding: 4px;
+  border: 1px solid var(--cb-line);
+  border-radius: 999px;
+  background: var(--cb-card);
+  color: var(--cb-ink-2);
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.cb-icon-btn:hover {
+  color: var(--cb-violet);
+  background: var(--cb-violet-pale);
+  border-color: var(--cb-lilac);
+}
+
+.cb-icon-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.cb-jd-textarea {
+  display: block;
+  width: 100%;
+  min-height: 88px;
+  margin-top: 6px;
+  padding: 9px 10px;
+  border: 1px solid var(--cb-line);
+  border-radius: 8px;
+  background: var(--cb-paper);
+  color: var(--cb-ink);
+  font-family: var(--cb-font-body);
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.cb-jd-textarea::placeholder {
+  color: var(--cb-ink-2);
+  opacity: 0.78;
+}
+
+.cb-jd-textarea:hover {
+  border-color: var(--cb-lilac);
+}
+
+.cb-jd-textarea:focus-visible {
+  border-color: var(--cb-violet);
+  outline: 2px solid var(--cb-violet);
+  outline-offset: 2px;
+}
+
+.cb-mode-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--cb-line-soft);
+}
+
+.cb-mode-title {
+  margin: 0;
+  font-family: var(--cb-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cb-ink);
+}
+
+.cb-mode-description {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--cb-ink-2);
+}
+
+.cb-mode-switch {
+  display: inline-flex;
+  flex: none;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--cb-line);
+  border-radius: 999px;
+  background: var(--cb-card);
+}
+
+.cb-mode-option {
+  min-width: 64px;
+  min-height: 32px;
+  padding: 5px 12px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--cb-ink-2);
+  font-family: var(--cb-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.cb-mode-option:hover:not(.is-active) {
+  background: var(--cb-violet-pale);
+  color: var(--cb-violet);
+}
+
+.cb-mode-option.is-active {
+  background: var(--cb-violet);
+  color: var(--cb-card);
+}
+
+.cb-mode-option:focus-visible,
+.cb-icon-btn:focus-visible {
+  outline: 2px solid var(--cb-violet);
+  outline-offset: 2px;
+}
+
+.cb-demo-tag {
+  margin-left: auto;
+  padding: 3px 7px;
+  border: 1px solid var(--cb-violet-soft);
+  border-radius: 999px;
+  color: var(--cb-violet-deep);
+  background: var(--cb-violet-pale);
+  font-size: 9.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.cb-stage-note {
+  margin: 12px 0 16px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--cb-lilac);
+  background: var(--cb-violet-pale);
+}
+
+.cb-stage-note strong {
+  display: block;
+  font-family: var(--cb-font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--cb-ink);
+}
+
+.cb-stage-note p {
+  margin: 3px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--cb-ink-2);
+}
+
+.cb-real-submit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.cb-real-submit-row p {
+  margin: 0;
+}
+
+.cb-real-submit {
+  flex: none;
+  min-height: 36px;
+  padding: 7px 14px;
+  border: 1px solid var(--cb-violet);
+  border-radius: 999px;
+  background: var(--cb-violet);
+  color: var(--cb-card);
+  font-family: var(--cb-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.cb-real-submit:hover:not(:disabled) {
+  border-color: var(--cb-violet-deep);
+  background: var(--cb-violet-deep);
+  transform: translateY(-1px);
+}
+
+.cb-real-submit:focus-visible {
+  outline: 2px solid var(--cb-violet);
+  outline-offset: 3px;
+}
+
+.cb-real-submit:disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
 }
 
 .cb-time-value {
@@ -903,6 +1193,19 @@
 .cb-trend-declining .cb-trend-arrow {
   color: var(--cb-fall);
   background: var(--cb-fall-bg);
+}
+
+/* A skill with too little history to trend is shown in the muted line colour
+   rather than a directional arrow, so an absence of data is never mistaken for
+   a flat one. */
+.cb-trend-insufficient {
+  color: var(--cb-muted);
+  font-weight: 500;
+}
+
+.cb-trend-insufficient .cb-trend-arrow {
+  color: var(--cb-muted);
+  background: var(--cb-line-soft);
 }
 
 /* Skill detail ------------------------------------------------------------------ */
@@ -1821,14 +2124,15 @@
    its own box-shadow ring, which is why the track is 5px tall. */
 .cb-route:focus-visible,
 .cb-evidence-toggle:focus-visible,
-.cb-reupload:focus-visible,
+.cb-jd-textarea:focus-visible,
+.cb-icon-btn:focus-visible,
+.cb-mode-option:focus-visible,
 .cb-proof-toggle:focus-visible,
 .cb-disclosure-btn:focus-visible {
   outline: 2px solid var(--cb-violet);
   outline-offset: 2px;
 }
 
-.cb-reupload:focus-visible,
 .cb-disclosure-btn:focus-visible {
   border-radius: 4px;
 }
@@ -1999,6 +2303,38 @@
 }
 
 @media (max-width: 640px) {
+  .cb-real-submit-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .cb-real-submit {
+    align-self: flex-start;
+    min-height: 44px;
+  }
+
+  .cb-mode-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .cb-mode-switch {
+    align-self: flex-start;
+  }
+
+  .cb-mode-option {
+    min-height: 44px;
+  }
+
+  .cb-jd-textarea {
+    font-size: 16px;
+  }
+
+  .cb-icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+
   /* The artwork is a ~6:1 banner, so proportional scaling alone would shrink its
      baked-in text past legibility. Scroll it at a readable minimum width instead
      of cropping it or redrawing it. */
@@ -2034,6 +2370,7 @@
   /* Hit areas: the desktop pill, disclosure row and tile link are all well under
      a comfortable touch target, so they grow only at this width. */
   .cb-reupload {
+    min-height: 44px;
     padding: 6px 10px;
   }
 
@@ -2057,4 +2394,93 @@
   .cb-detail-facts {
     grid-template-columns: 1fr;
   }
+}
+
+/* Request state -------------------------------------------------------------------
+   The route can be waiting on the SkillBridge service or the service can be
+   unreachable. Both states reuse the dashed paper surface already used by the
+   empty workspace views (see .cb-view-empty) so a request reads as part of the
+   page rather than as an overlay, and both sit in the flow so nothing shifts when
+   the route replaces them. */
+
+.cb-status {
+  margin-top: 12px;
+  border: 1px dashed var(--cb-line);
+  border-radius: 12px;
+  background: var(--cb-paper);
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--cb-ink-2);
+}
+
+.cb-status.is-loading,
+.cb-status.is-updating {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--cb-muted);
+}
+
+/* A 2px rule rather than a spinner: it reads as progress, and it reserves the same
+   height every time so the route below never jumps. */
+.cb-status.is-loading::before,
+.cb-status.is-updating::before {
+  content: '';
+  flex: none;
+  width: 46px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--cb-violet-soft);
+  overflow: hidden;
+}
+
+.cb-status.is-loading::before {
+  animation: cb-status-sweep 1.1s ease-in-out infinite;
+}
+
+.cb-status-title {
+  display: block;
+  font-family: var(--cb-font-display);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--cb-ink);
+}
+
+.cb-status-body {
+  margin: 4px 0 0;
+}
+
+.cb-status-note {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--cb-muted);
+}
+
+.cb-status code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 11.5px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--cb-violet-pale);
+  color: var(--cb-violet-deep);
+}
+
+@keyframes cb-status-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+/* A field the service does not return, stated rather than left blank. */
+.cb-not-provided {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--cb-muted);
 }

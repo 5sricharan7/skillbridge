@@ -1,14 +1,17 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './evidence.css'
 import {
   EVIDENCE_META,
   EVIDENCE_HIGHLIGHTS,
   PROOF_A_DATA,
-  PROOF_B_DATA,
-  PROOF_C_DATA,
-  PROOF_E_DATA,
   METHODOLOGY_DATA,
 } from '../data/evidenceData'
+import {
+  CAREER_BRIDGE_SOURCE_LABEL,
+  describeApiError,
+  isAbortError,
+  loadEvidenceProofs,
+} from '../data/careerBridgeSource'
 
 /* ------------------------------------------------------------------ */
 /* Hand-authored 24x24 SVG Icons                                      */
@@ -129,49 +132,69 @@ const EVIDENCE_NAV = [
 /* Sub-components & Views                                              */
 /* ------------------------------------------------------------------ */
 
-function CompactOverview({ onSelectView }) {
-  const cards = [
-    {
-      id: 'proof-a',
-      num: '1',
-      title: 'Proof A — Velocity Backtest',
-      badge: '+98% Rising / -72% Declining',
-      summary: 'Historical validation showing early detection of emerging technologies 6–12 months ahead of traditional curricula.',
-      metricLabel: 'Trend Accuracy',
-      metricVal: 'High Signal',
-      btnText: 'View Velocity Backtest',
-    },
-    {
+/* Proof A is illustrative page content: the service serves Proof B, C and E only,
+   and no Proof A is synthesised to fill the gap. Its card therefore keeps its
+   existing copy unchanged. */
+const PROOF_A_CARD = {
+  id: 'proof-a',
+  num: '1',
+  title: 'Proof A — Velocity Backtest',
+  badge: '+98% Rising / -72% Declining',
+  summary: 'Historical validation showing early detection of emerging technologies 6–12 months ahead of traditional curricula.',
+  metricLabel: 'Trend Accuracy',
+  metricVal: 'High Signal',
+  btnText: 'View Velocity Backtest',
+}
+
+const NOT_SERVED = 'This record was not returned by the SkillBridge service.'
+
+function proofCards(proofs) {
+  const b = proofs?.proofB
+  const c = proofs?.proofC
+  const e = proofs?.proofE
+
+  return [
+    PROOF_A_CARD,
+    b && {
       id: 'proof-b',
       num: '2',
       title: 'Proof B — External Cross-Check',
-      badge: '82% Overlap Agreement',
-      summary: 'Benchmarked against independent industry reports (NASSCOM & LinkedIn Emerging Jobs) across top tech competencies.',
+      badge: `${b.overallAgreement}% Overlap Agreement`,
+      summary: `Role-scoped overlap against ${b.source || 'the external reference set'} (${b.roleLabel}).`,
       metricLabel: 'Independent Match',
-      metricVal: '82%',
+      metricVal: `${b.overallAgreement}%`,
       btnText: 'View Cross-Check',
     },
-    {
+    c && {
       id: 'proof-c',
       num: '3',
       title: 'Proof C — Naive Baseline Comparison',
-      badge: '+85% F1 Improvement',
-      summary: 'Outperforms keyword matching across Precision (0.78 vs 0.42) and Recall (0.71 vs 0.38) on labeled benchmarks.',
+      badge: `${c.metrics[0].improvement} Precision`,
+      summary: `Signal engine against keyword matching on ${c.sampleSize ?? '—'} controlled cases.`,
       metricLabel: 'Precision Gain',
-      metricVal: '+85.7%',
+      metricVal: c.metrics[0].improvement,
       btnText: 'View Baseline Tests',
     },
-    {
+    e && {
       id: 'proof-e',
       num: '4',
       title: 'Proof E — Time-Budget Sensitivity',
-      badge: 'Dynamic Reprioritization',
-      summary: 'Proves the optimization engine performs knapsack reprioritization rather than superficial list truncation.',
-      metricLabel: 'Adaptability',
-      metricVal: '60h / 120h / 150h',
+      badge: e.plansIdentical ? 'Identical 20h / 100h plans' : 'Dynamic Reprioritization',
+      summary: e.plansIdentical
+        ? 'The recorded 20h and 100h plans were identical, so this example does not demonstrate budget sensitivity.'
+        : 'The recorded 20h and 100h plans differ, demonstrating budget sensitivity.',
+      metricLabel: 'Recorded budgets',
+      metricVal: '20h / 100h',
       btnText: 'View Budget Models',
     },
   ]
+    /* A proof the service did not return simply has no card, rather than one
+       filled with an invented figure. */
+    .filter(Boolean)
+}
+
+function CompactOverview({ onSelectView, proofs }) {
+  const cards = proofCards(proofs)
 
   return (
     <div className="ev-overview-compact">
@@ -335,8 +358,10 @@ function ProofAPanel() {
   )
 }
 
-function ProofBPanel() {
-  const d = PROOF_B_DATA
+/* Proof B is role-scoped server-side, so the gauge and the bars below it always
+   describe one role and name it, and the remaining roles are listed with their own
+   overlap figures rather than pooled into a single number. */
+function ProofBPanel({ d }) {
   const r = 36
   const circ = 2 * Math.PI * r
   const strokeOffset = circ * (1 - d.overallAgreement / 100)
@@ -357,36 +382,63 @@ function ProofBPanel() {
         </span>
       </div>
 
+      <div className="ev-role-scope">
+        Role scope: <strong>{d.roleLabel}</strong>
+        {d.roles.length > 1 && (
+          <span className="ev-role-scope-rest">
+            {d.roles
+              .filter((role) => role.role !== d.role)
+              .map((role) => ` ${role.label}: ${Number.isFinite(role.overlap) ? Math.round(role.overlap) : '—'}%`)
+              .join(' ·')}
+          </span>
+        )}
+      </div>
+
       <div className="ev-proof-b-grid">
         <div className="ev-bar-group">
           <div style={{ display: 'flex', gap: 14, fontSize: 11, color: 'var(--ev-muted)', marginBottom: 4 }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
               <span style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--ev-violet)' }} />
-              SkillBridge Score
+              Posting frequency
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
               <span style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--ev-lilac)' }} />
-              External Benchmark
+              In reference set
             </span>
           </div>
-          {d.skills.map((s) => (
-            <div key={s.name} className="ev-bar-row">
-              <div className="ev-bar-row-label">
-                <span>{s.name}</span>
-                <span style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--ev-muted)', fontSize: 11 }}>
-                  SB: {s.skillbridgeScore}% | Ext: {s.externalScore}%
-                </span>
-              </div>
-              <div className="ev-bar-pair">
-                <div className="ev-dual-bar">
-                  <div className="ev-dual-fill-sb" style={{ width: `${s.skillbridgeScore}%` }} />
+          {d.skills.length ? (
+            d.skills.map((s) => (
+              <div key={s.name} className="ev-bar-row">
+                <div className="ev-bar-row-label">
+                  <span>{s.name}</span>
+                  <span style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--ev-muted)', fontSize: 11 }}>
+                    Freq: {s.skillbridgeScore}% | Ref: {s.externalMatch ? 'yes' : 'no'}
+                  </span>
                 </div>
-                <div className="ev-dual-bar">
-                  <div className="ev-dual-fill-ext" style={{ width: `${s.externalScore}%` }} />
+                <div className="ev-bar-pair">
+                  <div className="ev-dual-bar">
+                    <div className="ev-dual-fill-sb" style={{ width: `${s.skillbridgeScore}%` }} />
+                  </div>
+                  <div className="ev-dual-bar">
+                    <div className="ev-dual-fill-ext" style={{ width: `${s.externalScore}%` }} />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className="ev-not-provided">{NOT_SERVED}</p>
+          )}
+          {d.sourceUrls.length > 0 && (
+            <ul className="ev-source-urls">
+              {d.sourceUrls.map((url) => (
+                <li key={url}>
+                  <a href={url} target="_blank" rel="noreferrer noopener">
+                    {url}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div className="ev-gauge-box">
@@ -408,7 +460,7 @@ function ProofBPanel() {
             <div className="ev-gauge-center">{d.overallAgreement}%</div>
           </div>
           <div className="ev-gauge-label">Overall Agreement</div>
-          <div className="ev-gauge-sub">Top skill overlap with independent reports</div>
+          <div className="ev-gauge-sub">Top skill overlap for {d.roleLabel}</div>
         </div>
       </div>
 
@@ -425,8 +477,10 @@ function ProofBPanel() {
   )
 }
 
-function ProofCPanel() {
-  const d = PROOF_C_DATA
+/* Proof C is a synthetic controlled comparison. Its warning and sample size come
+   from the service and stay on screen, so the numbers are never read as audited
+   real-world results. */
+function ProofCPanel({ d }) {
   return (
     <div className="ev-panel">
       <div className="ev-proof-header">
@@ -443,6 +497,16 @@ function ProofCPanel() {
         </span>
       </div>
 
+      {d.warning && (
+        <div className="ev-caveat">
+          <span className="ev-caveat-label">
+            <IconInfo />
+            Synthetic
+          </span>
+          {d.warning}
+        </div>
+      )}
+
       <div className="ev-metrics-grid">
         {d.metrics.map((m) => (
           <div key={m.label} className="ev-metric-card">
@@ -453,11 +517,11 @@ function ProofCPanel() {
             <div className="ev-metric-values">
               <div>
                 <span className="ev-val-sb">{m.skillbridge}</span>
-                <span style={{ fontSize: 11, color: 'var(--ev-violet)', display: 'block', fontWeight: 600 }}>SkillBridge</span>
+                <span style={{ fontSize: 11, color: 'var(--ev-violet)', display: 'block', fontWeight: 600 }}>Signal engine</span>
               </div>
               <div>
                 <span className="ev-val-base">{m.baseline}</span>
-                <span style={{ fontSize: 11, color: 'var(--ev-muted)', display: 'block' }}>Keyword baseline</span>
+                <span style={{ fontSize: 11, color: 'var(--ev-muted)', display: 'block' }}>Naive baseline</span>
               </div>
             </div>
           </div>
@@ -477,8 +541,9 @@ function ProofCPanel() {
   )
 }
 
-function ProofEPanel() {
-  const d = PROOF_E_DATA
+/* Proof E records one role's 20h and 100h plans. When those plans are identical
+   the panel says so instead of implying sensitivity that was not observed. */
+function ProofEPanel({ d }) {
   return (
     <div className="ev-panel">
       <div className="ev-proof-header">
@@ -491,12 +556,12 @@ function ProofEPanel() {
         </div>
         <span className="ev-meta-note">
           <IconClock />
-          Demonstrating true reprioritization
+          {d.plansIdentical ? 'Recorded plans are identical' : 'Recorded plans differ'}
         </span>
       </div>
 
       <div style={{ fontSize: 12, color: 'var(--ev-ink-2)', marginBottom: 14, background: 'var(--ev-violet-pale)', border: '1px solid var(--ev-violet-soft)', borderRadius: 10, padding: '8px 12px' }}>
-        <strong>Target Benchmark:</strong> {d.profile.targetRole} | <strong>Profile:</strong> {d.profile.currentLevel}
+        <strong>Target Benchmark:</strong> {d.profile.targetRole}
       </div>
 
       <div className="ev-budgets-grid">
@@ -525,6 +590,19 @@ function ProofEPanel() {
             <span>{t}</span>
           </div>
         ))}
+      </div>
+    </div>
+  )
+}
+
+/* A proof the service did not return says so in place of the panel, so the
+   navigation never leads to a blank or invented result. */
+function ProofUnavailable() {
+  return (
+    <div className="ev-panel">
+      <div className="ev-status is-error" role="status">
+        <span className="ev-status-title">Proof record unavailable</span>
+        <p className="ev-status-body">{NOT_SERVED}</p>
       </div>
     </div>
   )
@@ -581,6 +659,28 @@ function MethodologyPanel() {
 
 export default function Evidence() {
   const [activeView, setActiveView] = useState('overview')
+  const [proofs, setProofs] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    loadEvidenceProofs({ signal: controller.signal })
+      .then((loaded) => {
+        setProofs(loaded)
+        setError(null)
+      })
+      .catch((caught) => {
+        if (isAbortError(caught)) return
+        setError(describeApiError(caught))
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false)
+      })
+
+    return () => controller.abort()
+  }, [])
 
   return (
     <div className="ev-page">
@@ -614,7 +714,6 @@ export default function Evidence() {
             </div>
           </div>
         </aside>
-
         {/* Main Content Area */}
         <main className="ev-main" aria-live="polite">
           {/* Hero Banner with evidencebanner.png — shallow hero */}
@@ -657,16 +756,37 @@ export default function Evidence() {
               ))}
             </div>
 
-            {/* View Switcher: Compact Overview vs Dedicated Proof View */}
-            {activeView === 'overview' && (
-              <CompactOverview onSelectView={(viewId) => setActiveView(viewId)} />
+            {error ? (
+              <div className="ev-status is-error" role="alert">
+                <span className="ev-status-title">{error.title}</span>
+                <p className="ev-status-body">{error.message}</p>
+                <p className="ev-status-note">
+                  Proof A, the page copy and the methodology reference below are static content and remain readable.
+                </p>
+              </div>
+            ) : loading ? (
+              <p className="ev-status is-loading" aria-live="polite">
+                Loading proof records from the SkillBridge service…
+              </p>
+            ) : (
+              <p className="ev-source-line">Proof records · {CAREER_BRIDGE_SOURCE_LABEL}</p>
             )}
 
+            {/* Proof A is illustrative page content and is never replaced by a
+                service record, so it stays readable even when /proofs fails. */}
             {activeView === 'proof-a' && <ProofAPanel />}
-            {activeView === 'proof-b' && <ProofBPanel />}
-            {activeView === 'proof-c' && <ProofCPanel />}
-            {activeView === 'proof-e' && <ProofEPanel />}
+
+            {activeView === 'proof-b' && (proofs?.proofB ? <ProofBPanel d={proofs.proofB} /> : <ProofUnavailable />)}
+
+            {activeView === 'proof-c' && (proofs?.proofC ? <ProofCPanel d={proofs.proofC} /> : <ProofUnavailable />)}
+
+            {activeView === 'proof-e' && (proofs?.proofE ? <ProofEPanel d={proofs.proofE} /> : <ProofUnavailable />)}
+
             {activeView === 'methodology' && <MethodologyPanel />}
+
+            {!error && !loading && activeView === 'overview' && (
+              <CompactOverview onSelectView={(viewId) => setActiveView(viewId)} proofs={proofs} />
+            )}
           </div>
         </main>
       </div>

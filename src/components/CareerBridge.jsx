@@ -1,15 +1,21 @@
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import './careerBridge.css'
 import {
   CAREER_BRIDGE_DEFAULT_BUDGET,
-  loadProfile,
-  loadProofs,
-  loadRoadmap,
-  loadVendorFlags,
+  TREND_INSUFFICIENT,
+  describeApiError,
   getRecalibrationMarks,
   formatPercent,
+  isAbortError,
+  API_TARGET_ROLE_WARNING,
   ROADMAP_BUDGET_RANGE,
+  loadDemoProfile,
+  loadDemoRoadmap,
+  loadDemoProofs,
+  loadDemoVendorFlags,
+  submitRoadmap,
 } from '../data/careerBridgeSource'
+import { extractResumeText, validateResumeFile } from '../data/resumeExtraction'
 
 /* ---------------------------------------------------------------- icons */
 
@@ -28,6 +34,12 @@ const FileIcon = () => (
     <path d="M7 3.5h7l4 4V20H7z" />
     <path d="M14 3.5v4h4" />
     <path d="M9.5 15h6M9.5 18h3.5" strokeWidth="1.4" />
+  </svg>
+)
+
+const CloseIcon = () => (
+  <svg {...ICON_ATTRS} strokeWidth="1.9">
+    <path d="M7 7l10 10M17 7L7 17" />
   </svg>
 )
 
@@ -206,7 +218,7 @@ const SIDEBAR_GROUPS = [
   },
 ]
 
-function CareerBridgeSidebar({ view, onChange }) {
+function CareerBridgeSidebar({ view, mode, onChange }) {
   return (
     <aside className="cb-sidebar">
       <nav className="cb-sidebar-nav" aria-label="Career Bridge application">
@@ -215,11 +227,20 @@ function CareerBridgeSidebar({ view, onChange }) {
             {group.label && <span className="cb-sidebar-label">{group.label}</span>}
             {group.items.map((item) => {
               const isActive = item.view === view
+              const unavailableInRealMode =
+                mode === 'real' &&
+                ![
+                  CAREER_BRIDGE_VIEWS.overview,
+                  CAREER_BRIDGE_VIEWS.resume,
+                  CAREER_BRIDGE_VIEWS.role,
+                ].includes(item.view)
               return (
                 <button
                   key={item.label}
                   type="button"
                   className={`cb-sidebar-link${isActive ? ' is-active' : ''}`}
+                  disabled={unavailableInRealMode}
+                  title={unavailableInRealMode ? 'Analysis views are available in Demo mode' : undefined}
                   aria-current={isActive ? 'page' : undefined}
                   onClick={() => onChange(item.view)}
                 >
@@ -263,10 +284,22 @@ const CB_HERO_ART = {
 
 /* -------------------------------------------------------- shared pieces */
 
+/* A multi-word trend cannot be slugged straight into the class name, so the
+   modifier comes from a fixed map and an unmeasured skill gets its own muted
+   treatment rather than borrowing the flat 'stable' arrow. */
+const TREND_CLASS = {
+  Rising: 'rising',
+  Declining: 'declining',
+  Stable: 'stable',
+  [TREND_INSUFFICIENT]: 'insufficient',
+}
+
 function TrendMark({ trend }) {
-  const glyph = trend === 'Rising' ? <TrendGlyphUp /> : trend === 'Declining' ? <TrendGlyphDown /> : <TrendGlyphFlat />
+  const modifier = TREND_CLASS[trend] ?? 'insufficient'
+  const glyph =
+    trend === 'Rising' ? <TrendGlyphUp /> : trend === 'Declining' ? <TrendGlyphDown /> : <TrendGlyphFlat />
   return (
-    <span className={`cb-trendmark cb-trend-${trend.toLowerCase()}`}>
+    <span className={`cb-trendmark cb-trend-${modifier}`}>
       <span className="cb-trend-arrow" aria-hidden="true">
         {glyph}
       </span>
@@ -275,20 +308,204 @@ function TrendMark({ trend }) {
   )
 }
 
-function SummaryCard({ icon, label, title, status, detail }) {
+/* ---------------------------------------------------------------- inputs */
+
+/* Real mode extracts resume text locally before the user submits it for a route. */
+const RESUME_ACCEPT = '.pdf,.docx,.txt'
+
+function resumeExtensionOf(file) {
+  const name = typeof file?.name === 'string' ? file.name : ''
+  const dot = name.lastIndexOf('.')
+  return dot === -1 ? '' : name.slice(dot + 1).toLowerCase()
+}
+
+function formatFileSize(bytes) {
+  if (!Number.isFinite(bytes) || bytes < 0) return 'Unknown size'
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+/* Human label for the file's format, preferring the extension the user actually
+   selected over the browser's MIME string, which is empty for some local files. */
+function resumeTypeLabel(file) {
+  const extension = resumeExtensionOf(file)
+  if (extension) return extension.toUpperCase()
+  const type = typeof file?.type === 'string' ? file.type : ''
+  return type || 'unknown'
+}
+
+function CareerBridgeModeSwitch({ mode, onChange }) {
   return (
-    <div className="cb-summary-card">
+    <div className="cb-mode-row">
+      <div>
+        <p className="cb-mode-title">Choose your experience</p>
+        <p className="cb-mode-description">
+          Demo uses a curated sample. Real builds a roadmap from your resume, job description and available hours.
+        </p>
+      </div>
+      <div className="cb-mode-switch" role="group" aria-label="Career Bridge experience mode">
+        <button
+          type="button"
+          className={`cb-mode-option${mode === 'demo' ? ' is-active' : ''}`}
+          aria-pressed={mode === 'demo'}
+          onClick={() => onChange('demo')}
+        >
+          Demo
+        </button>
+        <button
+          type="button"
+          className={`cb-mode-option${mode === 'real' ? ' is-active' : ''}`}
+          aria-pressed={mode === 'real'}
+          onClick={() => onChange('real')}
+        >
+          Real
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function DemoInputCard({ icon, label, title, detail }) {
+  return (
+    <div className="cb-summary-card cb-input-card cb-demo-input-card">
       <div className="cb-summary-top">
         <span className="cb-summary-icon">{icon}</span>
         <span className="cb-summary-label">{label}</span>
-        <button type="button" className="cb-reupload">
-          Re-upload
-        </button>
+        <span className="cb-demo-tag">Demo data</span>
       </div>
       <strong className="cb-summary-title">{title}</strong>
       <div className="cb-summary-foot">
-        <span className="cb-summary-status">{status}</span>
-        <span className="cb-summary-detail">{detail}</span>
+        <span className="cb-file-state">{detail}</span>
+      </div>
+    </div>
+  )
+}
+
+/* The real file input is visually hidden but stays focusable, so the pill is
+   reachable by keyboard and its focus ring can be shown on the label. */
+function ResumeInputCard({ file, status, text, error, onSelect, onClear }) {
+  const inputId = useId()
+  const hasFile = Boolean(file)
+  const statusMessage = {
+    idle: 'Selected, not extracted',
+    extracting: 'Extracting text on this device…',
+    ready: 'Text extracted locally — ready for analysis',
+    error: 'Extraction failed',
+  }[status]
+
+  return (
+    <div className="cb-summary-card cb-input-card">
+      <div className="cb-summary-top">
+        <span className="cb-summary-icon">
+          <FileIcon />
+        </span>
+        <label className="cb-summary-label" htmlFor={inputId}>
+          Resume
+        </label>
+        <input
+          id={inputId}
+          className="cb-fileinput"
+          type="file"
+          accept={RESUME_ACCEPT}
+          onChange={(event) => {
+            onSelect(event.target.files?.[0] ?? null, event.target)
+          }}
+        />
+        {hasFile && (
+          <button type="button" className="cb-icon-btn" onClick={onClear} aria-label="Remove selected resume">
+            <CloseIcon />
+          </button>
+        )}
+        <label className="cb-reupload" htmlFor={inputId}>
+          {hasFile ? 'Replace' : 'Choose file'}
+        </label>
+      </div>
+
+      {hasFile ? (
+        <>
+          <strong className="cb-summary-title" title={file.name}>
+            {file.name}
+          </strong>
+          <div className="cb-summary-foot">
+            <span className="cb-file-facts">
+              {resumeTypeLabel(file)} · {formatFileSize(file.size)}
+            </span>
+            <span className={`cb-file-state is-${status}`} aria-live="polite">
+              {statusMessage}
+            </span>
+          </div>
+          {status === 'ready' && (
+            <p className="cb-input-hint" aria-live="polite">
+              {text.length.toLocaleString()} characters extracted. The text stays on this device and is not uploaded.
+            </p>
+          )}
+          {status === 'extracting' && (
+            <p className="cb-input-hint" role="status">
+              Reading the selected file locally…
+            </p>
+          )}
+        </>
+      ) : (
+        <>
+          <strong className="cb-summary-title cb-input-placeholder">No resume selected</strong>
+          <div className="cb-summary-foot">
+            <span className="cb-file-facts">PDF, DOCX or TXT</span>
+          </div>
+          <p className="cb-input-hint">Choose a local file. It is not uploaded or read in this step.</p>
+        </>
+      )}
+
+      {error && (
+        <p className="cb-input-error" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  )
+}
+
+function JobDescriptionInputCard({ value, onChange, size = 'compact' }) {
+  const inputId = useId()
+  const length = value.length
+  const hasText = length > 0
+
+  return (
+    <div className="cb-summary-card cb-input-card">
+      <div className="cb-summary-top">
+        <span className="cb-summary-icon">
+          <TargetIcon />
+        </span>
+        <label className="cb-summary-label" htmlFor={inputId}>
+          Job description
+        </label>
+        {hasText && (
+          <button type="button" className="cb-icon-btn" onClick={() => onChange('')} aria-label="Clear job description">
+            <CloseIcon />
+          </button>
+        )}
+      </div>
+
+      <textarea
+        id={inputId}
+        className="cb-jd-textarea"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder="Paste the full job posting, including responsibilities, requirements and skills."
+        rows={size === 'tall' ? 10 : 4}
+        aria-describedby={`${inputId}-hint ${inputId}-count`}
+      />
+      <p className="cb-input-hint" id={`${inputId}-hint`}>
+        Kept in page state only. It is not sent for analysis in this stage.
+      </p>
+
+      <div className="cb-summary-foot">
+        <span className="cb-file-facts" id={`${inputId}-count`} aria-live="polite">
+          {hasText ? `${length.toLocaleString()} characters` : 'Empty'}
+        </span>
+        <span className="cb-file-state">
+          {hasText ? 'Captured, not yet submitted' : 'Paste a job description to begin'}
+        </span>
       </div>
     </div>
   )
@@ -300,7 +517,7 @@ const { min: MIN_HOURS, max: MAX_HOURS } = ROADMAP_BUDGET_RANGE
    re-weights hours and re-ranks skills, so they are the interaction made
    visible rather than decoration. They are centred on the thumb by insetting
    by half the thumb width, so a tick at 90h sits under a slider set to 90h. */
-function TimeCard({ budget, onChange, committedHours, band, marks, skillCount }) {
+function TimeCard({ budget, onChange, committedHours, band, marks, skillCount, mode = 'demo' }) {
   const remaining = Math.max(0, budget - committedHours)
   const ratio = ((budget - MIN_HOURS) / (MAX_HOURS - MIN_HOURS)) * 100
   const track = `linear-gradient(90deg, var(--cb-violet) 0%, var(--cb-violet) ${ratio}%, var(--cb-violet-soft) ${ratio}%, var(--cb-violet-soft) 100%)`
@@ -330,7 +547,11 @@ function TimeCard({ budget, onChange, committedHours, band, marks, skillCount })
         onChange={onChange}
         style={{ background: track }}
         aria-label="Available learning hours"
-        aria-valuetext={`${budget} hours. ${committedHours} hours committed, ${remaining} hours remaining.`}
+        aria-valuetext={
+          mode === 'demo'
+            ? `${budget} hours. ${committedHours} hours committed, ${remaining} hours remaining.`
+              : `${budget} hours available for your roadmap.`
+        }
       />
 
       <div className="cb-marks" aria-hidden="true">
@@ -345,24 +566,32 @@ function TimeCard({ budget, onChange, committedHours, band, marks, skillCount })
         <span className="cb-mark-edge cb-mark-max">{MAX_HOURS}h</span>
       </div>
 
-      <div className="cb-budget">
-        <span className="cb-budget-track">
-          <span className="cb-budget-used" style={{ width: `${committedRatio}%` }} />
-        </span>
-        <span className="cb-budget-readout">
-          <span>
-            <b>{committedHours}h</b> committed
-          </span>
-          <span>
-            <b>{remaining}h</b> remaining
-          </span>
-        </span>
-      </div>
+      {mode === 'demo' ? (
+        <>
+          <div className="cb-budget">
+            <span className="cb-budget-track">
+              <span className="cb-budget-used" style={{ width: `${committedRatio}%` }} />
+            </span>
+            <span className="cb-budget-readout">
+              <span>
+                <b>{committedHours}h</b> committed
+              </span>
+              <span>
+                <b>{remaining}h</b> remaining
+              </span>
+            </span>
+          </div>
 
-      <div className="cb-summary-foot">
-        <span className="cb-summary-status">Reprioritized at {band} hours</span>
-        <span className="cb-summary-detail">All {skillCount} stops re-ranked, none dropped</span>
-      </div>
+          <div className="cb-summary-foot">
+            <span className="cb-summary-status">Reprioritized at {band} hours</span>
+            <span className="cb-summary-detail">All {skillCount} stops re-ranked, none dropped</span>
+          </div>
+        </>
+      ) : (
+        <div className="cb-summary-foot">
+          <span className="cb-file-state">{budget} hours available for your roadmap</span>
+        </div>
+      )}
     </div>
   )
 }
@@ -422,7 +651,11 @@ function DetailPanel({ skill, total }) {
   const facts = [
     { key: 'demand', label: 'Demand trend', value: `${skill.trend} · ${skill.demand}` },
     { key: 'position', label: 'Position', value: `${skill.position} of ${total}` },
-    { key: 'prerequisites', label: 'Prerequisites', value: skill.prerequisites.join(' · ') },
+    {
+      key: 'prerequisites',
+      label: 'Prerequisites',
+      value: skill.prerequisites.length ? skill.prerequisites.join(' · ') : NOT_PROVIDED,
+    },
   ]
 
   return (
@@ -442,7 +675,7 @@ function DetailPanel({ skill, total }) {
       </header>
 
       <div className="cb-detail-meta">
-        <span className="cb-chip cb-chip-type">{skill.type}</span>
+        {skill.type && <span className="cb-chip cb-chip-type">{skill.type}</span>}
         <span className={`cb-chip cb-chip-prio cb-prio-${skill.priority.toLowerCase()}`}>{skill.priority}</span>
         <span className="cb-chip cb-chip-hours">{skill.hours} hours</span>
       </div>
@@ -492,23 +725,31 @@ function DetailPanel({ skill, total }) {
       <div className="cb-detail-more">
         <Disclosure label="Key topics" iconKey="topics">
           <div className="cb-topics">
-            {skill.topics.map((topic) => (
-              <span className="cb-topic" key={topic}>
-                {topic}
-              </span>
-            ))}
+            {skill.topics.length ? (
+              skill.topics.map((topic) => (
+                <span className="cb-topic" key={topic}>
+                  {topic}
+                </span>
+              ))
+            ) : (
+              <span className="cb-not-provided">{NOT_PROVIDED}</span>
+            )}
           </div>
         </Disclosure>
 
         <Disclosure label="Recommended resources" iconKey="resources">
-          <ul className="cb-resources">
-            {skill.resources.map((resource) => (
-              <li className="cb-resource" key={resource}>
-                <span>{resource}</span>
-                <ExternalIcon />
-              </li>
-            ))}
-          </ul>
+          {skill.resources.length ? (
+            <ul className="cb-resources">
+              {skill.resources.map((resource) => (
+                <li className="cb-resource" key={resource}>
+                  <span>{resource}</span>
+                  <ExternalIcon />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="cb-not-provided">{NOT_PROVIDED}</p>
+          )}
         </Disclosure>
       </div>
     </aside>
@@ -519,7 +760,13 @@ const PROOF_ICONS = {
   velocity: <GaugeIcon />,
   external: <GlobeIcon />,
   baseline: <ScaleIcon />,
+  budget: <ClockIcon />,
 }
+
+/* A live roadmap item carries only what the service returns — skill, hours,
+   priority, reason — so the descriptive panels state plainly that a field is
+   unavailable rather than rendering an empty chip row. */
+const NOT_PROVIDED = 'Not provided by the service'
 
 /* Each row is its own disclosure, so a reader opens only the method they care
    about. The heading wraps the button rather than sitting inside it — <h3> does
@@ -614,63 +861,101 @@ function ViewNote({ label, icon, children }) {
   )
 }
 
-function ResumeAnalyzerView({ profile, roadmap }) {
+function ResumeAnalyzerView({ mode, profile, resume, onSelect, onClear, roadmap }) {
   return (
-    <ViewShell label="Resume Analyzer" title={profile.resume.file} icon={<FileIcon />} meta={profile.resume.detail}>
-      <div className="cb-view-split">
-        <SummaryCard
-          icon={<FileIcon />}
-          label={profile.resume.label}
-          title={profile.resume.file}
-          status={profile.resume.status}
-          detail={profile.resume.detail}
-        />
-        <ViewNote label="Analysis" icon={FACT_ICONS.why}>
-          <p>{profile.analysisNote}</p>
-          <p>
-            {profile.resume.detail} in {profile.resume.file}. The {roadmap.length} stops that matter most are ranked
-            in Skill Gap and ordered on the Overview roadmap.
-          </p>
+    <ViewShell
+      label="Resume Analyzer"
+      title="Resume"
+      icon={<FileIcon />}
+      meta={
+        mode === 'demo'
+          ? 'Demo profile'
+          : resume.file
+            ? resume.status === 'ready'
+              ? `${resume.text.length.toLocaleString()} characters extracted`
+              : resume.status === 'extracting'
+                ? 'Extracting text'
+                : resume.status === 'error'
+                  ? 'Extraction error'
+                  : 'Selected'
+            : 'No file selected'
+      }
+    >
+      <div className="cb-view-split is-stacked">
+        {mode === 'demo' ? (
+          <DemoInputCard
+            icon={<FileIcon />}
+            label="Resume profile"
+            title="Curated sample learner"
+            detail={`${profile.resume.detail} in demo data`}
+          />
+        ) : (
+          <ResumeInputCard
+            file={resume.file}
+            status={resume.status}
+            text={resume.text}
+            error={resume.error}
+            onSelect={onSelect}
+            onClear={onClear}
+          />
+        )}
+        <ViewNote label={mode === 'demo' ? 'Demo data' : 'What happens next'} icon={FACT_ICONS.why}>
+          {mode === 'demo' ? (
+            <p>This sample profile and its roadmap are curated demo content, not a real learner's resume.</p>
+          ) : (
+            <>
+              <p>
+                The file is read locally. When you generate a roadmap, its extracted text is sent as plain text to the
+                SkillBridge service; the file itself is never uploaded.
+              </p>
+            </>
+          )}
         </ViewNote>
       </div>
     </ViewShell>
   )
 }
 
-function RoleExplorerView({ profile, roadmap }) {
+function RoleExplorerView({ mode, profile, roadmap, jobDescription, onChangeJobDescription }) {
   return (
     <ViewShell
       label="Role Explorer"
-      title={profile.targetRole}
+      title={mode === 'demo' ? profile.targetRole : 'Job description'}
       icon={<TargetIcon />}
-      meta={profile.jobDescription.detail}
+      meta={mode === 'demo' ? 'Demo role' : `${jobDescription.length.toLocaleString()} characters`}
     >
-      <div className="cb-view-split">
-        <SummaryCard
-          icon={<TargetIcon />}
-          label={profile.jobDescription.label}
-          title={profile.jobDescription.file}
-          status={profile.jobDescription.status}
-          detail={profile.jobDescription.detail}
-        />
-        <ViewNote label="Matched skills" icon={FACT_ICONS.position}>
-          <p>
-            {profile.jobDescription.detail} for {profile.targetRole}. The {roadmap.length} below are the stops this
-            route prioritizes from that set.
-          </p>
+      <div className="cb-view-split is-stacked">
+        {mode === 'demo' ? (
+          <DemoInputCard
+            icon={<TargetIcon />}
+            label="Target role"
+            title={profile.jobDescription.file}
+            detail={`${profile.jobDescription.detail} in demo data`}
+          />
+        ) : (
+          <JobDescriptionInputCard value={jobDescription} onChange={onChangeJobDescription} size="tall" />
+        )}
+        <ViewNote label={mode === 'demo' ? 'Demo data' : 'What happens next'} icon={FACT_ICONS.position}>
+          {mode === 'demo' ? (
+            <p>This role profile and its roadmap are curated demo content, not an analysis of a real job description.</p>
+          ) : (
+            <p>Generate a roadmap from the Overview to submit this job description with your extracted resume text.</p>
+          )}
         </ViewNote>
       </div>
 
-      <ul className="cb-view-list">
-        {roadmap.map((skill) => (
-          <li key={skill.id}>
-            <span className="cb-view-rank">{String(skill.position).padStart(2, '0')}</span>
-            <span className="cb-view-name">{skill.name}</span>
-            <span className={`cb-chip cb-chip-tag cb-prio-${skill.priority.toLowerCase()}`}>{skill.priority}</span>
-            <TrendMark trend={skill.trend} />
-          </li>
-        ))}
-      </ul>
+      {mode === 'demo' && (
+        <ul className="cb-view-list">
+          {roadmap.map((skill) => (
+            <li key={skill.id}>
+              <span className="cb-view-rank">{String(skill.position).padStart(2, '0')}</span>
+              <span className="cb-view-name">{skill.name}</span>
+              <span className={`cb-chip cb-chip-tag cb-prio-${skill.priority.toLowerCase()}`}>{skill.priority}</span>
+              <TrendMark trend={skill.trend} />
+            </li>
+          ))}
+        </ul>
+      )}
     </ViewShell>
   )
 }
@@ -771,14 +1056,18 @@ function ResourcesView({ roadmap }) {
               </span>
               {skill.name}
             </span>
-            <ul className="cb-resources">
-              {skill.resources.map((resource) => (
-                <li className="cb-resource" key={resource}>
-                  <span>{resource}</span>
-                  <ExternalIcon />
-                </li>
-              ))}
-            </ul>
+            {skill.resources.length ? (
+              <ul className="cb-resources">
+                {skill.resources.map((resource) => (
+                  <li className="cb-resource" key={resource}>
+                    <span>{resource}</span>
+                    <ExternalIcon />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="cb-not-provided">{NOT_PROVIDED}</p>
+            )}
           </div>
         ))}
       </div>
@@ -931,30 +1220,289 @@ function OverviewSummaryRow({ profile, roadmap, onOpenRoles, onOpenMarket, onOpe
   )
 }
 
+/* Request state for the route. It reuses the dashed surface already used by the
+   empty workspace views, so an in-flight or failed request reads as part of the
+   page rather than as an overlay. Live regions carry the state for assistive
+   technology, and the failure copy is written for a reader, not a developer. */
+function RoadmapStatus({ loading, pending, error, hasRoute }) {
+  if (error) {
+    return (
+      <div className="cb-status is-error" role="alert">
+        <span className="cb-status-title">{error.title}</span>
+        <p className="cb-status-body">{error.message}</p>
+        {error.detail && <p className="cb-status-note">{error.detail}</p>}
+        {error.kind === 'unsupported-role' && (
+          <p className="cb-status-note">
+            Everything else in Career Bridge still works — the time budget, the skill gap list and the role details are
+            unchanged. Set <code>VITE_CAREER_BRIDGE_TARGET_ROLE</code> to a role listed above to plan against the live
+            service.
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <p className="cb-status is-loading" aria-live="polite">
+        Building your route from the SkillBridge service…
+      </p>
+    )
+  }
+
+  /* A completed refetch that already has a route on screen stays a quiet note, so
+     moving the slider never blanks the list it is describing. */
+  if (pending && hasRoute) {
+    return (
+      <p className="cb-status is-updating" aria-live="polite">
+        Recomputing the route for the new time budget…
+      </p>
+    )
+  }
+
+  return null
+}
+
 /* ----------------------------------------------------------------- page */
 
+/* Roadmap and proof requests are service calls in API mode, so the page owns their
+   lifecycle. Each effect cancels its own in-flight request, which both prevents a
+   slow response overwriting a newer budget and avoids overlapping requests when
+   the slider moves quickly. */
+const EMPTY_ROADMAP = { items: [], band: CAREER_BRIDGE_DEFAULT_BUDGET, committedHours: 0 }
+
 export default function CareerBridge() {
+  const [mode, setMode] = useState('demo')
   const [budget, setBudget] = useState(CAREER_BRIDGE_DEFAULT_BUDGET)
   const [selectedId, setSelectedId] = useState('python')
   const [evidenceOpen, setEvidenceOpen] = useState(false)
   const [view, setView] = useState(CAREER_BRIDGE_VIEWS.overview)
 
-  const profile = useMemo(() => loadProfile(), [])
-  const proofs = useMemo(() => loadProofs(), [])
-  const vendorFlags = useMemo(() => loadVendorFlags(), [])
+  const [roadmapData, setRoadmapData] = useState(EMPTY_ROADMAP)
+  const [proofs, setProofs] = useState([])
+  const [vendorFlags, setVendorFlags] = useState([])
+  const [roadmapLoading, setRoadmapLoading] = useState(true)
+  const [roadmapPending, setRoadmapPending] = useState(false)
+  const [roadmapError, setRoadmapError] = useState(null)
+  const [auxError, setAuxError] = useState(null)
+
+  /* Real inputs remain separate from Demo data. The extracted text is submitted
+     only when the user explicitly requests a real roadmap. */
+  const [resume, setResume] = useState({ file: null, text: '', status: 'idle', error: null })
+  const [jobDescription, setJobDescription] = useState('')
+  const resumeRequestId = useRef(0)
+  const roadmapRequestId = useRef(0)
+  const roadmapRequest = useRef(null)
+
+  const profile = useMemo(() => loadDemoProfile(), [])
   const marks = useMemo(() => getRecalibrationMarks(), [])
 
-  const { items: roadmap, band, committedHours } = useMemo(() => loadRoadmap({ budgetHours: budget }), [budget])
+  useEffect(
+    () => () => {
+      resumeRequestId.current += 1
+      roadmapRequestId.current += 1
+      roadmapRequest.current?.abort()
+    },
+    [],
+  )
+
+  useEffect(() => {
+    if (mode !== 'demo') return undefined
+
+    const controller = new AbortController()
+    setRoadmapPending(true)
+
+    loadDemoRoadmap({ budgetHours: budget, signal: controller.signal })
+      .then((data) => {
+        if (controller.signal.aborted) return
+        setRoadmapData(data)
+        setRoadmapError(null)
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return
+        setRoadmapData(EMPTY_ROADMAP)
+        setRoadmapError({
+          kind: 'demo',
+          title: 'Demo roadmap unavailable',
+          message: error instanceof Error ? error.message : 'The local demo roadmap could not be loaded.',
+          detail: '',
+        })
+      })
+      .finally(() => {
+        if (controller.signal.aborted) return
+        setRoadmapPending(false)
+        setRoadmapLoading(false)
+      })
+
+    return () => controller.abort()
+  }, [budget, mode])
+
+  /* Evidence and vendor flags decorate the route rather than drive it, so a
+     failure in one is reported instead of being swallowed into an empty list. */
+  useEffect(() => {
+    if (mode !== 'demo') {
+      setProofs([])
+      setVendorFlags([])
+      setAuxError(null)
+      return undefined
+    }
+
+    let active = true
+    const controller = new AbortController()
+    Promise.all([loadDemoProofs({ signal: controller.signal }), loadDemoVendorFlags({ signal: controller.signal })])
+      .then(([loadedProofs, loadedFlags]) => {
+        if (!active) return
+        setProofs(loadedProofs)
+        setVendorFlags(loadedFlags)
+        setAuxError(null)
+      })
+      .catch((error) => {
+        if (!active) return
+        setAuxError({
+          title: 'Demo insights unavailable',
+          message: error instanceof Error ? error.message : 'The local demo insights could not be loaded.',
+        })
+      })
+
+    return () => {
+      active = false
+      controller.abort()
+    }
+  }, [mode])
+
+  const { band, committedHours } = roadmapData
+
+  const roadmap = roadmapData.items
+
+  /* Before the first response there is nothing to select, so the panel keeps its
+     documented empty state rather than reaching into an empty array. */
   const selected = roadmap.find((skill) => skill.id === selectedId) ?? roadmap[0]
 
-  /* The budget can re-rank a stop out of the current selection, so fall back to
-     the first stop rather than rendering an empty panel. */
   useEffect(() => {
+    if (!roadmap.length) return
     setSelectedId((current) => (roadmap.some((skill) => skill.id === current) ? current : roadmap[0].id))
   }, [roadmap])
 
-  const handleBudgetChange = (event) => setBudget(Number(event.target.value))
   const handleSelect = (id) => setSelectedId(id)
+
+  const invalidateRealRoadmap = () => {
+    roadmapRequestId.current += 1
+    roadmapRequest.current?.abort()
+    roadmapRequest.current = null
+    setRoadmapData(EMPTY_ROADMAP)
+    setRoadmapError(null)
+    setRoadmapLoading(false)
+    setRoadmapPending(false)
+  }
+
+  const handleBudgetChange = (event) => {
+    if (mode === 'real') invalidateRealRoadmap()
+    setBudget(Number(event.target.value))
+  }
+
+  const handleModeChange = (nextMode) => {
+    if (nextMode === mode) return
+    roadmapRequestId.current += 1
+    roadmapRequest.current?.abort()
+    roadmapRequest.current = null
+    setRoadmapData(EMPTY_ROADMAP)
+    setRoadmapError(null)
+    setRoadmapPending(false)
+    setRoadmapLoading(nextMode === 'demo')
+    setMode(nextMode)
+    setView(CAREER_BRIDGE_VIEWS.overview)
+  }
+
+  const handleJobDescriptionChange = (value) => {
+    if (mode === 'real') invalidateRealRoadmap()
+    setJobDescription(value)
+  }
+
+  const handleResumeSelect = (file, input) => {
+    if (!file) return
+    invalidateRealRoadmap()
+    const requestId = resumeRequestId.current + 1
+    resumeRequestId.current = requestId
+    setResume({ file, text: '', status: 'extracting', error: null })
+    input.value = ''
+
+    try {
+      validateResumeFile(file)
+    } catch (error) {
+      setResume({
+        file,
+        text: '',
+        status: 'error',
+        error: error instanceof Error ? error.message : 'This resume file is not supported.',
+      })
+      return
+    }
+
+    extractResumeText(file).then(
+      (text) => {
+        if (resumeRequestId.current !== requestId) return
+        setResume({ file, text, status: 'ready', error: null })
+      },
+      (error) => {
+        if (resumeRequestId.current !== requestId) return
+        setResume({
+          file,
+          text: '',
+          status: 'error',
+          error: error instanceof Error ? error.message : 'This resume could not be read. Try another file.',
+        })
+      },
+    )
+  }
+
+  const handleResumeClear = () => {
+    invalidateRealRoadmap()
+    resumeRequestId.current += 1
+    setResume({ file: null, text: '', status: 'idle', error: null })
+  }
+
+  const handleRealSubmit = () => {
+    if (resume.status !== 'ready' || !resume.text.trim() || !jobDescription.trim()) {
+      setRoadmapError({
+        kind: 'invalid-input',
+        title: 'Complete both inputs first',
+        message: 'Select and extract a resume, then enter a job description before generating a roadmap.',
+        detail: '',
+      })
+      return
+    }
+
+    roadmapRequestId.current += 1
+    const requestId = roadmapRequestId.current
+    const controller = new AbortController()
+    roadmapRequest.current?.abort()
+    roadmapRequest.current = controller
+    setRoadmapData(EMPTY_ROADMAP)
+    setRoadmapError(null)
+    setRoadmapLoading(true)
+    setRoadmapPending(true)
+
+    submitRoadmap({
+      resumeText: resume.text,
+      jdText: jobDescription,
+      budgetHours: budget,
+      signal: controller.signal,
+    })
+      .then((data) => {
+        if (roadmapRequestId.current !== requestId) return
+        setRoadmapData(data)
+      })
+      .catch((error) => {
+        if (roadmapRequestId.current !== requestId || isAbortError(error)) return
+        setRoadmapError(describeApiError(error))
+      })
+      .finally(() => {
+        if (roadmapRequestId.current !== requestId) return
+        roadmapRequest.current = null
+        setRoadmapLoading(false)
+        setRoadmapPending(false)
+      })
+  }
 
   /* Skill Gap lists the same stops the Overview detail panel describes, so picking
      one there selects it and returns to the view that can explain it. */
@@ -964,13 +1512,16 @@ export default function CareerBridge() {
   }
 
   const isOverview = view === CAREER_BRIDGE_VIEWS.overview
+  const isDemo = mode === 'demo'
 
   return (
     <section className="career-bridge" id="career-bridge">
       <div className="cb-shell">
-        <CareerBridgeSidebar view={view} onChange={setView} />
+        <CareerBridgeSidebar view={view} mode={mode} onChange={setView} />
         <div className="cb-main-col">
           <div className="cb-inner">
+        <CareerBridgeModeSwitch mode={mode} onChange={handleModeChange} />
+
         {isOverview && (
         <header className="cb-intro">
           {/* The approved hero artwork is a static raster asset. It already carries the
@@ -1006,20 +1557,34 @@ export default function CareerBridge() {
 
         {isOverview && (
         <section className="cb-summary" aria-label="Analysis inputs" data-summary="1">
-          <SummaryCard
-            icon={<FileIcon />}
-            label={profile.resume.label}
-            title={profile.resume.file}
-            status={profile.resume.status}
-            detail={profile.resume.detail}
-          />
-          <SummaryCard
-            icon={<TargetIcon />}
-            label={profile.jobDescription.label}
-            title={profile.jobDescription.file}
-            status={profile.jobDescription.status}
-            detail={profile.jobDescription.detail}
-          />
+          {isDemo ? (
+            <>
+              <DemoInputCard
+                icon={<FileIcon />}
+                label="Resume profile"
+                title="Curated sample learner"
+                detail={`Demo data: ${profile.resume.detail}`}
+              />
+              <DemoInputCard
+                icon={<TargetIcon />}
+                label="Target role"
+                title={profile.jobDescription.file}
+                detail={`Demo data: ${profile.jobDescription.detail}`}
+              />
+            </>
+          ) : (
+            <>
+              <ResumeInputCard
+                file={resume.file}
+                status={resume.status}
+                text={resume.text}
+                error={resume.error}
+                onSelect={handleResumeSelect}
+                onClear={handleResumeClear}
+              />
+              <JobDescriptionInputCard value={jobDescription} onChange={handleJobDescriptionChange} />
+            </>
+          )}
           <TimeCard
             budget={budget}
             onChange={handleBudgetChange}
@@ -1027,8 +1592,63 @@ export default function CareerBridge() {
             band={band}
             marks={marks}
             skillCount={roadmap.length}
+            mode={mode}
           />
         </section>
+        )}
+
+        {!isDemo && isOverview && (
+          <div className="cb-stage-note">
+            <strong>{roadmap.length ? 'Live roadmap from your inputs' : 'Build a roadmap from your inputs'}</strong>
+            <p>
+              The extracted resume text, job description and available hours are sent to the SkillBridge service when
+              you submit. The file itself is never uploaded.
+            </p>
+            {API_TARGET_ROLE_WARNING && (
+              <p role="status">
+                Configured target role “{API_TARGET_ROLE_WARNING}” is not currently plannable. It will be omitted from
+                the request; the roadmap will use your resume and job description.
+              </p>
+            )}
+            <div className="cb-real-submit-row">
+              <p aria-live="polite">
+                {resume.status !== 'ready'
+                  ? 'Select a supported resume and wait for text extraction.'
+                  : !jobDescription.trim()
+                    ? 'Add a job description to continue.'
+                    : 'Your inputs are ready to submit.'}
+              </p>
+              <button
+                className="cb-real-submit"
+                type="button"
+                onClick={handleRealSubmit}
+                disabled={roadmapLoading || resume.status !== 'ready' || !resume.text.trim() || !jobDescription.trim()}
+              >
+                {roadmapLoading ? 'Building roadmap…' : 'Generate roadmap'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isOverview && (
+          <RoadmapStatus
+            loading={roadmapLoading}
+            pending={roadmapPending}
+            error={roadmapError}
+            hasRoute={roadmap.length > 0}
+          />
+        )}
+
+        {/* The route itself still renders when this fails; the missing decoration
+            is named rather than shown as if it had returned nothing. */}
+        {isDemo && auxError && isOverview && (
+          <div className="cb-status is-error" role="status">
+            <span className="cb-status-title">{auxError.title}</span>
+            <p className="cb-status-body">
+              {auxError.message} The roadmap route is unaffected; its evidence and vendor
+              annotations are unavailable.
+            </p>
+          </div>
         )}
 
         {isOverview && (
@@ -1046,6 +1666,7 @@ export default function CareerBridge() {
               </div>
               <span className="cb-count">{roadmap.length} skills</span>
             </header>
+            {roadmap.length > 0 ? (
             <ol className="cb-routes" key={band}>
               {roadmap.map((skill, index) => {
                 const isActive = selected?.id === skill.id
@@ -1069,19 +1690,41 @@ export default function CareerBridge() {
                 )
               })}
             </ol>
+            ) : (
+              /* The panel keeps its shape and states the outcome, rather than
+                 collapsing to nothing when the service returns no route. */
+              <p className="cb-detail-empty">No route to show for this time budget yet.</p>
+            )}
           </section>
 
           <DetailPanel skill={selected} total={roadmap.length} />
         </div>
         )}
 
-        {view === CAREER_BRIDGE_VIEWS.resume && <ResumeAnalyzerView profile={profile} roadmap={roadmap} />}
+        {view === CAREER_BRIDGE_VIEWS.resume && (
+          <ResumeAnalyzerView
+            mode={mode}
+            profile={profile}
+            resume={resume}
+            onSelect={handleResumeSelect}
+            onClear={handleResumeClear}
+            roadmap={roadmap}
+          />
+        )}
 
-        {view === CAREER_BRIDGE_VIEWS.role && <RoleExplorerView profile={profile} roadmap={roadmap} />}
+        {view === CAREER_BRIDGE_VIEWS.role && (
+          <RoleExplorerView
+            mode={mode}
+            profile={profile}
+            roadmap={roadmap}
+            jobDescription={jobDescription}
+            onChangeJobDescription={handleJobDescriptionChange}
+          />
+        )}
 
-        {view === CAREER_BRIDGE_VIEWS.gap && <SkillGapView roadmap={roadmap} onSelect={handleGapSelect} />}
+        {isDemo && view === CAREER_BRIDGE_VIEWS.gap && <SkillGapView roadmap={roadmap} onSelect={handleGapSelect} />}
 
-        {view === CAREER_BRIDGE_VIEWS.planner && (
+        {isDemo && view === CAREER_BRIDGE_VIEWS.planner && (
           <LearningPlannerView
             budget={budget}
             onBudgetChange={handleBudgetChange}
@@ -1093,11 +1736,11 @@ export default function CareerBridge() {
           />
         )}
 
-        {view === CAREER_BRIDGE_VIEWS.market && <MarketInsightsView roadmap={roadmap} />}
+        {isDemo && view === CAREER_BRIDGE_VIEWS.market && <MarketInsightsView roadmap={roadmap} />}
 
-        {view === CAREER_BRIDGE_VIEWS.resources && <ResourcesView roadmap={roadmap} />}
+        {isDemo && view === CAREER_BRIDGE_VIEWS.resources && <ResourcesView roadmap={roadmap} />}
 
-        {view === CAREER_BRIDGE_VIEWS.community && (
+        {isDemo && view === CAREER_BRIDGE_VIEWS.community && (
           <ComingSoonView
             label="Community"
             title="Community"
@@ -1106,7 +1749,7 @@ export default function CareerBridge() {
           />
         )}
 
-        {view === CAREER_BRIDGE_VIEWS.settings && (
+        {isDemo && view === CAREER_BRIDGE_VIEWS.settings && (
           <ComingSoonView
             label="Settings"
             title="Settings"
@@ -1115,7 +1758,7 @@ export default function CareerBridge() {
           />
         )}
 
-        {isOverview && (
+        {isDemo && isOverview && (
           <OverviewSummaryRow
             profile={profile}
             roadmap={roadmap}
@@ -1125,7 +1768,7 @@ export default function CareerBridge() {
           />
         )}
 
-        {isOverview && (
+        {isDemo && isOverview && (
           <>
             <section className="cb-evidence" aria-labelledby="cb-evidence-title">
             <h2 className="cb-evidence-heading" id="cb-evidence-title">
@@ -1164,8 +1807,17 @@ export default function CareerBridge() {
         </section>
 
         <footer className="cb-footer">
-          <span>Mock analysis · local roadmap data</span>
-          <span>Move the time dial. The route responds.</span>
+          {isDemo ? (
+            <>
+              <span>Demo mode / local deterministic data</span>
+              <span>Move the time dial. The route responds.</span>
+            </>
+          ) : (
+            <>
+              <span>Real input mode / not analyzed</span>
+              <span>Analysis is not connected in this stage.</span>
+            </>
+          )}
         </footer>
           </>
         )}

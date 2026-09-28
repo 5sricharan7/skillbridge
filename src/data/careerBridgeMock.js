@@ -151,6 +151,19 @@ const SKILLS = [
   },
 ]
 
+/* The roadmap endpoint takes the two analysis texts the Resume Analyzer and Role
+   Explorer cards describe. The backend has no endpoint that parses an uploaded
+   file, so the target-role text is assembled here from the skill vocabulary this
+   module already owns, which keeps it in step with the route below.
+
+   `resumeText` is empty on purpose: the product holds no parsed resume text, and
+   an empty resume makes the backend treat every target skill as a gap, which is
+   how the route is already presented. Nothing is invented to fill the field. */
+export const CAREER_BRIDGE_ANALYSIS_INPUTS = {
+  resumeText: '',
+  jdText: `Embedded Systems Engineer role requirements: ${SKILLS.map((skill) => skill.name).join(', ')}.`,
+}
+
 const BANDS = CAREER_BRIDGE_BANDS
 
 export function pickBand(budget) {
