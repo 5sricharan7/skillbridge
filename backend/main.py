@@ -10,6 +10,7 @@ if __package__:
         adapt_signals_for_role,
         validate_target_role,
     )
+    from .data.curriculum_intelligence import build_role_curriculum_intelligence
     from .data.proofs import normalize_proofs
     from .engines.optimizer import optimize_roadmap
     from .engines.signal_engine import extract_signals
@@ -22,6 +23,7 @@ else:
         adapt_signals_for_role,
         validate_target_role,
     )
+    from data.curriculum_intelligence import build_role_curriculum_intelligence
     from data.proofs import normalize_proofs
     from engines.optimizer import optimize_roadmap
     from engines.signal_engine import extract_signals
@@ -123,3 +125,23 @@ def get_vendor_flags() -> list[dict[str, object]]:
 @app.get("/proofs", response_model=list[dict[str, object]])
 def get_proofs() -> list[dict[str, object]]:
     return normalize_proofs()
+
+
+@app.get("/curriculum-intelligence/{role}")
+def get_curriculum_intelligence(role: str) -> dict[str, object]:
+    """Serve one role's recorded skills, velocity slices, hours, and DAG.
+
+    A role the artifacts do not know is a 422 listing the roles they do, the
+    same shape ``POST /roadmap`` already returns. A known role without learning
+    data is answered with ``plannable: false`` rather than an error.
+    """
+    try:
+        return build_role_curriculum_intelligence(role)
+    except UnknownTargetRoleError as error:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": str(error),
+                "valid_roles": list(error.valid_roles),
+            },
+        ) from error

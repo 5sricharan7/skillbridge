@@ -314,6 +314,7 @@ The interactive API schema is available at `http://127.0.0.1:8000/docs`.
 | `POST` | `/roadmap` | Generate a roadmap; optional `target_role` enables artifact enrichment |
 | `GET` | `/velocity/{skill}` | Existing velocity response, currently backed by deterministic development fixtures |
 | `GET` | `/proofs` | Normalized, role-scoped Proof B plus Proof C and Proof E artifact records |
+| `GET` | `/curriculum-intelligence/{role}` | One role's recorded skill frequency, classification, velocity, learning hours, prerequisite graph, and proof references |
 
 ### Placeholder / not implemented
 
@@ -368,7 +369,12 @@ There is no configured frontend test, lint, or type-check script.
 - Career Bridge processing is a deterministic prototype, not a validated
   career recommendation service.
 - Curriculum Time Machine is not connected to institutional curriculum
-  systems.
+  systems. It has no institution, programme, year, credit, or course data, and
+  no curriculum-revision history. `GET /curriculum-intelligence/{role}` serves
+  the job-posting role categories the artifacts actually record, with the two
+  velocity slices the artifacts actually measured (`2025-H1 -> 2026-H2`) and an
+  explicit `not_available` list for everything no artifact records. It is not a
+  curriculum record.
 - Evidence examples and evaluation benchmarks are illustrative; no production
   verification provider or audited outcomes are represented.
 - `/vendor-flags` currently returns an empty list. `/proofs` exposes only the

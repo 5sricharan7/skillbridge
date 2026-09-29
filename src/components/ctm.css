@@ -1,8 +1,12 @@
 /* -----------------------------------------------------------------------
    Curriculum Time Machine — workspace styles.
    Scoped to .ctm; does not touch global/homepage styles.
-   Reuses --cb-* tokens (defined in the .career-bridge scope) by re-declaring
-   them here so CTM can stand alone without Career Bridge being on the page.
+
+   This is the third workspace token scope. Its values are identical to the
+   `--cb-*` set in careerBridge.css, re-declared here so this page stands alone
+   and never inherits or fights the homepage or the Career Bridge workspace.
+   Every value is a documented DESIGN.md §3 colour: no hex value below is new,
+   so no token was added to the design system to produce this page.
    ----------------------------------------------------------------------- */
 
 .ctm {
@@ -22,7 +26,10 @@
   --ctm-font-display: var(--font-display, 'Space Grotesk', 'Segoe UI', system-ui, sans-serif);
   --ctm-font-body: var(--font-body, 'Public Sans', 'Segoe UI', system-ui, sans-serif);
 
-  /* trend tints */
+  /* Direction tints. A direction is always carried by a glyph shape and a
+     number as well as by the tint, so the tint never carries meaning alone.
+     These are graphical indicators, not small text: each clears 3:1 against its
+     own tint, and every accompanying word is --ctm-ink-2. */
   --ctm-rise: #1e7a4f;
   --ctm-rise-bg: #e6f1eb;
   --ctm-stable: #6a6e78;
@@ -30,210 +37,47 @@
   --ctm-fall: #c2503b;
   --ctm-fall-bg: #f8e9e5;
 
-  /* gap level tints */
-  --ctm-gap-high-text: #4d3cc0;
-  --ctm-gap-high-bg: #f3eefb;
-  --ctm-gap-high-line: #ddd5f5;
-  --ctm-gap-mod-text: #7a6246;
-  --ctm-gap-mod-bg: #f4efe6;
-  --ctm-gap-mod-line: #e5dccb;
-  --ctm-gap-low-text: #3e7a55;
-  --ctm-gap-low-bg: #eaf3ec;
-  --ctm-gap-low-line: #d5e5db;
-
-  /* module type tints */
-  --ctm-type-module-text: #4d3cc0;
-  --ctm-type-module-bg: #f3eefb;
-  --ctm-type-module-line: #ddd5f5;
-  --ctm-type-workshop-text: #7a6246;
-  --ctm-type-workshop-bg: #f4efe6;
-  --ctm-type-workshop-line: #e5dccb;
-  --ctm-type-elective-text: #3e7a55;
-  --ctm-type-elective-bg: #eaf3ec;
-  --ctm-type-elective-line: #d5e5db;
+  /* Three-tier classification tints. The recorded classes are core / mid /
+     noise, which is a magnitude tier, so this is the documented three-tier
+     chip treatment: violet for the top tier, warm brown for the middle, muted
+     green for the bottom. Not a red/amber/green severity ramp. */
+  --ctm-tier-high-text: #4d3cc0;
+  --ctm-tier-high-bg: #f3eefb;
+  --ctm-tier-high-line: #ddd5f5;
+  --ctm-tier-mid-text: #7a6246;
+  --ctm-tier-mid-bg: #f4efe6;
+  --ctm-tier-mid-line: #e5dccb;
+  --ctm-tier-low-text: #3e7a55;
+  --ctm-tier-low-bg: #eaf3ec;
+  --ctm-tier-low-line: #d5e5db;
 
   position: relative;
   background: var(--ctm-paper);
   color: var(--ctm-ink);
+  /* Clears the fixed global navbar; this page has no per-page header of its own. */
   padding-top: clamp(72px, 8vw, 80px);
   min-height: 100vh;
 }
 
-/* ------------------------------------------------------------------ */
-/* Shell — sidebar + main two-column layout                            */
-/* ------------------------------------------------------------------ */
-
-.ctm-shell {
-  display: grid;
-  grid-template-columns: clamp(200px, 15vw, 232px) minmax(0, 1fr);
-  align-items: start;
-  width: 100%;
+.ctm-inner {
+  width: min(100%, 1480px);
+  margin: 0 auto;
+  padding: 0 clamp(28px, 5vw, 72px) 56px;
 }
 
-/* ------------------------------------------------------------------ */
-/* Sidebar                                                             */
-/* ------------------------------------------------------------------ */
-
-.ctm-sidebar {
-  position: sticky;
-  top: 80px;
-  height: calc(100vh - 80px);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  padding: 20px 12px 20px 14px;
-  border-right: 1px solid var(--ctm-line-soft);
-  min-width: 0;
-}
-
-.ctm-sidebar-label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--ctm-muted);
-  padding: 0 10px 8px;
-}
-
-.ctm-sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.ctm-sidebar-btn {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  width: 100%;
-  min-height: 40px;
-  padding: 0 10px;
-  border: 1px solid transparent;
-  border-radius: 9px;
-  font-family: var(--ctm-font-body);
-  font-size: 12.5px;
-  font-weight: 600;
-  text-align: left;
-  color: var(--ctm-ink-2);
-  background: transparent;
-  cursor: pointer;
-  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
-}
-
-.ctm-sidebar-ic {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 16px;
-  height: 16px;
-  color: var(--ctm-muted);
-  transition: color 0.18s ease, transform 0.18s ease;
-}
-
-.ctm-sidebar-ic svg {
-  width: 15px;
-  height: 15px;
-}
-
-.ctm-sidebar-btn:hover {
-  background: var(--ctm-violet-pale);
-  color: var(--ctm-ink);
-}
-
-.ctm-sidebar-btn:hover .ctm-sidebar-ic {
-  color: var(--ctm-violet);
-  transform: translateX(1px);
-}
-
-.ctm-sidebar-btn.is-active {
-  background: var(--ctm-violet-pale);
-  border-color: var(--ctm-violet-soft);
-  color: var(--ctm-violet);
-}
-
-.ctm-sidebar-btn.is-active .ctm-sidebar-ic {
-  color: var(--ctm-violet);
-  transform: translateX(2px);
-}
-
-.ctm-sidebar-btn:focus-visible {
-  outline: 2px solid var(--ctm-violet);
-  outline-offset: 2px;
-}
-
-.ctm-sidebar-divider {
-  margin: 12px 0;
-  border: none;
-  border-top: 1px solid var(--ctm-line-soft);
-}
-
-/* Sidebar plan badge */
-.ctm-plan-badge {
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 10px 11px;
-  border: 1px solid var(--ctm-violet-soft);
-  border-radius: 12px;
-  background: var(--ctm-violet-pale);
-}
-
-.ctm-plan-badge-ic {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 24px;
-  height: 24px;
-  border-radius: 7px;
-  background: var(--ctm-card);
-  border: 1px solid var(--ctm-violet-soft);
-  color: var(--ctm-violet);
-}
-
-.ctm-plan-badge-ic svg {
-  width: 13px;
-  height: 13px;
-}
-
-.ctm-plan-badge-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  line-height: 1.3;
-}
-
-.ctm-plan-badge-sm {
-  font-size: 10px;
-  color: var(--ctm-muted);
-}
-
-.ctm-plan-badge-lg {
-  font-family: var(--ctm-font-display);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ctm-violet);
-}
-
-/* ------------------------------------------------------------------ */
-/* Main column                                                         */
-/* ------------------------------------------------------------------ */
-
-.ctm-main {
-  min-width: 0;
-  padding: 0 0 48px;
-}
-
-/* ------------------------------------------------------------------ */
-/* Hero / banner                                                       */
-/* ------------------------------------------------------------------ */
+/* -------------------------------------------------------------------- hero
+   Restored verbatim from the pre-7B stylesheet. The asset was never removed from
+   `public/assets/`; only the markup and these rules were dropped. The banner is
+   the page's h1, and the recorded-data panels below it flow in normal document
+   order, so the overlay covers the illustration and never the data.
+   ----------------------------------------------------------------------- */
 
 .ctm-hero {
   position: relative;
   overflow: hidden;
+  border-bottom: 1px solid var(--ctm-line);
+  border-radius: 16px 16px 0 0;
+  margin-bottom: 4px;
 }
 
 .ctm-hero-figure {
@@ -270,9 +114,9 @@
   pointer-events: none;
 }
 
-/* DESIGN.md §15: gradients in artwork overlays are acceptable when functioning
-   as a legibility scrim over a photo/illustration, not as a brand signal. */
-
+/* The scrim is the original author's legibility overlay for the hero illustration,
+   not a brand signal: the gradient is a fixed function of the artwork behind it and
+   carries no meaning of its own. */
 .ctm-hero-kicker {
   display: inline-flex;
   align-items: center;
@@ -315,1163 +159,567 @@
   pointer-events: auto;
 }
 
-/* Screen-reader text duplicates the hero headline for the document outline */
-.ctm-hero-sr {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
+/* ---------------------------------------------------------------- page head
+   The hero above carries the title. This block is the sub-head: the one lead
+   sentence, and the control that changes every figure below it.
+   ----------------------------------------------------------------------- */
 
-/* ------------------------------------------------------------------ */
-/* Content area below hero                                             */
-/* ------------------------------------------------------------------ */
-
-.ctm-content {
-  padding: 24px clamp(20px, 2.5vw, 32px);
-}
-
-/* ------------------------------------------------------------------ */
-/* Flow strip (Overview step numbers)                                  */
-/* ------------------------------------------------------------------ */
-
-.ctm-flow {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr auto 1fr;
-  align-items: center;
-  gap: 0;
-  background: var(--ctm-card);
-  border: 1px solid var(--ctm-line);
-  border-radius: 16px;
-  padding: clamp(14px, 1.5vw, 20px);
-  box-shadow: 0 16px 32px rgba(91, 70, 216, 0.05), 0 4px 12px rgba(16, 16, 16, 0.04);
-  margin-bottom: 24px;
-  animation: ctm-fade-up 0.32s ease both;
-}
-
-.ctm-flow-step {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.ctm-flow-num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: var(--ctm-violet-pale);
-  border: 1px solid var(--ctm-violet-soft);
-  font-family: var(--ctm-font-display);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ctm-violet);
-}
-
-.ctm-flow-ic {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
-  background: var(--ctm-violet-pale);
-  border: 1px solid var(--ctm-violet-soft);
-  color: var(--ctm-violet);
-}
-
-.ctm-flow-ic svg {
-  width: 18px;
-  height: 18px;
-}
-
-.ctm-flow-text h3 {
-  font-family: var(--ctm-font-display);
-  font-size: 13.5px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ctm-ink);
-  margin-bottom: 2px;
-}
-
-.ctm-flow-text p {
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--ctm-ink-2);
-}
-
-.ctm-flow-arrow {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--ctm-lilac);
-  padding: 0 12px;
-}
-
-.ctm-flow-arrow svg {
-  width: 18px;
-  height: 18px;
-}
-
-/* ------------------------------------------------------------------ */
-/* Section header (shared)                                             */
-/* ------------------------------------------------------------------ */
-
-.ctm-section-head {
+.ctm-head {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
+  gap: clamp(16px, 3vw, 40px);
+  flex-wrap: wrap;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--ctm-line);
 }
 
-.ctm-section-head h2 {
-  font-family: var(--ctm-font-display);
-  font-size: clamp(1rem, 1.6vw, 1.2rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--ctm-ink);
+.ctm-head-copy {
+  min-width: 0;
+  max-width: 62ch;
 }
 
-.ctm-section-head p {
-  font-size: 12px;
-  color: var(--ctm-ink-2);
-  margin-top: 3px;
-}
-
-.ctm-section-meta {
-  display: flex;
-  flex-direction: column;
-}
-
-.ctm-view-all {
+.ctm-kicker {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--ctm-violet);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: gap 0.2s ease, color 0.2s ease;
-  padding: 0;
-  white-space: nowrap;
-  flex: none;
-}
-
-.ctm-view-all:hover {
-  gap: 8px;
-  color: var(--ctm-violet-deep);
-}
-
-.ctm-view-all:focus-visible {
-  outline: 2px solid var(--ctm-violet);
-  outline-offset: 2px;
-  border-radius: 3px;
-}
-
-.ctm-view-all svg {
-  width: 13px;
-  height: 13px;
-}
-
-/* ------------------------------------------------------------------ */
-/* Panel card — reuse cb-panel visual recipe                          */
-/* ------------------------------------------------------------------ */
-
-.ctm-panel {
-  background: var(--ctm-card);
-  border: 1px solid var(--ctm-line);
-  border-radius: 16px;
-  padding: clamp(14px, 1.5vw, 20px);
-  box-shadow: 0 16px 32px rgba(91, 70, 216, 0.05), 0 4px 12px rgba(16, 16, 16, 0.04);
-}
-
-/* ------------------------------------------------------------------ */
-/* Trend strip (key industry trends row)                               */
-/* ------------------------------------------------------------------ */
-
-.ctm-trends {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
-  margin-bottom: 24px;
-  animation: ctm-fade-up 0.38s 0.06s ease both;
-}
-
-.ctm-trend-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: var(--ctm-card);
-  border: 1px solid var(--ctm-line);
-  border-radius: 12px;
-  padding: 12px 14px;
-  box-shadow: 0 4px 12px rgba(16, 16, 16, 0.04);
-  transition: border-color 0.2s ease, transform 0.2s ease;
-}
-
-.ctm-trend-card:hover {
-  border-color: var(--ctm-lilac);
-  transform: translateY(-2px);
-}
-
-.ctm-trend-ic {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
   background: var(--ctm-violet-pale);
   border: 1px solid var(--ctm-violet-soft);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.ctm-headline {
+  font-family: var(--ctm-font-display);
+  font-size: clamp(1.5rem, 2.8vw, 2.3rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ctm-ink);
+  margin: 10px 0 8px;
+}
+
+.ctm-headline em {
+  font-style: normal;
   color: var(--ctm-violet);
 }
 
-.ctm-trend-ic svg {
-  width: 15px;
-  height: 15px;
+.ctm-lead {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ctm-ink-2);
+  margin: 0;
+  max-width: 56ch;
 }
 
-.ctm-trend-name {
-  font-family: var(--ctm-font-display);
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ctm-ink);
-  line-height: 1.2;
-}
-
-.ctm-trend-growth {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-family: var(--ctm-font-display);
-  font-size: 14px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--ctm-rise);
-}
-
-.ctm-trend-growth svg {
-  width: 13px;
-  height: 13px;
-}
-
-/* Miniature sparkline (purely decorative, hand-drawn path) */
-.ctm-sparkline {
-  width: 100%;
-  height: 24px;
-  color: var(--ctm-lilac);
-  margin-top: auto;
-}
-
-/* ------------------------------------------------------------------ */
-/* Overview two-up (gap + modules)                                     */
-/* ------------------------------------------------------------------ */
-
-.ctm-overview-split {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  animation: ctm-fade-up 0.42s 0.1s ease both;
-}
-
-/* ------------------------------------------------------------------ */
-/* Gap analysis table rows                                             */
-/* ------------------------------------------------------------------ */
-
-.ctm-gap-list {
-  list-style: none;
+.ctm-rolefield {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin-top: 8px;
+  gap: 6px;
+  flex: none;
 }
 
-.ctm-gap-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 140px auto;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: 9px;
+.ctm-rolefield-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ctm-ink-2);
+}
+
+.ctm-roles {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--ctm-line);
+  border-radius: 999px;
+  background: var(--ctm-card);
+  box-shadow: 0 4px 12px rgba(16, 16, 16, 0.04);
+}
+
+.ctm-role {
+  font-family: var(--ctm-font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ctm-ink-2);
+  background: transparent;
   border: 1px solid transparent;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  border-radius: 999px;
+  padding: 7px 14px;
+  min-height: 32px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
-.ctm-gap-item:hover {
+.ctm-role:hover {
   background: var(--ctm-violet-pale);
   border-color: var(--ctm-lilac);
 }
 
-.ctm-gap-name {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ctm-ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.ctm-role.is-active {
+  background: var(--ctm-violet);
+  border-color: var(--ctm-violet);
+  color: var(--ctm-card);
 }
 
-.ctm-gap-bar-wrap {
+.ctm-role:focus-visible {
+  outline: 2px solid var(--ctm-violet);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------- summary
+   The documented 3-up summary row. Nothing here is a fourth grid.
+   ----------------------------------------------------------------------- */
+
+.ctm-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(12px, 1.4vw, 18px);
+  margin-top: 16px;
+}
+
+.ctm-summary-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 102px;
+  background: var(--ctm-card);
+  border: 1px solid var(--ctm-line);
+  border-radius: 14px;
+  padding: 10px clamp(10px, 1.2vw, 16px);
+  box-shadow:
+    0 16px 32px rgba(91, 70, 216, 0.05),
+    0 4px 12px rgba(16, 16, 16, 0.04);
+}
+
+.ctm-summary-top {
   display: flex;
   align-items: center;
   gap: 7px;
 }
 
-.ctm-gap-bar-track {
-  flex: 1;
-  height: 5px;
-  border-radius: 999px;
-  background: var(--ctm-line-soft);
-  overflow: hidden;
-}
-
-.ctm-gap-bar-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: var(--ctm-violet);
-  transition: width 0.4s ease;
-}
-
-.ctm-gap-bar-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--ctm-muted);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-/* Gap level chips */
-.ctm-chip {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  padding: 2px 8px;
-  white-space: nowrap;
-  border: 1px solid transparent;
-}
-
-.ctm-chip-high {
-  color: var(--ctm-gap-high-text);
-  background: var(--ctm-gap-high-bg);
-  border-color: var(--ctm-gap-high-line);
-}
-
-.ctm-chip-moderate {
-  color: var(--ctm-gap-mod-text);
-  background: var(--ctm-gap-mod-bg);
-  border-color: var(--ctm-gap-mod-line);
-}
-
-.ctm-chip-low-coverage {
-  color: var(--ctm-gap-low-text);
-  background: var(--ctm-gap-low-bg);
-  border-color: var(--ctm-gap-low-line);
-}
-
-.ctm-chip-module {
-  color: var(--ctm-type-module-text);
-  background: var(--ctm-type-module-bg);
-  border-color: var(--ctm-type-module-line);
-}
-
-.ctm-chip-workshop {
-  color: var(--ctm-type-workshop-text);
-  background: var(--ctm-type-workshop-bg);
-  border-color: var(--ctm-type-workshop-line);
-}
-
-.ctm-chip-elective {
-  color: var(--ctm-type-elective-text);
-  background: var(--ctm-type-elective-bg);
-  border-color: var(--ctm-type-elective-line);
-}
-
-.ctm-chip-impact {
-  color: var(--ctm-violet);
-  background: var(--ctm-violet-pale);
-  border-color: var(--ctm-violet-soft);
-}
-
-/* ------------------------------------------------------------------ */
-/* Module cards (Recommended Modules)                                  */
-/* ------------------------------------------------------------------ */
-
-.ctm-module-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
-.ctm-module-card {
-  display: flex;
-  flex-direction: column;
-  background: var(--ctm-card);
-  border: 1px solid var(--ctm-line);
-  border-radius: 14px;
-  padding: 16px;
-  box-shadow: 0 4px 12px rgba(16, 16, 16, 0.04);
-  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-  animation: ctm-card-in 0.38s ease both;
-}
-
-.ctm-module-card:hover {
-  border-color: var(--ctm-lilac);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(91, 70, 216, 0.1), 0 4px 12px rgba(16, 16, 16, 0.04);
-}
-
-.ctm-module-card.is-selected {
-  border-color: var(--ctm-violet);
-  background: var(--ctm-violet-pale);
-}
-
-/* Stagger delays for module cards */
-.ctm-module-card:nth-child(1) { animation-delay: 0s; }
-.ctm-module-card:nth-child(2) { animation-delay: 0.05s; }
-.ctm-module-card:nth-child(3) { animation-delay: 0.10s; }
-.ctm-module-card:nth-child(4) { animation-delay: 0.15s; }
-.ctm-module-card:nth-child(5) { animation-delay: 0.20s; }
-.ctm-module-card:nth-child(6) { animation-delay: 0.25s; }
-
-@keyframes ctm-card-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.ctm-module-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.ctm-module-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
-.ctm-module-title {
-  font-family: var(--ctm-font-display);
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ctm-ink);
-  margin-bottom: 6px;
-  line-height: 1.2;
-}
-
-.ctm-module-card.is-selected .ctm-module-title {
-  color: var(--ctm-violet);
-}
-
-.ctm-module-desc {
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--ctm-ink-2);
-  flex: 1;
-  margin-bottom: 12px;
-}
-
-.ctm-module-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
-  border-top: 1px solid var(--ctm-line-soft);
-  padding-top: 10px;
-}
-
-.ctm-meta-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11.5px;
-  color: var(--ctm-muted);
-}
-
-.ctm-meta-item svg {
-  width: 12px;
-  height: 12px;
-  color: var(--ctm-violet);
-  flex: none;
-}
-
-/* Add to Plan button */
-.ctm-add-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  border-radius: 999px;
-  font-family: var(--ctm-font-body);
-  font-weight: 600;
-  font-size: 12.5px;
-  padding: 8px 16px;
-  border: 1.5px solid var(--ctm-violet);
-  color: var(--ctm-violet);
-  background: transparent;
-  cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-  margin-top: auto;
-}
-
-.ctm-add-btn:hover {
-  background: var(--ctm-violet-pale);
-  transform: translateY(-1px);
-}
-
-.ctm-add-btn.is-added {
-  background: var(--ctm-violet);
-  color: #fff;
-  border-color: var(--ctm-violet);
-}
-
-.ctm-add-btn.is-added:hover {
-  background: var(--ctm-violet-deep);
-  border-color: var(--ctm-violet-deep);
-}
-
-.ctm-add-btn:focus-visible {
-  outline: 2px solid var(--ctm-violet);
-  outline-offset: 2px;
-}
-
-.ctm-add-btn svg {
-  width: 13px;
-  height: 13px;
-}
-
-/* ------------------------------------------------------------------ */
-/* Industry Signals view                                               */
-/* ------------------------------------------------------------------ */
-
-.ctm-signals-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.ctm-signal-row {
-  background: var(--ctm-card);
-  border: 1px solid var(--ctm-line);
-  border-radius: 14px;
-  padding: 16px 18px;
-  box-shadow: 0 4px 12px rgba(16, 16, 16, 0.04);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 200px auto;
-  align-items: start;
-  gap: 16px;
-  transition: border-color 0.2s ease;
-  animation: ctm-fade-up 0.36s ease both;
-}
-
-.ctm-signal-row:hover {
-  border-color: var(--ctm-lilac);
-}
-
-.ctm-signal-name {
-  font-family: var(--ctm-font-display);
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ctm-ink);
-  margin-bottom: 5px;
-}
-
-.ctm-signal-desc {
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--ctm-ink-2);
-  max-width: 52ch;
-}
-
-.ctm-signal-roles {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 8px;
-}
-
-.ctm-signal-role {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--ctm-violet);
-  background: var(--ctm-violet-pale);
-  border: 1px solid var(--ctm-violet-soft);
-  border-radius: 999px;
-  padding: 2px 8px;
-}
-
-.ctm-signal-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  border-left: 1px solid var(--ctm-line-soft);
-  padding-left: 16px;
-}
-
-.ctm-signal-pct {
-  font-family: var(--ctm-font-display);
-  font-size: clamp(1.4rem, 2.2vw, 1.8rem);
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  letter---spacing: -0.02em;
-  color: var(--ctm-rise);
-  line-height: 1;
-}
-
-.ctm-signal-pct-label {
-  font-size: 10.5px;
-  color: var(--ctm-muted);
-  text-align: center;
-}
-
-.ctm-signal-postings {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--ctm-rise);
-  margin-top: 2px;
-}
-
-.ctm-trend-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border: 1px solid transparent;
-  flex: none;
-  align-self: flex-start;
-}
-
-.ctm-trend-rising {
-  color: var(--ctm-rise);
-  background: var(--ctm-rise-bg);
-  border-color: #c6e0d0;
-}
-
-.ctm-trend-stable {
-  color: var(--ctm-stable);
-  background: var(--ctm-stable-bg);
-  border-color: #d8d9dc;
-}
-
-/* ------------------------------------------------------------------ */
-/* Gap Analysis view                                                   */
-/* ------------------------------------------------------------------ */
-
-.ctm-gap-full-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.ctm-gap-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 200px 120px auto;
-  align-items: center;
-  gap: 16px;
-  background: var(--ctm-card);
-  border: 1px solid var(--ctm-line);
-  border-radius: 12px;
-  padding: 14px 16px;
-  transition: border-color 0.2s ease;
-  animation: ctm-fade-up 0.34s ease both;
-}
-
-.ctm-gap-row:hover {
-  border-color: var(--ctm-lilac);
-}
-
-.ctm-gap-row-name {
-  font-family: var(--ctm-font-display);
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ctm-ink);
-  margin-bottom: 4px;
-}
-
-.ctm-gap-row-desc {
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--ctm-ink-2);
-}
-
-.ctm-gap-coverage {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.ctm-gap-coverage-label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ctm-muted);
-}
-
-.ctm-gap-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-.ctm-gap-meta-label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ctm-muted);
-}
-
-.ctm-gap-relevance {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ctm-ink);
-}
-
-/* ------------------------------------------------------------------ */
-/* Implementation Plan view                                            */
-/* ------------------------------------------------------------------ */
-
-.ctm-plan-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 48px 24px;
-  text-align: center;
-  color: var(--ctm-muted);
-  font-size: 13px;
-  line-height: 1.55;
-}
-
-.ctm-plan-empty-ic {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: var(--ctm-violet-pale);
-  border: 1px solid var(--ctm-violet-soft);
-  color: var(--ctm-violet);
-  margin-bottom: 4px;
-}
-
-.ctm-plan-empty-ic svg {
+.ctm-summary-icon {
   width: 24px;
   height: 24px;
-}
-
-.ctm-plan-empty strong {
-  font-family: var(--ctm-font-display);
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--ctm-ink);
-  display: block;
-}
-
-.ctm-plan-summary {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
-  animation: ctm-fade-up 0.3s ease both;
-}
-
-.ctm-plan-stat {
-  background: var(--ctm-card);
-  border: 1px solid var(--ctm-line);
-  border-radius: 14px;
-  padding: 14px 16px;
-  box-shadow: 0 4px 12px rgba(16, 16, 16, 0.04);
-}
-
-.ctm-plan-stat-label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--ctm-muted);
-  margin-bottom: 6px;
-}
-
-.ctm-plan-stat-value {
-  font-family: var(--ctm-font-display);
-  font-size: clamp(1.2rem, 1.8vw, 1.4rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--ctm-violet);
-  font-variant-numeric: tabular-nums;
-}
-
-.ctm-plan-stat-sub {
-  font-size: 11px;
-  color: var(--ctm-muted);
-  margin-top: 2px;
-}
-
-.ctm-plan-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.ctm-plan-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: var(--ctm-card);
-  border: 1px solid var(--ctm-line);
-  border-radius: 12px;
-  padding: 12px 14px;
-  animation: ctm-fade-up 0.3s ease both;
-}
-
-.ctm-plan-item-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.ctm-plan-item-name {
-  font-family: var(--ctm-font-display);
-  font-size: 13.5px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ctm-ink);
-  margin-bottom: 3px;
-}
-
-.ctm-plan-item-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-}
-
-.ctm-plan-item-dur {
-  font-size: 11.5px;
-  color: var(--ctm-muted);
-}
-
-.ctm-plan-remove {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid var(--ctm-line);
-  background: transparent;
-  color: var(--ctm-muted);
-  cursor: pointer;
-  flex: none;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-
-.ctm-plan-remove:hover {
-  background: var(--ctm-fall-bg);
-  border-color: #e0b5ae;
-  color: var(--ctm-fall);
-}
-
-.ctm-plan-remove:focus-visible {
-  outline: 2px solid var(--ctm-violet);
-  outline-offset: 2px;
-}
-
-.ctm-plan-remove svg {
-  width: 13px;
-  height: 13px;
-}
-
-.ctm-plan-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.ctm-plan-clear {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--ctm-font-body);
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ctm-muted);
-  background: transparent;
-  border: 1px solid var(--ctm-line);
-  border-radius: 999px;
-  padding: 7px 14px;
-  cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-
-.ctm-plan-clear:hover {
-  border-color: #e0b5ae;
-  background: var(--ctm-fall-bg);
-  color: var(--ctm-fall);
-}
-
-.ctm-plan-clear:focus-visible {
-  outline: 2px solid var(--ctm-violet);
-  outline-offset: 2px;
-}
-
-/* Calendar placement block */
-.ctm-calendar {
-  margin-top: 20px;
-  animation: ctm-fade-up 0.36s 0.08s ease both;
-}
-
-.ctm-calendar-head {
-  font-family: var(--ctm-font-display);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ctm-ink);
-  margin-bottom: 10px;
-  padding-top: 16px;
-  border-top: 1px solid var(--ctm-line-soft);
-}
-
-.ctm-calendar-slots {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-
-.ctm-cal-slot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  background: var(--ctm-card);
-  border: 1px solid var(--ctm-line);
-  border-radius: 10px;
-  padding: 10px 12px;
-}
-
-.ctm-cal-slot.is-available {
-  border-color: var(--ctm-violet-soft);
-  background: var(--ctm-violet-pale);
-}
-
-.ctm-cal-slot-label {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ctm-ink);
-}
-
-.ctm-cal-slot-weeks {
-  font-size: 11px;
-  color: var(--ctm-muted);
-  margin-top: 2px;
-}
-
-.ctm-cal-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex: none;
-}
-
-.ctm-cal-slot.is-available .ctm-cal-dot {
-  background: var(--ctm-rise);
-}
-
-.ctm-cal-slot:not(.is-available) .ctm-cal-dot {
-  background: var(--ctm-line);
-}
-
-/* ------------------------------------------------------------------ */
-/* Resources view                                                      */
-/* ------------------------------------------------------------------ */
-
-.ctm-resources-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.ctm-resource-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: var(--ctm-card);
-  border: 1px solid var(--ctm-line);
-  border-radius: 10px;
-  padding: 12px 14px;
-  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
-  text-decoration: none;
-  color: inherit;
-  animation: ctm-fade-up 0.34s ease both;
-}
-
-.ctm-resource-card:hover {
-  background: var(--ctm-violet-pale);
-  border-color: var(--ctm-lilac);
-  transform: translateY(-1px);
-}
-
-.ctm-resource-card:focus-visible {
-  outline: 2px solid var(--ctm-violet);
-  outline-offset: 2px;
-}
-
-.ctm-resource-ic {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 32px;
-  height: 32px;
   border-radius: 8px;
   background: var(--ctm-violet-pale);
   border: 1px solid var(--ctm-violet-soft);
   color: var(--ctm-violet);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
 }
 
-.ctm-resource-ic svg {
-  width: 16px;
-  height: 16px;
+.ctm-summary-icon svg {
+  width: 14px;
+  height: 14px;
 }
 
-.ctm-resource-body {
-  flex: 1;
-  min-width: 0;
+.ctm-summary-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ctm-ink-2);
 }
 
-.ctm-resource-title {
+.ctm-summary-title {
+  display: block;
+  font-family: var(--ctm-font-display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ctm-ink);
+  margin: 6px 0 2px;
+}
+
+.ctm-summary-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ctm-summary-detail {
+  font-size: 11px;
+  color: var(--ctm-ink-2);
+}
+
+/* ----------------------------------------------------------------- panels */
+
+.ctm-split {
+  display: grid;
+  grid-template-columns: minmax(0, 0.38fr) minmax(0, 0.62fr);
+  gap: clamp(12px, 1.6vw, 20px);
+  align-items: start;
+  margin-top: clamp(12px, 1.6vh, 18px);
+}
+
+.ctm-panel {
+  background: var(--ctm-card);
+  border: 1px solid var(--ctm-line);
+  border-radius: 16px;
+  padding: clamp(12px, 1.4vw, 20px);
+  box-shadow:
+    0 16px 32px rgba(91, 70, 216, 0.05),
+    0 4px 12px rgba(16, 16, 16, 0.04);
+}
+
+.ctm-change,
+.ctm-path {
+  margin-top: clamp(12px, 1.6vh, 18px);
+}
+
+.ctm-panel-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--ctm-line-soft);
+}
+
+.ctm-panel-head h2 {
+  font-family: var(--ctm-font-display);
+  font-size: clamp(1rem, 1.6vw, 1.3rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ctm-ink);
+  margin-top: 3px;
+}
+
+.ctm-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ctm-ink-2);
+  white-space: nowrap;
+}
+
+.ctm-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ctm-ink-2);
+}
+
+.ctm-label-ic {
+  width: 17px;
+  height: 17px;
+  border-radius: 6px;
+  background: var(--ctm-violet-pale);
+  border: 1px solid var(--ctm-violet-soft);
+  color: var(--ctm-violet);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.ctm-label-ic svg {
+  width: 12px;
+  height: 12px;
+}
+
+.ctm-inline-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--ctm-violet);
+}
+
+.ctm-inline-icon svg {
+  width: 13px;
+  height: 13px;
+}
+
+.ctm-panel-note {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ctm-ink-2);
+  margin: 8px 0 0;
+  max-width: 72ch;
+}
+
+.ctm-panel-foot {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--ctm-ink-2);
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--ctm-line-soft);
+  max-width: 72ch;
+}
+
+.ctm-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.ctm-code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 11.5px;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--ctm-violet-pale);
+  color: var(--ctm-violet-deep);
+  /* Wraps rather than nowrap: this chip also carries recorded prerequisite
+     lists, which are long comma-separated strings that would otherwise force a
+     horizontal scrollbar on a 390px screen. */
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* A field the artifacts leave unrecorded, stated rather than left blank. */
+.ctm-unrecorded {
+  font-style: italic;
+  color: var(--ctm-ink-2);
+}
+
+.ctm-not-provided {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ctm-ink-2);
+  margin: 0;
+}
+
+/* -------------------------------------------------------------- skill list
+   A scannable sorted list, not a card grid. Long names truncate rather than
+   forcing the column to overflow.
+   ----------------------------------------------------------------------- */
+
+.ctm-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* No entrance animation on the rows. The list can hold 45 entries, so animating
+   them would be motion-as-decoration at the exact moment the reader is trying to
+   scan data. The panel swaps and the summary cards carry the motion instead. */
+
+.ctm-row {
+  position: relative;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: clamp(6px, 0.8vw, 10px);
+  min-height: 34px;
+  padding: 5px 8px;
+  text-align: left;
+  font-family: var(--ctm-font-body);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.ctm-row:hover {
+  background: var(--ctm-violet-pale);
+  border-color: var(--ctm-lilac);
+}
+
+.ctm-row.is-active {
+  background: var(--ctm-violet-pale);
+  border-color: var(--ctm-violet);
+}
+
+.ctm-row-rank {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ctm-card);
+  border: 1px solid var(--ctm-line);
+  color: var(--ctm-ink-2);
+  font-family: var(--ctm-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.ctm-row.is-active .ctm-row-rank {
+  background: var(--ctm-violet);
+  border-color: var(--ctm-violet);
+  color: var(--ctm-card);
+}
+
+.ctm-row-name {
   font-size: 13px;
   font-weight: 600;
   color: var(--ctm-ink);
-  margin-bottom: 2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.ctm-resource-source {
-  font-size: 11px;
-  color: var(--ctm-muted);
+.ctm-row.is-active .ctm-row-name {
+  color: var(--ctm-violet);
 }
 
-.ctm-resource-type {
+.ctm-row-frequency,
+.ctm-row-hours {
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ctm-ink-2);
+  white-space: nowrap;
+}
+
+.ctm-row-frequency {
+  min-width: 42px;
+  text-align: right;
+}
+
+.ctm-row-hours {
+  min-width: 46px;
+  text-align: right;
+}
+
+/* ----------------------------------------------------------------- chips
+   A pill with a word, a tinted background and a tinted border, so the tier is
+   never colour alone.
+   ----------------------------------------------------------------------- */
+
+.ctm-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid transparent;
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.05em;
-  color: var(--ctm-violet);
-  background: var(--ctm-violet-pale);
-  border: 1px solid var(--ctm-violet-soft);
-  border-radius: 999px;
-  padding: 2px 7px;
-  flex: none;
+  letter-spacing: 0.03em;
+  padding: 2px 8px;
+  white-space: nowrap;
 }
 
-.ctm-resource-ext {
-  display: inline-flex;
-  flex: none;
-  color: var(--ctm-lilac);
-  opacity: 0.7;
-  transition: opacity 0.18s ease;
+.ctm-chip.is-tier-core {
+  color: var(--ctm-tier-high-text);
+  background: var(--ctm-tier-high-bg);
+  border-color: var(--ctm-tier-high-line);
 }
 
-.ctm-resource-card:hover .ctm-resource-ext {
-  opacity: 1;
+.ctm-chip.is-tier-mid {
+  color: var(--ctm-tier-mid-text);
+  background: var(--ctm-tier-mid-bg);
+  border-color: var(--ctm-tier-mid-line);
 }
 
-.ctm-resource-ext svg {
-  width: 11px;
-  height: 11px;
+.ctm-chip.is-tier-noise {
+  color: var(--ctm-tier-low-text);
+  background: var(--ctm-tier-low-bg);
+  border-color: var(--ctm-tier-low-line);
 }
 
-/* ------------------------------------------------------------------ */
-/* View page heading                                                    */
-/* ------------------------------------------------------------------ */
-
-.ctm-view-heading {
-  padding: 20px clamp(20px, 2.5vw, 32px) 0;
-  animation: ctm-fade-up 0.28s ease both;
-}
-
-.ctm-view-heading h1 {
-  font-family: var(--ctm-font-display);
-  font-size: clamp(1.1rem, 1.8vw, 1.4rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--ctm-ink);
-  margin-bottom: 4px;
-}
-
-.ctm-view-heading p {
-  font-size: 13px;
-  line-height: 1.5;
+.ctm-chip.is-tier-unclassified,
+.ctm-chip.is-plain {
   color: var(--ctm-ink-2);
-  max-width: 60ch;
+  background: var(--ctm-line-soft);
+  border-color: var(--ctm-line);
 }
 
-.ctm-data-note {
+.ctm-chip.is-warn {
+  color: var(--ctm-tier-mid-text);
+  background: var(--ctm-tier-mid-bg);
+  border-color: var(--ctm-tier-mid-line);
+}
+
+/* ---------------------------------------------------------- velocity mark
+   DESIGN.md §3.3: a coloured dot inside a tinted circle, with the text colour
+   carrying the label. The glyph's shape and the sign of the printed number are
+   the redundant encodings, so the tint is never the only signal.
+   ----------------------------------------------------------------------- */
+
+.ctm-vmark {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 8px;
-  font-size: 10.5px;
-  color: var(--ctm-muted);
-  background: var(--ctm-line-soft);
-  border: 1px solid var(--ctm-line);
-  border-radius: 999px;
-  padding: 3px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ctm-ink-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.ctm-data-note svg {
-  width: 11px;
-  height: 11px;
+.ctm-vmark-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
   flex: none;
 }
 
-/* ------------------------------------------------------------------ */
-/* Animations                                                          */
-/* ------------------------------------------------------------------ */
+.ctm-vmark-dot svg {
+  width: 11px;
+  height: 11px;
+}
 
-@keyframes ctm-fade-up {
+.ctm-vmark.is-up .ctm-vmark-dot {
+  color: var(--ctm-rise);
+  background: var(--ctm-rise-bg);
+  animation: ctm-trend-pop 0.45s ease both;
+}
+
+.ctm-vmark.is-down .ctm-vmark-dot {
+  color: var(--ctm-fall);
+  background: var(--ctm-fall-bg);
+  animation: ctm-trend-pop 0.45s ease both;
+}
+
+.ctm-vmark.is-flat .ctm-vmark-dot {
+  color: var(--ctm-stable);
+  background: var(--ctm-stable-bg);
+}
+
+.ctm-vmark.is-unrecorded {
+  color: var(--ctm-ink-2);
+  font-weight: 500;
+}
+
+.ctm-vmark.is-unrecorded .ctm-vmark-dot {
+  color: var(--ctm-ink-2);
+  background: var(--ctm-line-soft);
+}
+
+@keyframes ctm-trend-pop {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ----------------------------------------------------------------- detail
+   Kicker, title, chips, the one important sentence, then divider-separated
+   sections. Dividers, not nested cards.
+   ----------------------------------------------------------------------- */
+
+.ctm-detail {
+  position: sticky;
+  top: 96px;
+  animation: ctm-detail-in 0.32s ease both;
+}
+
+@keyframes ctm-detail-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
   }
   to {
     opacity: 1;
@@ -1479,169 +727,1321 @@
   }
 }
 
-/* Stagger nth delays for signal rows */
-.ctm-signal-row:nth-child(1) { animation-delay: 0s; }
-.ctm-signal-row:nth-child(2) { animation-delay: 0.05s; }
-.ctm-signal-row:nth-child(3) { animation-delay: 0.10s; }
-.ctm-signal-row:nth-child(4) { animation-delay: 0.15s; }
-.ctm-signal-row:nth-child(5) { animation-delay: 0.20s; }
+.ctm-detail-empty {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ctm-ink-2);
+  margin: 10px 0 0;
+}
 
-.ctm-gap-row:nth-child(1) { animation-delay: 0s; }
-.ctm-gap-row:nth-child(2) { animation-delay: 0.05s; }
-.ctm-gap-row:nth-child(3) { animation-delay: 0.10s; }
-.ctm-gap-row:nth-child(4) { animation-delay: 0.15s; }
-.ctm-gap-row:nth-child(5) { animation-delay: 0.20s; }
+.ctm-detail-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
 
-.ctm-resource-card:nth-child(1) { animation-delay: 0s; }
-.ctm-resource-card:nth-child(2) { animation-delay: 0.04s; }
-.ctm-resource-card:nth-child(3) { animation-delay: 0.08s; }
-.ctm-resource-card:nth-child(4) { animation-delay: 0.12s; }
-.ctm-resource-card:nth-child(5) { animation-delay: 0.16s; }
-.ctm-resource-card:nth-child(6) { animation-delay: 0.20s; }
-.ctm-resource-card:nth-child(7) { animation-delay: 0.24s; }
-.ctm-resource-card:nth-child(8) { animation-delay: 0.28s; }
+.ctm-detail-head h3 {
+  font-family: var(--ctm-font-display);
+  font-size: clamp(1.15rem, 1.8vw, 1.5rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ctm-ink);
+  margin: 5px 0 0;
+  overflow-wrap: anywhere;
+}
 
-/* ------------------------------------------------------------------ */
-/* Responsive                                                          */
-/* ------------------------------------------------------------------ */
+.ctm-detail-rank {
+  font-family: var(--ctm-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ctm-violet);
+  flex: none;
+}
 
-@media (max-width: 1024px) {
-  .ctm-trends {
-    grid-template-columns: repeat(3, 1fr);
+.ctm-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.ctm-detail-velocity {
+  display: flex;
+  margin-top: 9px;
+}
+
+/* The one place a 3px accent rule appears: the sentence that matters most. */
+.ctm-detail-why {
+  margin-top: 10px;
+  border-left: 3px solid var(--ctm-lilac);
+  padding-left: 12px;
+}
+
+.ctm-detail-why p {
+  font-family: var(--ctm-font-display);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: var(--ctm-ink);
+  margin: 4px 0 0;
+}
+
+.ctm-detail-section {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ctm-line-soft);
+}
+
+.ctm-detail-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ctm-ink-2);
+}
+
+/* -------------------------------------------------------------- two slices
+   The only comparison on the page: the two observations the recorded velocity
+   score was computed from. Both sides are raw recorded counts.
+   ----------------------------------------------------------------------- */
+
+.ctm-slices {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin-top: 7px;
+}
+
+.ctm-slice {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.ctm-slice-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ctm-ink-2);
+}
+
+.ctm-slice-count {
+  font-family: var(--ctm-font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ctm-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.ctm-slice-frequency {
+  font-size: 11.5px;
+  color: var(--ctm-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.ctm-slice-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ctm-lilac);
+}
+
+.ctm-slice-arrow svg {
+  width: 17px;
+  height: 17px;
+}
+
+.ctm-slice-delta {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 2px;
+  padding-top: 8px;
+  border-top: 1px solid var(--ctm-line-soft);
+  font-size: 11.5px;
+  color: var(--ctm-ink-2);
+}
+
+.ctm-slice-delta .ctm-num {
+  font-family: var(--ctm-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ctm-ink);
+}
+
+/* -------------------------------------------------------------- hours */
+
+.ctm-hours {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 7px;
+}
+
+.ctm-hours-value {
+  font-family: var(--ctm-font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ctm-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.ctm-hours-source {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ctm-ink-2);
+  min-width: 0;
+}
+
+.ctm-hours-source-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ctm-ink-2);
+  margin-right: 6px;
+}
+
+/* -------------------------------------------------------- prerequisites */
+
+.ctm-prereqs {
+  list-style: none;
+  margin: 7px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ctm-prereq {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ctm-ink);
+}
+
+.ctm-prereq-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ctm-lilac);
+  flex: none;
+}
+
+.ctm-prereq-flag {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ctm-tier-mid-text);
+  background: var(--ctm-tier-mid-bg);
+  border: 1px solid var(--ctm-tier-mid-line);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+/* ------------------------------------------------------------ what changed */
+
+.ctm-change-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.ctm-change-counts {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ctm-line-soft);
+}
+
+.ctm-change-count {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--ctm-ink-2);
+}
+
+.ctm-change-count .ctm-num {
+  font-family: var(--ctm-font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ctm-ink);
+}
+
+.ctm-movers {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ctm-line-soft);
+}
+
+.ctm-mover-list {
+  list-style: none;
+  margin: 7px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ctm-mover {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--ctm-line-soft);
+}
+
+.ctm-mover:last-child {
+  border-bottom: none;
+}
+
+.ctm-mover-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ctm-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ctm-mover-slices {
+  font-size: 11.5px;
+  color: var(--ctm-ink-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ctm-mover-delta {
+  font-family: var(--ctm-font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ctm-ink);
+  min-width: 52px;
+  text-align: right;
+}
+
+/* ------------------------------------------------------- insufficient data
+   A named list, not just a count. Each row states the recorded reason the two
+   slices could not be compared, so the gap is attributable to the artifacts
+   rather than presented as a judgement about the skill.
+   ----------------------------------------------------------------------- */
+
+.ctm-insufficient {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ctm-line-soft);
+}
+
+.ctm-insufficient-note {
+  margin: 6px 0 10px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ctm-ink-2);
+  max-width: 68ch;
+}
+
+.ctm-insufficient-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2px 14px;
+}
+
+.ctm-insufficient-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--ctm-line-soft);
+}
+
+.ctm-insufficient-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ctm-ink);
+}
+
+.ctm-insufficient-reason {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ctm-muted);
+}
+
+/* --------------------------------------------------------- recommendations
+   Each entry is a bordered block, not a card: the page already has panels, and
+   nesting a second card per recommendation would flatten the hierarchy. The
+   order number and the field name/value pairs do the work.
+   ----------------------------------------------------------------------- */
+
+.ctm-recs {
+  display: block;
+}
+
+.ctm-rec-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+
+.ctm-rec {
+  padding: 14px 0;
+  border-top: 1px solid var(--ctm-line-soft);
+}
+
+.ctm-rec-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.ctm-rec-order {
+  font-family: var(--ctm-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ctm-muted);
+  min-width: 20px;
+}
+
+.ctm-rec-name {
+  font-family: var(--ctm-font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ctm-ink);
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* The direction word always accompanies the number, so the tint is never the
+   only carrier of the meaning. */
+.ctm-rec-move {
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.ctm-rec-move.is-higher {
+  color: var(--ctm-rise);
+  background: var(--ctm-rise-bg);
+}
+
+.ctm-rec-move.is-lower {
+  color: var(--ctm-fall);
+  background: var(--ctm-fall-bg);
+}
+
+.ctm-basis {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 2px 20px;
+}
+
+.ctm-basis-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 0;
+  min-width: 0;
+}
+
+.ctm-basis-row dt {
+  flex: none;
+  width: 104px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--ctm-muted);
+}
+
+.ctm-basis-row dd {
+  margin: 0;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ctm-ink-2);
+  overflow-wrap: anywhere;
+}
+
+.ctm-basis-note {
+  color: var(--ctm-muted);
+}
+
+.ctm-basis-note.is-warn {
+  color: var(--ctm-fall);
+}
+
+.ctm-rec-more {
+  margin-top: 14px;
+  width: 100%;
+  padding: 10px 18px;
+  font-family: var(--ctm-font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ctm-ink);
+  background: var(--ctm-violet-pale);
+  border: 1px solid var(--ctm-violet-soft);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.ctm-rec-more:hover {
+  background: var(--ctm-violet-soft);
+  transform: translateY(-2px);
+}
+
+.ctm-rec-more:active {
+  transform: translateY(0);
+}
+
+.ctm-rec-evidence {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ctm-line);
+}
+
+.ctm-rec-caveats {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.ctm-rec-caveat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--ctm-ink-2);
+}
+
+.ctm-rec-caveat-src {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ctm-muted);
+}
+
+/* ------------------------------------------------------------------ report
+   The generate action is the page's only primary control, so it is the one place
+   the workspace violet fill is used: pills are for actions, and this is one.
+   ----------------------------------------------------------------------- */
+
+.ctm-report {
+  display: block;
+}
+
+.ctm-report-manifest,
+.ctm-report-warnings,
+.ctm-report-blocked {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ctm-line-soft);
+}
+
+.ctm-report-blocked {
+  border-top-color: var(--ctm-fall);
+  border-top-style: solid;
+}
+
+.ctm-report-blocked-title {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ctm-fall);
+  margin-bottom: 6px;
+}
+
+.ctm-report-blockers,
+.ctm-report-warn-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ctm-report-blockers li,
+.ctm-report-warn-list li {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ctm-ink-2);
+  padding-left: 14px;
+  position: relative;
+}
+
+.ctm-report-blockers li::before,
+.ctm-report-warn-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--ctm-muted);
+}
+
+.ctm-report-blockers li::before {
+  background: var(--ctm-fall);
+}
+
+.ctm-report-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2px 22px;
+}
+
+.ctm-report-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--ctm-line-soft);
+  min-width: 0;
+}
+
+.ctm-report-item-name {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ctm-muted);
+}
+
+.ctm-report-item-body {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--ctm-ink-2);
+}
+
+.ctm-report-generate {
+  margin-top: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  font-family: var(--ctm-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ctm-card);
+  background: var(--ctm-violet);
+  border: 1px solid var(--ctm-violet);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.ctm-report-generate:hover {
+  background: var(--ctm-violet-deep);
+  border-color: var(--ctm-violet-deep);
+  transform: translateY(-2px);
+}
+
+.ctm-report-generate:active {
+  transform: translateY(0);
+}
+
+.ctm-report-note {
+  margin: 12px 0 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--ctm-muted);
+  max-width: 76ch;
+}
+
+/* Reserved height so announcing the result does not shift the panel below it. */
+.ctm-report-result {
+  margin: 10px 0 0;
+  min-height: 1.2em;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ctm-ink-2);
+}
+
+/* --------------------------------------------------------- learning path
+   A rail of stages. The rail is decorative; the stage number and the "After:"
+   line carry the order in text.
+   ----------------------------------------------------------------------- */
+
+.ctm-stages {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+
+.ctm-stage {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.ctm-stage-rail {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.ctm-stage-rail::before {
+  content: '';
+  position: absolute;
+  top: 26px;
+  bottom: -10px;
+  width: 1px;
+  background: var(--ctm-line);
+}
+
+.ctm-stage:last-child .ctm-stage-rail::before {
+  display: none;
+}
+
+.ctm-stage-node {
+  position: relative;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ctm-card);
+  border: 1px solid var(--ctm-line);
+  color: var(--ctm-ink-2);
+  font-family: var(--ctm-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ctm-stage-body {
+  padding-bottom: 16px;
+  min-width: 0;
+}
+
+.ctm-stage-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ctm-ink-2);
+}
+
+.ctm-stage-skills {
+  list-style: none;
+  margin: 7px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 8px;
+}
+
+.ctm-stage-skill {
+  border: 1px solid var(--ctm-line);
+  border-radius: 8px;
+  padding: 9px 11px;
+  background: var(--ctm-card);
+}
+
+.ctm-stage-skill-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.ctm-stage-skill-name {
+  font-family: var(--ctm-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ctm-ink);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ctm-stage-skill-hours {
+  margin-left: auto;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ctm-violet);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ctm-stage-skill-after,
+.ctm-stage-skill-source {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ctm-ink-2);
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.ctm-stage-skill-source {
+  color: var(--ctm-ink-2);
+}
+
+/* A recorded fact the page cannot resolve, flagged rather than dropped. */
+.ctm-notice {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 11px 13px;
+  border: 1px solid var(--ctm-tier-mid-line);
+  border-radius: 12px;
+  background: var(--ctm-tier-mid-bg);
+}
+
+.ctm-notice-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--ctm-tier-mid-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ctm-notice-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.ctm-notice-title {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ctm-tier-mid-text);
+}
+
+.ctm-notice-list {
+  list-style: none;
+  margin: 5px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ctm-notice-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ctm-ink-2);
+}
+
+/* ------------------------------------------------------- limits disclosure
+   The toggle becomes the header of its own panel on open, so the two read as
+   one object.
+   ----------------------------------------------------------------------- */
+
+.ctm-disclosure {
+  margin-top: clamp(12px, 1.6vh, 18px);
+}
+
+.ctm-disclosure-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 10px clamp(12px, 1.4vw, 20px);
+  text-align: left;
+  font-family: var(--ctm-font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ctm-ink-2);
+  background: var(--ctm-card);
+  border: 1px solid var(--ctm-line);
+  border-radius: 12px 12px 0 0;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.ctm-disclosure-btn:hover {
+  background: var(--ctm-violet-pale);
+  border-color: var(--ctm-lilac);
+}
+
+.ctm-disclosure-btn.is-open {
+  border-radius: 12px 12px 0 0;
+  border-bottom-color: transparent;
+}
+
+.ctm-disclosure-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  min-width: 0;
+}
+
+.ctm-disclosure-count {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ctm-ink-2);
+}
+
+.ctm-disclosure-chevron {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ctm-violet);
+  transition: transform 0.2s ease;
+}
+
+.ctm-disclosure-chevron svg {
+  width: 15px;
+  height: 15px;
+}
+
+.ctm-disclosure-btn.is-open .ctm-disclosure-chevron {
+  transform: rotate(180deg);
+}
+
+.ctm-disclosure-panel {
+  border: 1px solid var(--ctm-line);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  background: var(--ctm-card);
+  padding: clamp(12px, 1.4vw, 20px);
+  box-shadow:
+    0 16px 32px rgba(91, 70, 216, 0.05),
+    0 4px 12px rgba(16, 16, 16, 0.04);
+  animation: ctm-panel-in 0.28s ease both;
+}
+
+@keyframes ctm-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
   }
-
-  .ctm-module-grid {
-    grid-template-columns: repeat(2, 1fr);
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
+}
 
-  .ctm-signal-row {
-    grid-template-columns: minmax(0, 1fr) auto;
+.ctm-evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.ctm-evidence {
+  border: 1px solid var(--ctm-line);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--ctm-paper);
+}
+
+.ctm-evidence-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ctm-evidence-title {
+  font-family: var(--ctm-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ctm-ink);
+}
+
+.ctm-evidence-summary {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--ctm-ink);
+  margin: 7px 0 0;
+}
+
+.ctm-evidence-scope,
+.ctm-evidence-source,
+.ctm-evidence-artifact {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ctm-ink-2);
+  margin: 4px 0 0;
+}
+
+.ctm-evidence-caveats {
+  list-style: none;
+  margin: 7px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ctm-evidence-caveats li {
+  position: relative;
+  padding-left: 12px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ctm-ink-2);
+}
+
+.ctm-evidence-caveats li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ctm-lilac);
+}
+
+.ctm-limits {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--ctm-line-soft);
+}
+
+.ctm-limit-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ctm-limit {
+  font-size: 11px;
+  color: var(--ctm-ink-2);
+  background: var(--ctm-line-soft);
+  border: 1px solid var(--ctm-line);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+
+/* ------------------------------------------------------------------ footer */
+
+.ctm-footer {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--ctm-line-soft);
+  font-size: 11.5px;
+  color: var(--ctm-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------ request state
+   Loading, error and empty reuse one dashed paper surface and sit in the flow,
+   so nothing shifts when the record replaces them.
+   ----------------------------------------------------------------------- */
+
+.ctm-status {
+  margin-top: 16px;
+  border: 1px dashed var(--ctm-line);
+  border-radius: 12px;
+  background: var(--ctm-card);
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ctm-ink-2);
+}
+
+.ctm-status.is-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  color: var(--ctm-ink-2);
+}
+
+/* A 2px rule rather than a spinner, and the same height every time. */
+.ctm-status.is-loading::before {
+  content: '';
+  flex: none;
+  width: 46px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--ctm-violet-soft);
+  overflow: hidden;
+  animation: ctm-status-sweep 0.75s ease infinite;
+}
+
+@keyframes ctm-status-sweep {
+  0% {
+    transform: translateX(-100%);
   }
-
-  .ctm-signal-stat {
-    grid-row: 1;
-    grid-column: 2;
+  100% {
+    transform: translateX(320%);
   }
+}
 
-  .ctm-trend-badge {
-    grid-row: 2;
-    grid-column: 2;
+.ctm-status.is-error {
+  border-style: solid;
+  border-color: var(--ctm-fall);
+  background: var(--ctm-fall-bg);
+}
+
+.ctm-status-title {
+  display: block;
+  font-family: var(--ctm-font-display);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ctm-ink);
+}
+
+.ctm-status-body {
+  margin: 4px 0 0;
+}
+
+.ctm-status-note {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ctm-ink-2);
+}
+
+/* ------------------------------------------------------------------- focus
+   The workspace controls use the workspace violet rather than inheriting the
+   global marketing indigo outline, at the same 2px / 2px-offset geometry.
+   ----------------------------------------------------------------------- */
+
+.ctm-row:focus-visible,
+.ctm-role:focus-visible,
+.ctm-disclosure-btn:focus-visible,
+.ctm-rec-more:focus-visible,
+.ctm-report-generate:focus-visible {
+  outline: 2px solid var(--ctm-violet);
+  outline-offset: 2px;
+}
+
+/* The filled generate button sits on the violet fill, so its ring is drawn in
+   the paper colour to stay visible against its own background. */
+.ctm-report-generate:focus-visible {
+  outline-color: var(--ctm-ink);
+  outline-offset: 3px;
+}
+
+.ctm-disclosure-btn:focus-visible {
+  border-radius: 12px 12px 0 0;
+}
+
+/* -------------------------------------------------------- entrance motion
+   Every entrance uses `backwards`, so once it finishes each element falls back
+   to its normal styles and nothing can be left stranded invisible. Durations and
+   easing are the §12 values: 0.28s panel reveal, 0.15s thumb-scale hold, `ease`.
+   ----------------------------------------------------------------------- */
+
+.ctm-head,
+.ctm-summary-card {
+  animation: ctm-card-in 0.28s ease backwards;
+}
+
+@keyframes ctm-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px) scale(0.9);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
 
-  .ctm-gap-row {
-    grid-template-columns: minmax(0, 1fr) 120px auto;
+/* ------------------------------------------------------------ reduced motion
+   Delays are zeroed as well as durations: an entrance that kept its delay while
+   its duration collapsed would hold its `backwards` from-state — invisible
+   content — for the length of that delay.
+   ----------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .ctm *,
+  .ctm *::before,
+  .ctm *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* -------------------------------------------------------------- responsive
+   Grids collapse to one column, never to an intermediate width. The detail
+   panel stops being sticky once it is no longer beside the list, because a
+   sticky panel with nothing to stick against is just a stacking bug.
+   ----------------------------------------------------------------------- */
+
+@media (max-width: 1120px) {
+  .ctm-head {
+    align-items: flex-start;
   }
 }
 
 @media (max-width: 880px) {
-  .ctm-shell {
+  .ctm-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ctm-summary {
     grid-template-columns: 1fr;
   }
 
-  .ctm-sidebar {
+  .ctm-evidence-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ctm-detail {
     position: static;
-    height: auto;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding: 10px 14px;
-    border-right: none;
-    border-bottom: 1px solid var(--ctm-line-soft);
-    gap: 4px;
-  }
-
-  .ctm-sidebar-label {
-    display: none;
-  }
-
-  .ctm-sidebar-divider {
-    display: none;
-  }
-
-  .ctm-sidebar-nav {
-    flex-direction: row;
-    gap: 4px;
-    flex-wrap: nowrap;
-  }
-
-  .ctm-plan-badge {
-    display: none;
-  }
-
-  .ctm-overview-split {
-    grid-template-columns: 1fr;
-  }
-
-  .ctm-plan-summary {
-    grid-template-columns: 1fr 1fr 1fr;
   }
 }
 
 @media (max-width: 720px) {
+  /* The overlay scrim exists to keep the headline legible on top of the
+     illustration. On a narrow column the banner gets too short to carry overlaid
+     text, so the copy drops into normal flow directly beneath it. */
   .ctm-hero-copy {
     position: static;
     background: var(--ctm-paper);
     padding: 16px 20px;
   }
 
-  .ctm-trends {
-    grid-template-columns: repeat(2, 1fr);
+  .ctm-hero {
+    border-radius: 12px 12px 0 0;
   }
 
-  .ctm-module-grid {
-    grid-template-columns: 1fr;
+  .ctm-inner {
+    padding-bottom: 40px;
   }
 
-  .ctm-signal-row {
-    grid-template-columns: 1fr;
+  .ctm-slices,
+  .ctm-change-grid {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
   }
 
-  .ctm-gap-row {
-    grid-template-columns: 1fr;
+  .ctm-slice-arrow {
+    transform: rotate(90deg);
   }
 
-  .ctm-resources-grid {
-    grid-template-columns: 1fr;
+  .ctm-stage,
+  .ctm-basis {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .ctm-plan-summary {
-    grid-template-columns: 1fr;
+  .ctm-insufficient-list,
+  .ctm-report-list {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .ctm-calendar-slots {
-    grid-template-columns: 1fr;
+  /* The 104px fixed term column plus a gap leaves too little for the value on a
+     390px screen, so the field name stacks above its value instead. */
+  .ctm-basis-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    padding: 5px 0;
+  }
+
+  .ctm-basis-row dt {
+    width: auto;
+  }
+
+  .ctm-stage-rail {
+    justify-content: flex-start;
+  }
+
+  .ctm-stage-rail::before {
+    display: none;
+  }
+
+  .ctm-stage-node {
+    margin-bottom: 6px;
+  }
+
+  .ctm-mover {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .ctm-mover-delta {
+    text-align: left;
   }
 }
 
-/* ------------------------------------------------------------------ */
-/* Reduced motion                                                      */
-/* ------------------------------------------------------------------ */
-
-@media (prefers-reduced-motion: reduce) {
-  .ctm-flow,
-  .ctm-trends,
-  .ctm-overview-split,
-  .ctm-module-card,
-  .ctm-signal-row,
-  .ctm-gap-row,
-  .ctm-resource-card,
-  .ctm-plan-summary,
-  .ctm-plan-item,
-  .ctm-calendar,
-  .ctm-view-heading {
-    animation: none;
-    opacity: 1;
-    transform: none;
+@media (max-width: 640px) {
+  /* The tier chip is hidden here, which leaves four grid children. Three
+     columns would push the hours value onto an implicit second row. */
+  .ctm-row {
+    grid-template-columns: 24px minmax(0, 1fr) auto auto;
   }
 
-  .ctm-module-card:hover,
-  .ctm-trend-card:hover,
-  .ctm-resource-card:hover {
-    transform: none;
+  .ctm-row .ctm-chip {
+    display: none;
   }
 
-  .ctm-add-btn:hover,
-  .ctm-view-all:hover {
-    transform: none;
+  .ctm-role {
+    min-height: 40px;
+  }
+
+  .ctm-disclosure-btn {
+    min-height: 48px;
+  }
+
+  .ctm-stage-skills {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

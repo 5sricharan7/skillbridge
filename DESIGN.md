@@ -89,7 +89,7 @@ in §2 is load-bearing, and it does not survive inversion.
 
 ## 3. Color
 
-The system runs on **two scoped token sets**, not one. This is the single most
+The system runs on **three scoped token sets**, not one. This is the single most
 important structural rule in this document.
 
 - **`src/styles.css` `:root`** — the marketing site. Neutral-cool grays with a
@@ -98,9 +98,15 @@ important structural rule in this document.
   A deliberately **separate, warmer** scope (`--cb-*`), so the workspace never
   inherits or fights homepage tokens. Comment in source: *"Scoped to the component;
   does not touch global/homepage styles."*
+- **`src/components/ctm.css` `.ctm`** — the Curriculum Time Machine workspace
+  (`--ctm-*`). Same rule, same reason: the CTM page is a workspace, not marketing,
+  so it gets its own scope rather than reaching into `:root`. Its values are
+  **not** new values — every one is copied from the `--cb-*` table in 3.2, so the
+  two workspaces read as one product.
 
-Never mix the two. A `--cb-*` token inside `src/styles.css` is a bug. A `:root`
-token inside `careerBridge.css` is a bug.
+Never mix the scopes. A `--cb-*` token inside `src/styles.css` is a bug. A `:root`
+token inside `careerBridge.css` or `ctm.css` is a bug. A `--ctm-*` token outside
+`ctm.css` is a bug.
 
 ### 3.1 Global palette (marketing)
 
@@ -970,7 +976,7 @@ to `src/data/careerBridgeMock.js` or is computed from it.
 - Don't animate more than `0.45s`, and never animate layout properties in a
   critical path.
 - Don't add a hamburger menu.
-- Don't mix the two token scopes.
+- Don't mix the token scopes.
 - Don't invent a number, a metric, or a testimonial.
 
 ---
@@ -985,8 +991,8 @@ to `src/data/careerBridgeMock.js` or is computed from it.
    color, a `border-radius`, or a `0.2s` in new CSS, stop and check §3, §8, §12.
 3. **Extending the system is a documented change.** To add a token, radius,
    shadow, or duration:
-   - add it to the correct scope in `src/styles.css` or
-     `src/components/careerBridge.css`,
+   - add it to the correct scope in `src/styles.css`,
+     `src/components/careerBridge.css`, or `src/components/ctm.css`,
    - add it to the matching table in this document,
    - record its contrast ratio in §3.4 if it carries meaning.
 4. **Redesigning an existing pattern is out of scope** for a feature task. This
@@ -1002,6 +1008,7 @@ to `src/data/careerBridgeMock.js` or is computed from it.
 |---|---|
 | Global tokens, marketing styles, responsive, reduced motion | `src/styles.css` |
 | Workspace tokens, panels, rows, chips, slider, data surfaces | `src/components/careerBridge.css` |
+| CTM workspace tokens, rank nodes, slice panels, path, disclosure | `src/components/ctm.css` |
 | Fonts | `index.html` (Google Fonts link) |
 | Route definitions | `src/App.jsx` |
 | Hero card field geometry constants | `src/components/HeroCardField.jsx` |

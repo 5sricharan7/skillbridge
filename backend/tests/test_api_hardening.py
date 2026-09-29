@@ -3,6 +3,7 @@ import json
 from fastapi.testclient import TestClient
 
 from backend import main
+from backend.data import loaders
 from backend.data.adapters import build_velocity_profile
 
 
@@ -150,3 +151,88 @@ def test_invalid_target_role_does_not_expose_internal_paths() -> None:
     assert "traceback" not in body
     assert "c:\\\\" not in body
     assert "backend/data/artifacts" not in body
+
+
+def test_curriculum_intelligence_does_not_change_any_existing_endpoint() -> None:
+    roadmap_request = {
+        "resume_text": "Java",
+        "jd_text": "Python SQL AWS Docker",
+        "budget_hours": 24,
+    }
+    before = (
+        client.post("/roadmap", json=roadmap_request).content,
+        client.post(
+            "/roadmap", json={**roadmap_request, "target_role": "data_science"}
+        ).content,
+        client.get("/velocity/python").content,
+        client.get("/vendor-flags").content,
+        client.get("/proofs").content,
+        client.get("/health").content,
+    )
+
+    for role in ("data_science", "backend_ml_engineer", "other"):
+        assert client.get(f"/curriculum-intelligence/{role}").status_code == 200
+
+    after = (
+        client.post("/roadmap", json=roadmap_request).content,
+        client.post(
+            "/roadmap", json={**roadmap_request, "target_role": "data_science"}
+        ).content,
+        client.get("/velocity/python").content,
+        client.get("/vendor-flags").content,
+        client.get("/proofs").content,
+        client.get("/health").content,
+    )
+
+    assert before == after
+
+
+def test_curriculum_intelligence_reads_artifacts_without_mutating_them(
+    monkeypatch,
+) -> None:
+    def snapshot() -> dict[str, tuple[bytes, float]]:
+        return {
+            name: (loaders.artifact_path(name).read_bytes(), loaders.artifact_path(name).stat().st_mtime)
+            for name in loaders.ARTIFACT_NAMES
+        }
+
+    before = snapshot()
+
+    reads: list[str] = []
+    for name in loaders.ARTIFACT_NAMES:
+        original = getattr(loaders, f"load_{name.split('.')[0]}", None)
+        if original is None:
+            continue
+        monkeypatch.setattr(
+            loaders,
+            f"load_{name.split('.')[0]}",
+            lambda *, _original=original, _name=name, **kwargs: (
+                reads.append(_name),
+                _original(**kwargs),
+            )[1],
+        )
+
+    assert client.get("/curriculum-intelligence/data_science").status_code == 200
+    assert "cleaned_postings.parquet" in reads
+    assert "velocity_scores.parquet" in reads
+    assert "dag_structure.json" in reads
+    assert "hours_per_skill.json" in reads
+    assert snapshot() == before
+
+
+def test_roadmap_response_shape_is_unchanged_by_the_new_imports() -> None:
+    response = client.post(
+        "/roadmap",
+        json={"resume_text": "", "jd_text": "Python", "budget_hours": 12},
+    )
+
+    assert response.status_code == 200
+    assert set(response.json()) == {"budget_hours", "roadmap"}
+    assert response.json()["budget_hours"] == 12
+    assert all(
+        set(item) == {"skill", "hours", "priority", "reason", "vendor_flag"}
+        for item in response.json()["roadmap"]
+    )
+    assert client.post(
+        "/roadmap", json={"resume_text": "", "jd_text": "", "budget_hours": 12}
+    ).json() == {"budget_hours": 12, "roadmap": []}
