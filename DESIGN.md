@@ -521,6 +521,18 @@ part of the approved visual, not a CSS technique to copy.
 surface, border, or background. Artwork may contain them. If a design seems to
 need a gradient fill, it needs a different design.
 
+**Documented exception — subpage hero legibility scrim.** A subpage hero that sits
+directly under a photograph or illustration may lay paper-to-transparent
+`linear-gradient` scrims over the artwork so the headline keeps AA contrast. This
+is a scrim over artwork, not a fill on a surface, and it is the only gradient the
+system permits outside artwork. It ships in `.ev-hero-copy` (Evidence, a single
+horizontal ramp) and `.ctm-top-art-veil` (Curriculum Time Machine, a horizontal
+ramp plus a vertical top wash on its `::after`); match one of those rather than
+inventing a new ramp. Constraints: the page's own paper token only, no hue shift,
+no mesh, no second brand colour, at most a horizontal ramp plus a vertical top
+wash, and never on a card, panel, or button. Any other gradient need still
+requires a different design.
+
 ---
 
 ## 9. Forms and inputs
@@ -903,7 +915,9 @@ pattern this project has already declined.
 
 **Never use a gradient as a brand signal.** No purple-to-pink mesh, no
 `linear-gradient(135deg, …)` on a background, border, or card. The brand is a
-flat violet. (Artwork may contain gradients; CSS surfaces may not.)
+flat violet. (Artwork may contain gradients; CSS surfaces may not. The one
+permitted CSS gradient is the subpage hero legibility scrim, §8, and it carries
+no brand signal.)
 
 **Never use glassmorphism.** No `backdrop-filter: blur()`, no translucent white
 panels, no "frosted" nav. The navbar is either fully transparent or fully

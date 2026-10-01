@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 /* The SkillBridge service routes. They are proxied in development so the app can
    call same-origin paths with no base URL and no CORS preflight. The target comes
    from VITE_CAREER_BRIDGE_API, so no host is hardcoded here. */
-const API_ROUTES = ['/roadmap', '/velocity', '/proofs', '/vendor-flags', '/health', '/curriculum-intelligence']
+const API_ROUTES = ['/roadmap', '/velocity', '/proofs', '/vendor-flags', '/health', '/curriculum-intelligence', '/curriculum-record', '/curriculum-coverage', '/curriculum-gaps', '/curriculum-recommendations']
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_')

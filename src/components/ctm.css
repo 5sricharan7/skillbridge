@@ -7,6 +7,13 @@
    and never inherits or fights the homepage or the Career Bridge workspace.
    Every value is a documented DESIGN.md §3 colour: no hex value below is new,
    so no token was added to the design system to produce this page.
+
+   The page is an application workspace, not a report: a compact header, a view
+   rail down the left, one canvas at a time in the middle, and an optional detail
+   drawer on the right. The canvas shows a relationship; the drawer shows the
+   fields behind one node. Nothing is hidden behind an interaction that would
+   hide a recorded value, and every figure on screen is a value the service
+   recorded.
    ----------------------------------------------------------------------- */
 
 .ctm {
@@ -21,15 +28,16 @@
   --ctm-lilac: #a79bf0;
   --ctm-violet-soft: #e7e2fb;
   --ctm-violet-pale: #f2effc;
+  /* Text drawn on a filled violet surface: the active rail item and filter chip.
+     5.9:1 against --ctm-violet, so it clears AA at body size. */
+  --ctm-on-violet: #ffffff;
   --ctm-line: #e5e2e4;
   --ctm-line-soft: #ece9e6;
   --ctm-font-display: var(--font-display, 'Space Grotesk', 'Segoe UI', system-ui, sans-serif);
   --ctm-font-body: var(--font-body, 'Public Sans', 'Segoe UI', system-ui, sans-serif);
 
   /* Direction tints. A direction is always carried by a glyph shape and a
-     number as well as by the tint, so the tint never carries meaning alone.
-     These are graphical indicators, not small text: each clears 3:1 against its
-     own tint, and every accompanying word is --ctm-ink-2. */
+     number as well as by the tint, so the tint never carries meaning alone. */
   --ctm-rise: #1e7a4f;
   --ctm-rise-bg: #e6f1eb;
   --ctm-stable: #6a6e78;
@@ -51,6 +59,10 @@
   --ctm-tier-low-bg: #eaf3ec;
   --ctm-tier-low-line: #d5e5db;
 
+  --ctm-ease: cubic-bezier(0.32, 0.72, 0.24, 1);
+  --ctm-radius: 16px;
+  --ctm-radius-tile: 8px;
+
   position: relative;
   background: var(--ctm-paper);
   color: var(--ctm-ink);
@@ -59,319 +71,543 @@
   min-height: 100vh;
 }
 
-.ctm-inner {
-  width: min(100%, 1480px);
-  margin: 0 auto;
-  padding: 0 clamp(28px, 5vw, 72px) 56px;
-}
-
-/* -------------------------------------------------------------------- hero
-   Restored verbatim from the pre-7B stylesheet. The asset was never removed from
-   `public/assets/`; only the markup and these rules were dropped. The banner is
-   the page's h1, and the recorded-data panels below it flow in normal document
-   order, so the overlay covers the illustration and never the data.
-   ----------------------------------------------------------------------- */
-
-.ctm-hero {
-  position: relative;
-  overflow: hidden;
-  border-bottom: 1px solid var(--ctm-line);
-  border-radius: 16px 16px 0 0;
-  margin-bottom: 4px;
-}
-
-.ctm-hero-figure {
-  display: block;
-  margin: 0;
-  line-height: 0;
-  position: relative;
-}
-
-.ctm-hero-img {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-height: 260px;
-  object-fit: cover;
-  object-position: center 30%;
-}
-
-/* Text overlay on the left side of the hero */
-.ctm-hero-copy {
+.ctm-visually-hidden {
   position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: clamp(20px, 3vw, 36px) clamp(20px, 3vw, 36px) clamp(20px, 3vw, 32px);
-  background: linear-gradient(
-    to right,
-    rgba(248, 247, 243, 0.97) 0%,
-    rgba(248, 247, 243, 0.9) 38%,
-    rgba(248, 247, 243, 0.4) 60%,
-    rgba(248, 247, 243, 0) 75%
-  );
-  pointer-events: none;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
-/* The scrim is the original author's legibility overlay for the hero illustration,
-   not a brand signal: the gradient is a fixed function of the artwork behind it and
-   carries no meaning of its own. */
-.ctm-hero-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ctm-violet);
-  margin-bottom: 10px;
+/* Numbers are tabular so a column of recorded counts lines up and a value cannot
+   appear to change width while it counts up. */
+.ctm-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.ctm-unit {
+  color: var(--ctm-muted);
+  font-size: 0.86em;
+}
+
+.ctm-code {
+  font-family: ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+  font-size: 11px;
+  color: var(--ctm-ink-2);
   background: var(--ctm-violet-pale);
   border: 1px solid var(--ctm-violet-soft);
-  border-radius: 999px;
-  padding: 3px 10px;
-  width: max-content;
-  pointer-events: auto;
+  border-radius: 5px;
+  padding: 1px 5px;
 }
 
-.ctm-hero-headline {
-  font-family: var(--ctm-font-display);
-  font-size: clamp(1.8rem, 3.8vw, 3rem);
-  font-weight: 800;
-  line-height: 1.0;
-  letter-spacing: -0.03em;
-  color: var(--ctm-ink);
-  margin-bottom: 10px;
-  pointer-events: auto;
-}
+/* ------------------------------------------------------- compact header */
 
-.ctm-hero-headline em {
-  font-style: normal;
-  color: var(--ctm-violet);
-}
-
-.ctm-hero-lead {
-  font-size: clamp(13px, 1.2vw, 15px);
-  line-height: 1.55;
-  color: var(--ctm-ink-2);
-  max-width: 42ch;
-  pointer-events: auto;
-}
-
-/* ---------------------------------------------------------------- page head
-   The hero above carries the title. This block is the sub-head: the one lead
-   sentence, and the control that changes every figure below it.
-   ----------------------------------------------------------------------- */
-
-.ctm-head {
+.ctm-top {
+  position: relative;
+  /* Own stacking context, so the artwork layer can never paint over the rail,
+     the canvas, or the drawer. */
+  isolation: isolate;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: clamp(16px, 3vw, 40px);
   flex-wrap: wrap;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--ctm-line);
+  /* A contained banner: taller than the old strip, shorter than a page hero. */
+  min-height: clamp(190px, 15vw, 230px);
+  padding: clamp(20px, 2.4vw, 30px);
+  border-radius: var(--ctm-radius);
+  /* Takes over the header hairline it replaced, so the hero keeps the same
+     weight of separation from the workspace below it. */
+  border: 1px solid var(--ctm-line);
+  /* Clips the campus artwork to the banner's own rounded corners. */
+  overflow: hidden;
 }
 
-.ctm-head-copy {
-  min-width: 0;
-  max-width: 62ch;
+/* Campus artwork sits behind the heading, inside the banner's own box.
+   `inset: 0` means it can never widen the page, so there is no horizontal
+   overflow to guard against at any breakpoint. */
+.ctm-top-art {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
-.ctm-kicker {
-  display: inline-flex;
-  align-items: center;
+.ctm-top-art-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* 78% vertically selects the dense architecture band rather than the flat
+     bright sky at the top; the horizontal bias keeps the built mass that sits
+     on the right of the source. */
+  object-position: 72% 78%;
+  /* The source is a bright daytime plate, so at full strength the scrim alone
+     would wash it back to paper. A slight knock-down is what lets the
+     architecture read as photography rather than as a tint. */
+  filter: brightness(0.86) saturate(0.95);
+  animation: ctm-hero-art-in 1100ms var(--ctm-ease) both;
+}
+
+/* Legibility scrim, not decoration: the heading is the foreground, so the
+   paper tone is at full strength under the text, thins to almost nothing across
+   the middle right where the building is, then returns to a calm ground under
+   the role controls. Same left-to-right logic as the Evidence banner. */
+.ctm-top-art-veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    var(--ctm-paper) 0%,
+    color-mix(in srgb, var(--ctm-paper) 94%, transparent) 20%,
+    color-mix(in srgb, var(--ctm-paper) 68%, transparent) 36%,
+    color-mix(in srgb, var(--ctm-paper) 30%, transparent) 48%,
+    color-mix(in srgb, var(--ctm-paper) 6%, transparent) 58%,
+    color-mix(in srgb, var(--ctm-paper) 0%, transparent) 68%,
+    color-mix(in srgb, var(--ctm-paper) 34%, transparent) 78%,
+    color-mix(in srgb, var(--ctm-paper) 66%, transparent) 100%
+  );
+}
+
+/* The kicker row sits highest, where the source's sky is brightest, so it gets
+   its own top-down wash instead of a heavier left column. */
+.ctm-top-art-veil::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ctm-paper) 34%, transparent) 0%,
+    color-mix(in srgb, var(--ctm-paper) 0%, transparent) 34%
+  );
+}
+
+.ctm-top-copy,
+.ctm-topmeta {
+  position: relative;
+  z-index: 1;
+}
+
+/* The role label is the one control surface without a fill of its own, so it
+   gets a paper chip of its own rather than relying on the scrim behind it. */
+.ctm-rolefield-label {
+  margin: 0;
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
-  color: var(--ctm-violet);
-  background: var(--ctm-violet-pale);
-  border: 1px solid var(--ctm-violet-soft);
-  border-radius: 999px;
-  padding: 3px 10px;
+  color: var(--ctm-muted);
+  width: max-content;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--ctm-card);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ctm-line) 60%, transparent);
 }
 
-.ctm-headline {
+/* Entrance runs once, on mount only: the header is not remounted by a role or
+   view change, so the artwork never replays while the reader is working. */
+@keyframes ctm-hero-art-in {
+  from {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.ctm-top-copy {
+  min-width: 0;
+  flex: 1 1 420px;
+}
+
+.ctm-kicker,
+.ctm-view-kicker,
+.ctm-label,
+.ctm-flow-kicker,
+.ctm-placement-stage,
+.ctm-matrix-status,
+.ctm-railcontext-label {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ctm-muted);
+}
+
+/* Sized for the banner, in family with the Evidence hero headline. */
+.ctm-topline {
+  margin: 6px 0 0;
   font-family: var(--ctm-font-display);
-  font-size: clamp(1.5rem, 2.8vw, 2.3rem);
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  font-size: clamp(1.45rem, 2.6vw, 2.15rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.06;
   color: var(--ctm-ink);
-  margin: 10px 0 8px;
 }
 
-.ctm-headline em {
+.ctm-topline em {
   font-style: normal;
   color: var(--ctm-violet);
 }
 
 .ctm-lead {
+  margin: 8px 0 0;
+  max-width: 52ch;
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.5;
   color: var(--ctm-ink-2);
+}
+
+.ctm-topmeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.ctm-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   margin: 0;
-  max-width: 56ch;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--ctm-tier-mid-bg);
+  border: 1px solid var(--ctm-tier-mid-line);
+  color: var(--ctm-tier-mid-text);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ctm-flag svg {
+  width: 14px;
+  height: 14px;
 }
 
 .ctm-rolefield {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  flex: none;
-}
-
-.ctm-rolefield-label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--ctm-ink-2);
 }
 
 .ctm-roles {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   padding: 3px;
+  background: var(--ctm-card);
   border: 1px solid var(--ctm-line);
   border-radius: 999px;
-  background: var(--ctm-card);
-  box-shadow: 0 4px 12px rgba(16, 16, 16, 0.04);
 }
 
 .ctm-role {
-  font-family: var(--ctm-font-body);
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ctm-ink-2);
-  background: transparent;
+  min-height: 30px;
+  padding: 0 13px;
   border: 1px solid transparent;
   border-radius: 999px;
-  padding: 7px 14px;
-  min-height: 32px;
+  background: transparent;
+  font-family: var(--ctm-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ctm-ink-2);
   cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition: background 0.18s var(--ctm-ease), color 0.18s var(--ctm-ease);
 }
 
 .ctm-role:hover {
   background: var(--ctm-violet-pale);
-  border-color: var(--ctm-lilac);
+  color: var(--ctm-ink);
 }
 
 .ctm-role.is-active {
   background: var(--ctm-violet);
-  border-color: var(--ctm-violet);
-  color: var(--ctm-card);
+  color: var(--ctm-on-violet);
 }
 
-.ctm-role:focus-visible {
+.ctm-role:focus-visible,
+.ctm-railbtn:focus-visible,
+.ctm-tile:focus-visible,
+.ctm-ghost-btn:focus-visible,
+.ctm-jump-btn:focus-visible,
+.ctm-chipnode:focus-visible,
+.ctm-course:focus-visible,
+.ctm-sem-head:focus-visible,
+.ctm-matrix-col:focus-visible,
+.ctm-rowbtn:focus-visible,
+.ctm-placement-skill:focus-visible,
+.ctm-filter:focus-visible,
+.ctm-disclosure-btn:focus-visible,
+.ctm-retry:focus-visible,
+.ctm-drawer-close:focus-visible,
+.ctm-search-input:focus-visible {
   outline: 2px solid var(--ctm-violet);
   outline-offset: 2px;
 }
 
-/* ---------------------------------------------------------------- summary
-   The documented 3-up summary row. Nothing here is a fourth grid.
-   ----------------------------------------------------------------------- */
+/* ------------------------------------------------- shell: rail + canvas
 
-.ctm-summary {
+   Mirrors the Evidence subpage shell: one grid holding the sidebar and the main
+   column as siblings, so the rail's left edge and the banner's left edge are the
+   same content boundary. The banner is a child of the main column, never a
+   full-width strip above it. */
+
+.ctm-shell {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: clamp(12px, 1.4vw, 18px);
-  margin-top: 16px;
+  grid-template-columns: clamp(210px, 16vw, 244px) minmax(0, 1fr);
+  gap: clamp(14px, 1.8vw, 24px);
+  align-items: start;
+  width: min(100%, 1560px);
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3.2vw, 44px) 56px;
 }
 
-.ctm-summary-card {
+.ctm-main {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  min-height: 102px;
+  gap: clamp(14px, 1.8vh, 22px);
+}
+
+.ctm-rail {
+  position: sticky;
+  top: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  padding: 12px 10px 16px;
   background: var(--ctm-card);
   border: 1px solid var(--ctm-line);
-  border-radius: 14px;
-  padding: 10px clamp(10px, 1.2vw, 16px);
-  box-shadow:
-    0 16px 32px rgba(91, 70, 216, 0.05),
-    0 4px 12px rgba(16, 16, 16, 0.04);
+  border-radius: var(--ctm-radius);
 }
 
-.ctm-summary-top {
+.ctm-railnav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ctm-railbtn {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 10px;
+  width: 100%;
+  min-height: 46px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  font-family: var(--ctm-font-body);
+  text-align: left;
+  color: var(--ctm-ink-2);
+  cursor: pointer;
+  transition: background 0.18s var(--ctm-ease), color 0.18s var(--ctm-ease), border-color 0.18s var(--ctm-ease);
 }
 
-.ctm-summary-icon {
-  width: 24px;
-  height: 24px;
-  border-radius: 8px;
+/* The active marker is a drawn edge, so it survives a forced-colours mode where
+   the background tint would vanish. */
+.ctm-railbtn::before {
+  content: '';
+  position: absolute;
+  left: -11px;
+  top: 50%;
+  width: 3px;
+  height: 0;
+  border-radius: 0 3px 3px 0;
+  background: var(--ctm-violet);
+  transform: translateY(-50%);
+  transition: height 0.24s var(--ctm-ease);
+}
+
+.ctm-railbtn:hover {
   background: var(--ctm-violet-pale);
-  border: 1px solid var(--ctm-violet-soft);
+  color: var(--ctm-ink);
+}
+
+.ctm-railbtn.is-active {
+  background: var(--ctm-violet-pale);
+  border-color: var(--ctm-violet-soft);
   color: var(--ctm-violet);
+}
+
+.ctm-railbtn.is-active::before {
+  height: 24px;
+}
+
+.ctm-railbtn-ic {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  color: var(--ctm-muted);
+  background: var(--ctm-paper);
+  transition: color 0.18s var(--ctm-ease);
 }
 
-.ctm-summary-icon svg {
-  width: 14px;
-  height: 14px;
+.ctm-railbtn-ic svg {
+  width: 16px;
+  height: 16px;
 }
 
-.ctm-summary-label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--ctm-ink-2);
+.ctm-railbtn.is-active .ctm-railbtn-ic {
+  color: var(--ctm-violet);
+  background: var(--ctm-violet-soft);
 }
 
-.ctm-summary-title {
-  display: block;
-  font-family: var(--ctm-font-display);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--ctm-ink);
-  margin: 6px 0 2px;
-}
-
-.ctm-summary-foot {
+.ctm-railbtn-text {
   display: flex;
   flex-direction: column;
   gap: 1px;
+  min-width: 0;
 }
 
-.ctm-summary-detail {
+.ctm-railbtn-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.ctm-railbtn-kicker {
+  font-size: 10.5px;
+  line-height: 1.25;
+  color: var(--ctm-muted);
+}
+
+.ctm-railcontext {
+  margin-top: auto;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--ctm-paper);
+  border: 1px solid var(--ctm-line-soft);
+}
+
+.ctm-railcontext-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ctm-railcontext-list li {
   font-size: 11px;
+  font-weight: 600;
+  color: var(--ctm-ink-2);
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--ctm-violet-soft);
+}
+
+.ctm-railcontext-empty,
+.ctm-railcontext-meta {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ctm-muted);
+}
+
+.ctm-view {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ctm-view-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--ctm-line);
+}
+
+.ctm-view-title {
+  margin: 3px 0 0;
+  font-family: var(--ctm-font-display);
+  font-size: clamp(1.05rem, 1.7vw, 1.3rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ctm-ink);
+}
+
+.ctm-view-actions {
+  flex: none;
+}
+
+.ctm-view-body {
+  min-width: 0;
+  animation: ctm-view-in 0.32s var(--ctm-ease) both;
+}
+
+@keyframes ctm-view-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.ctm-canvas {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 1.6vh, 18px);
+  min-width: 0;
+}
+
+.ctm-canvas-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--ctm-card);
+  border: 1px solid var(--ctm-line);
+  font-size: 11.5px;
   color: var(--ctm-ink-2);
 }
 
-/* ----------------------------------------------------------------- panels */
-
-.ctm-split {
-  display: grid;
-  grid-template-columns: minmax(0, 0.38fr) minmax(0, 0.62fr);
-  gap: clamp(12px, 1.6vw, 20px);
-  align-items: start;
-  margin-top: clamp(12px, 1.6vh, 18px);
+.ctm-canvas-status.is-error {
+  background: var(--ctm-fall-bg);
+  border-color: var(--ctm-fall-bg);
+  color: var(--ctm-fall);
 }
+
+.ctm-canvas-status svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+
+/* ------------------------------------------------------------------ panel */
 
 .ctm-panel {
+  min-width: 0;
   background: var(--ctm-card);
   border: 1px solid var(--ctm-line);
-  border-radius: 16px;
-  padding: clamp(12px, 1.4vw, 20px);
-  box-shadow:
-    0 16px 32px rgba(91, 70, 216, 0.05),
-    0 4px 12px rgba(16, 16, 16, 0.04);
-}
-
-.ctm-change,
-.ctm-path {
-  margin-top: clamp(12px, 1.6vh, 18px);
+  border-radius: var(--ctm-radius);
+  padding: clamp(13px, 1.3vw, 18px);
+  box-shadow: 0 4px 12px rgba(16, 16, 16, 0.04);
 }
 
 .ctm-panel-head {
@@ -379,48 +615,29 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 12px;
-  padding-bottom: 8px;
+  padding-bottom: 9px;
   border-bottom: 1px solid var(--ctm-line-soft);
 }
 
-.ctm-panel-head h2 {
-  font-family: var(--ctm-font-display);
-  font-size: clamp(1rem, 1.6vw, 1.3rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--ctm-ink);
-  margin-top: 3px;
-}
-
-.ctm-count {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--ctm-ink-2);
-  white-space: nowrap;
+.ctm-panel-heading {
+  min-width: 0;
 }
 
 .ctm-label {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--ctm-ink-2);
+  gap: 6px;
 }
 
 .ctm-label-ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 17px;
   height: 17px;
   border-radius: 6px;
   background: var(--ctm-violet-pale);
-  border: 1px solid var(--ctm-violet-soft);
   color: var(--ctm-violet);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
 }
 
 .ctm-label-ic svg {
@@ -428,1620 +645,1843 @@
   height: 12px;
 }
 
-.ctm-inline-icon {
-  display: inline-flex;
-  align-items: center;
-  color: var(--ctm-violet);
+.ctm-panel-title {
+  margin: 3px 0 0;
+  font-family: var(--ctm-font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--ctm-ink);
 }
 
-.ctm-inline-icon svg {
-  width: 13px;
-  height: 13px;
+.ctm-count {
+  margin: 0;
+  flex: none;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ctm-muted);
 }
 
-.ctm-panel-note {
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--ctm-ink-2);
-  margin: 8px 0 0;
-  max-width: 72ch;
+.ctm-panel-note,
+.ctm-panel-foot {
+  margin: 9px 0 0;
+  max-width: 84ch;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--ctm-muted);
 }
 
 .ctm-panel-foot {
-  font-size: 11.5px;
-  line-height: 1.6;
-  color: var(--ctm-ink-2);
-  margin: 12px 0 0;
-  padding-top: 10px;
+  margin-top: 11px;
+  padding-top: 9px;
   border-top: 1px solid var(--ctm-line-soft);
-  max-width: 72ch;
 }
 
-.ctm-num {
-  font-variant-numeric: tabular-nums;
+/* ------------------------------------------------------------- pulse tiles */
+
+.ctm-pulse {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: 10px;
 }
 
-.ctm-code {
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 11.5px;
-  padding: 1px 5px;
-  border-radius: 5px;
-  background: var(--ctm-violet-pale);
-  color: var(--ctm-violet-deep);
-  /* Wraps rather than nowrap: this chip also carries recorded prerequisite
-     lists, which are long comma-separated strings that would otherwise force a
-     horizontal scrollbar on a 390px screen. */
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-
-/* A field the artifacts leave unrecorded, stated rather than left blank. */
-.ctm-unrecorded {
-  font-style: italic;
-  color: var(--ctm-ink-2);
-}
-
-.ctm-not-provided {
-  font-size: 12.5px;
-  line-height: 1.6;
-  color: var(--ctm-ink-2);
-  margin: 0;
-}
-
-/* -------------------------------------------------------------- skill list
-   A scannable sorted list, not a card grid. Long names truncate rather than
-   forcing the column to overflow.
-   ----------------------------------------------------------------------- */
-
-.ctm-list {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
+.ctm-tile {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-}
-
-/* No entrance animation on the rows. The list can hold 45 entries, so animating
-   them would be motion-as-decoration at the exact moment the reader is trying to
-   scan data. The panel swaps and the summary cards carry the motion instead. */
-
-.ctm-row {
-  position: relative;
-  width: 100%;
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) auto auto auto;
-  align-items: center;
-  gap: clamp(6px, 0.8vw, 10px);
-  min-height: 34px;
-  padding: 5px 8px;
+  gap: 2px;
+  min-width: 0;
+  padding: 13px 14px;
+  border: 1px solid var(--ctm-line);
+  border-radius: var(--ctm-radius-tile);
+  background: var(--ctm-card);
   text-align: left;
   font-family: var(--ctm-font-body);
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 9px;
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
-
-.ctm-row:hover {
-  background: var(--ctm-violet-pale);
-  border-color: var(--ctm-lilac);
-}
-
-.ctm-row.is-active {
-  background: var(--ctm-violet-pale);
-  border-color: var(--ctm-violet);
-}
-
-.ctm-row-rank {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--ctm-card);
-  border: 1px solid var(--ctm-line);
-  color: var(--ctm-ink-2);
-  font-family: var(--ctm-font-display);
-  font-size: 11px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-}
-
-.ctm-row.is-active .ctm-row-rank {
-  background: var(--ctm-violet);
-  border-color: var(--ctm-violet);
-  color: var(--ctm-card);
-}
-
-.ctm-row-name {
-  font-size: 13px;
-  font-weight: 600;
   color: var(--ctm-ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  animation: ctm-tile-in 0.34s var(--ctm-ease) both;
+  animation-delay: var(--ctm-tile-delay, 0ms);
 }
 
-.ctm-row.is-active .ctm-row-name {
-  color: var(--ctm-violet);
-}
-
-.ctm-row-frequency,
-.ctm-row-hours {
-  font-size: 11.5px;
-  font-variant-numeric: tabular-nums;
-  color: var(--ctm-ink-2);
-  white-space: nowrap;
-}
-
-.ctm-row-frequency {
-  min-width: 42px;
-  text-align: right;
-}
-
-.ctm-row-hours {
-  min-width: 46px;
-  text-align: right;
-}
-
-/* ----------------------------------------------------------------- chips
-   A pill with a word, a tinted background and a tinted border, so the tier is
-   never colour alone.
-   ----------------------------------------------------------------------- */
-
-.ctm-chip {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  padding: 2px 8px;
-  white-space: nowrap;
-}
-
-.ctm-chip.is-tier-core {
-  color: var(--ctm-tier-high-text);
-  background: var(--ctm-tier-high-bg);
-  border-color: var(--ctm-tier-high-line);
-}
-
-.ctm-chip.is-tier-mid {
-  color: var(--ctm-tier-mid-text);
-  background: var(--ctm-tier-mid-bg);
-  border-color: var(--ctm-tier-mid-line);
-}
-
-.ctm-chip.is-tier-noise {
-  color: var(--ctm-tier-low-text);
-  background: var(--ctm-tier-low-bg);
-  border-color: var(--ctm-tier-low-line);
-}
-
-.ctm-chip.is-tier-unclassified,
-.ctm-chip.is-plain {
-  color: var(--ctm-ink-2);
-  background: var(--ctm-line-soft);
-  border-color: var(--ctm-line);
-}
-
-.ctm-chip.is-warn {
-  color: var(--ctm-tier-mid-text);
-  background: var(--ctm-tier-mid-bg);
-  border-color: var(--ctm-tier-mid-line);
-}
-
-/* ---------------------------------------------------------- velocity mark
-   DESIGN.md §3.3: a coloured dot inside a tinted circle, with the text colour
-   carrying the label. The glyph's shape and the sign of the printed number are
-   the redundant encodings, so the tint is never the only signal.
-   ----------------------------------------------------------------------- */
-
-.ctm-vmark {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--ctm-ink-2);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.ctm-vmark-dot {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 17px;
-  height: 17px;
-  border-radius: 50%;
-  flex: none;
-}
-
-.ctm-vmark-dot svg {
-  width: 11px;
-  height: 11px;
-}
-
-.ctm-vmark.is-up .ctm-vmark-dot {
-  color: var(--ctm-rise);
-  background: var(--ctm-rise-bg);
-  animation: ctm-trend-pop 0.45s ease both;
-}
-
-.ctm-vmark.is-down .ctm-vmark-dot {
-  color: var(--ctm-fall);
-  background: var(--ctm-fall-bg);
-  animation: ctm-trend-pop 0.45s ease both;
-}
-
-.ctm-vmark.is-flat .ctm-vmark-dot {
-  color: var(--ctm-stable);
-  background: var(--ctm-stable-bg);
-}
-
-.ctm-vmark.is-unrecorded {
-  color: var(--ctm-ink-2);
-  font-weight: 500;
-}
-
-.ctm-vmark.is-unrecorded .ctm-vmark-dot {
-  color: var(--ctm-ink-2);
-  background: var(--ctm-line-soft);
-}
-
-@keyframes ctm-trend-pop {
+@keyframes ctm-tile-in {
   from {
     opacity: 0;
-    transform: scale(0.9);
+    transform: translateY(7px);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: none;
   }
 }
 
-/* ----------------------------------------------------------------- detail
-   Kicker, title, chips, the one important sentence, then divider-separated
-   sections. Dividers, not nested cards.
-   ----------------------------------------------------------------------- */
-
-.ctm-detail {
-  position: sticky;
-  top: 96px;
-  animation: ctm-detail-in 0.32s ease both;
+button.ctm-tile {
+  cursor: pointer;
+  transition: border-color 0.18s var(--ctm-ease), transform 0.18s var(--ctm-ease);
 }
 
-@keyframes ctm-detail-in {
+button.ctm-tile:hover {
+  border-color: var(--ctm-violet-soft);
+  transform: translateY(-1px);
+}
+
+.ctm-tile-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ctm-muted);
+}
+
+.ctm-tile-value {
+  font-family: var(--ctm-font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--ctm-ink);
+}
+
+.ctm-tile-value.is-ok {
+  color: var(--ctm-rise);
+}
+
+.ctm-tile-value.is-stop {
+  color: var(--ctm-fall);
+}
+
+.ctm-tile-detail {
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--ctm-muted);
+}
+
+.ctm-tile-icon {
+  position: absolute;
+  top: 11px;
+  right: 11px;
+  display: inline-flex;
+  color: var(--ctm-violet-soft);
+}
+
+.ctm-tile-icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.ctm-tile-icon.is-ok {
+  color: var(--ctm-rise-bg);
+}
+
+.ctm-tile-icon.is-stop {
+  color: var(--ctm-fall-bg);
+}
+
+/* -------------------------------------------------- overview: flow + keys */
+
+.ctm-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: clamp(12px, 1.6vw, 18px);
+  align-items: start;
+}
+
+.ctm-flow {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ctm-flow-step {
+  flex: 1 1 118px;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--ctm-line-soft);
+  border-radius: 10px;
+  background: var(--ctm-paper);
+}
+
+.ctm-flow-value {
+  margin: 4px 0 0;
+  font-family: var(--ctm-font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ctm-ink);
+}
+
+.ctm-flow-label {
+  margin: 2px 0 0;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--ctm-muted);
+}
+
+.ctm-flow-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: var(--ctm-lilac);
+}
+
+.ctm-flow-arrow svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* A composition band is the recorded count drawn against the counts beside it.
+   No percentage is printed: each band carries its own number in the legend, so
+   the picture can be read without inferring a figure the service did not state. */
+.ctm-composition {
+  display: flex;
+  gap: 2px;
+  height: 9px;
+  margin-top: 9px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ctm-composition-band {
+  min-width: 3px;
+  border-radius: 999px;
+}
+
+.ctm-composition-band.is-ok {
+  background: var(--ctm-rise);
+}
+
+.ctm-composition-band.is-stop {
+  background: var(--ctm-fall);
+}
+
+.ctm-composition-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 8px 0 0;
+}
+
+.ctm-composition-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  color: var(--ctm-ink-2);
+}
+
+.ctm-composition-count {
+  font-weight: 600;
+  color: var(--ctm-ink);
+}
+
+.ctm-swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+}
+
+.ctm-swatch.is-ok {
+  background: var(--ctm-rise);
+}
+
+.ctm-swatch.is-stop {
+  background: var(--ctm-fall);
+}
+
+.ctm-unresolved {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ctm-unresolved-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 9px;
+  border: 1px solid var(--ctm-line-soft);
+  border-radius: 8px;
+}
+
+.ctm-unresolved-row svg {
+  width: 16px;
+  height: 16px;
+  color: var(--ctm-rise);
+}
+
+.ctm-unresolved-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ctm-ink);
+}
+
+.ctm-ghost-btn {
+  margin-top: 12px;
+  min-height: 32px;
+  padding: 0 13px;
+  border: 1px solid var(--ctm-violet-soft);
+  border-radius: 999px;
+  background: var(--ctm-violet-pale);
+  font-family: var(--ctm-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ctm-violet-deep);
+  cursor: pointer;
+  transition: background 0.18s var(--ctm-ease), border-color 0.18s var(--ctm-ease);
+}
+
+.ctm-ghost-btn:hover {
+  background: var(--ctm-violet-soft);
+  border-color: var(--ctm-lilac);
+}
+
+.ctm-jump {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ctm-jump-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--ctm-line-soft);
+  border-radius: 10px;
+  background: var(--ctm-paper);
+  font-family: var(--ctm-font-body);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.18s var(--ctm-ease), background 0.18s var(--ctm-ease);
+}
+
+.ctm-jump-btn:hover {
+  border-color: var(--ctm-violet-soft);
+  background: var(--ctm-violet-pale);
+}
+
+.ctm-jump-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ctm-ink);
+}
+
+.ctm-jump-detail {
+  font-size: 11px;
+  color: var(--ctm-muted);
+}
+
+/* ---------------------------------------------------- canvas: curriculum */
+
+.ctm-mapcanvas {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+}
+
+.ctm-yearcol {
+  flex: 0 0 auto;
+  width: 250px;
+  padding: 11px;
+  border: 1px solid var(--ctm-line-soft);
+  border-radius: 12px;
+  background: var(--ctm-paper);
+}
+
+.ctm-year-head {
+  padding-bottom: 9px;
+  margin-bottom: 9px;
+  border-bottom: 1px solid var(--ctm-line);
+}
+
+.ctm-year-label {
+  margin: 0;
+  font-family: var(--ctm-font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ctm-ink);
+}
+
+.ctm-year-meta {
+  margin: 2px 0 0;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--ctm-muted);
+}
+
+.ctm-semcol + .ctm-semcol {
+  margin-top: 10px;
+}
+
+.ctm-sem-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  font-family: var(--ctm-font-body);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.18s var(--ctm-ease), border-color 0.18s var(--ctm-ease);
+}
+
+.ctm-sem-head:hover {
+  background: var(--ctm-violet-pale);
+  border-color: var(--ctm-violet-soft);
+}
+
+.ctm-sem-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ctm-violet-deep);
+}
+
+.ctm-sem-meta {
+  font-size: 10px;
+  color: var(--ctm-muted);
+}
+
+.ctm-courselist {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 5px 0 0;
+  padding: 0 0 0 9px;
+  list-style: none;
+  border-left: 1px solid var(--ctm-violet-soft);
+}
+
+.ctm-course {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  padding: 8px 9px;
+  border: 1px solid var(--ctm-line);
+  border-radius: var(--ctm-radius-tile);
+  background: var(--ctm-card);
+  font-family: var(--ctm-font-body);
+  text-align: left;
+  cursor: pointer;
+  animation: ctm-node-in 0.3s var(--ctm-ease) both;
+  transition: border-color 0.18s var(--ctm-ease), transform 0.18s var(--ctm-ease);
+}
+
+@keyframes ctm-node-in {
   from {
     opacity: 0;
     transform: translateY(5px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
-.ctm-detail-empty {
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--ctm-ink-2);
-  margin: 10px 0 0;
+.ctm-course:hover {
+  border-color: var(--ctm-violet-soft);
+  transform: translateY(-1px);
 }
 
-.ctm-detail-head {
+.ctm-course-top {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
 }
 
-.ctm-detail-head h3 {
-  font-family: var(--ctm-font-display);
-  font-size: clamp(1.15rem, 1.8vw, 1.5rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
+.ctm-course-name {
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.3;
   color: var(--ctm-ink);
-  margin: 5px 0 0;
-  overflow-wrap: anywhere;
 }
 
-.ctm-detail-rank {
-  font-family: var(--ctm-font-display);
-  font-size: 12px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--ctm-violet);
+.ctm-course-code {
   flex: none;
+  font-family: ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+  font-size: 9.5px;
+  color: var(--ctm-muted);
 }
 
-.ctm-detail-meta {
+.ctm-course-meta {
+  font-size: 10px;
+  color: var(--ctm-muted);
+}
+
+.ctm-course-skills {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 8px;
+  gap: 3px;
+  margin-top: 2px;
 }
 
-.ctm-detail-velocity {
-  display: flex;
-  margin-top: 9px;
-}
-
-/* The one place a 3px accent rule appears: the sentence that matters most. */
-.ctm-detail-why {
-  margin-top: 10px;
-  border-left: 3px solid var(--ctm-lilac);
-  padding-left: 12px;
-}
-
-.ctm-detail-why p {
-  font-family: var(--ctm-font-display);
-  font-size: 13.5px;
-  font-weight: 600;
-  line-height: 1.45;
-  letter-spacing: -0.01em;
-  color: var(--ctm-ink);
-  margin: 4px 0 0;
-}
-
-.ctm-detail-section {
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid var(--ctm-line-soft);
-}
-
-.ctm-detail-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
+.ctm-skillchip {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--ctm-paper);
+  border: 1px solid var(--ctm-line-soft);
+  font-size: 9.5px;
   color: var(--ctm-ink-2);
 }
 
-/* -------------------------------------------------------------- two slices
-   The only comparison on the page: the two observations the recorded velocity
-   score was computed from. Both sides are raw recorded counts.
-   ----------------------------------------------------------------------- */
-
-.ctm-slices {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
-  margin-top: 7px;
+.ctm-skillchip.is-more {
+  color: var(--ctm-muted);
 }
 
-.ctm-slice {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.ctm-slice-label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--ctm-ink-2);
-}
-
-.ctm-slice-count {
-  font-family: var(--ctm-font-display);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ctm-ink);
-  font-variant-numeric: tabular-nums;
-}
-
-.ctm-slice-frequency {
-  font-size: 11.5px;
-  color: var(--ctm-ink-2);
-  font-variant-numeric: tabular-nums;
-}
-
-.ctm-slice-arrow {
+.ctm-course-prereq {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  color: var(--ctm-lilac);
+  gap: 4px;
+  font-size: 9.5px;
+  color: var(--ctm-muted);
 }
 
-.ctm-slice-arrow svg {
-  width: 17px;
-  height: 17px;
+.ctm-course-prereq svg {
+  width: 12px;
+  height: 12px;
 }
 
-.ctm-slice-delta {
-  grid-column: 1 / -1;
+/* ----------------------------------------------------- canvas: evolution */
+
+.ctm-evo-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: clamp(12px, 1.6vw, 18px);
+  align-items: start;
+}
+
+.ctm-slicecanvas {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 2px;
-  padding-top: 8px;
-  border-top: 1px solid var(--ctm-line-soft);
-  font-size: 11.5px;
-  color: var(--ctm-ink-2);
-}
-
-.ctm-slice-delta .ctm-num {
-  font-family: var(--ctm-font-display);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ctm-ink);
-}
-
-/* -------------------------------------------------------------- hours */
-
-.ctm-hours {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 7px;
-}
-
-.ctm-hours-value {
-  font-family: var(--ctm-font-display);
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--ctm-ink);
-  font-variant-numeric: tabular-nums;
-}
-
-.ctm-hours-source {
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: var(--ctm-ink-2);
-  min-width: 0;
-}
-
-.ctm-hours-source-label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--ctm-ink-2);
-  margin-right: 6px;
-}
-
-/* -------------------------------------------------------- prerequisites */
-
-.ctm-prereqs {
-  list-style: none;
-  margin: 7px 0 0;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
   padding: 0;
+  list-style: none;
+}
+
+.ctm-slicecanvas-row {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.ctm-slicecanvas-id {
+  margin: 0;
+  font-family: ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+  font-size: 11px;
+  color: var(--ctm-ink-2);
+}
+
+.ctm-slicecanvas-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--ctm-paper);
+  border: 1px solid var(--ctm-line-soft);
+  overflow: hidden;
+}
+
+.ctm-slicecanvas-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ctm-violet);
+  transform-origin: left center;
+  animation: ctm-grow-x 0.5s var(--ctm-ease) both;
+}
+
+@keyframes ctm-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.ctm-slicecanvas-count {
+  margin: 0;
+  font-size: 10.5px;
+  color: var(--ctm-muted);
+  white-space: nowrap;
+}
+
+.ctm-tiers {
   display: flex;
   flex-direction: column;
   gap: 5px;
-}
-
-.ctm-prereq {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  flex-wrap: wrap;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ctm-ink);
-}
-
-.ctm-prereq-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--ctm-lilac);
-  flex: none;
-}
-
-.ctm-prereq-flag {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--ctm-tier-mid-text);
-  background: var(--ctm-tier-mid-bg);
-  border: 1px solid var(--ctm-tier-mid-line);
-  border-radius: 999px;
-  padding: 1px 7px;
-}
-
-/* ------------------------------------------------------------ what changed */
-
-.ctm-change-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  gap: 12px;
-  margin-top: 10px;
-}
-
-.ctm-change-counts {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 18px;
-  margin-top: 4px;
-  padding-top: 10px;
-  border-top: 1px solid var(--ctm-line-soft);
-}
-
-.ctm-change-count {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  font-size: 11.5px;
-  color: var(--ctm-ink-2);
-}
-
-.ctm-change-count .ctm-num {
-  font-family: var(--ctm-font-display);
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--ctm-ink);
-}
-
-.ctm-movers {
-  margin-top: 14px;
-  padding-top: 10px;
-  border-top: 1px solid var(--ctm-line-soft);
-}
-
-.ctm-mover-list {
-  list-style: none;
-  margin: 7px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.ctm-mover {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  align-items: baseline;
-  gap: 12px;
-  padding: 4px 0;
-  border-bottom: 1px solid var(--ctm-line-soft);
-}
-
-.ctm-mover:last-child {
-  border-bottom: none;
-}
-
-.ctm-mover-name {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ctm-ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ctm-mover-slices {
-  font-size: 11.5px;
-  color: var(--ctm-ink-2);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.ctm-mover-delta {
-  font-family: var(--ctm-font-display);
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--ctm-ink);
-  min-width: 52px;
-  text-align: right;
-}
-
-/* ------------------------------------------------------- insufficient data
-   A named list, not just a count. Each row states the recorded reason the two
-   slices could not be compared, so the gap is attributable to the artifacts
-   rather than presented as a judgement about the skill.
-   ----------------------------------------------------------------------- */
-
-.ctm-insufficient {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--ctm-line-soft);
-}
-
-.ctm-insufficient-note {
-  margin: 6px 0 10px;
-  font-size: 12.5px;
-  line-height: 1.55;
-  color: var(--ctm-ink-2);
-  max-width: 68ch;
-}
-
-.ctm-insufficient-list {
-  list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2px 14px;
+  list-style: none;
 }
 
-.ctm-insufficient-row {
+.ctm-tier-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 9px;
+  border: 1px solid var(--ctm-line-soft);
+  border-radius: 8px;
+}
+
+.ctm-tier-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ctm-ink);
+}
+
+.ctm-chiprail {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ctm-chipnode {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 7px 0;
-  border-bottom: 1px solid var(--ctm-line-soft);
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--ctm-line-soft);
+  border-radius: var(--ctm-radius-tile);
+  background: var(--ctm-paper);
+  font-family: var(--ctm-font-body);
+  text-align: left;
+  cursor: pointer;
+  animation: ctm-rail-node-in 0.3s var(--ctm-ease) both;
+  animation-delay: calc(var(--ctm-rail-index, 0) * 12ms);
+  transition: border-color 0.18s var(--ctm-ease), background 0.18s var(--ctm-ease);
 }
 
-.ctm-insufficient-name {
-  font-size: 12.5px;
+@keyframes ctm-rail-node-in {
+  from {
+    opacity: 0;
+    transform: translateX(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.ctm-chipnode:hover {
+  border-color: var(--ctm-violet-soft);
+  background: var(--ctm-violet-pale);
+}
+
+.ctm-chipnode-name {
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ctm-ink);
+}
+
+.ctm-chipnode-meta {
+  font-size: 10px;
+  color: var(--ctm-muted);
+}
+
+/* --------------------------------------------------------- canvas: gaps */
+
+.ctm-matrix {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ctm-matrix-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 11px 12px;
+  border: 1px solid var(--ctm-line);
+  border-radius: var(--ctm-radius-tile);
+  background: var(--ctm-card);
+  font-family: var(--ctm-font-body);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.18s var(--ctm-ease), background 0.18s var(--ctm-ease);
+}
+
+.ctm-matrix-col:hover {
+  border-color: var(--ctm-violet-soft);
+}
+
+.ctm-matrix-col.is-active {
+  border-color: var(--ctm-violet);
+  background: var(--ctm-violet-pale);
+}
+
+.ctm-matrix-count {
+  font-family: var(--ctm-font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ctm-ink);
+}
+
+.ctm-matrix-label {
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--ctm-ink);
 }
 
-.ctm-insufficient-reason {
+.ctm-matrix-status {
+  letter-spacing: 0.06em;
+}
+
+.ctm-tablewrap {
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.ctm-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.ctm-matrix-table th,
+.ctm-matrix-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--ctm-line-soft);
+  vertical-align: middle;
+}
+
+.ctm-matrix-table thead th {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ctm-muted);
+  border-bottom-color: var(--ctm-line);
+}
+
+.ctm-matrix-table tbody tr:hover {
+  background: var(--ctm-violet-pale);
+}
+
+.ctm-matrix-table tbody th {
+  font-weight: 600;
+  color: var(--ctm-ink);
+}
+
+.ctm-rowbtn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--ctm-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ctm-violet-deep);
+  cursor: pointer;
+  text-align: left;
+}
+
+.ctm-rowbtn:hover {
+  text-decoration: underline;
+}
+
+/* ---------------------------------------------------- canvas: proposal */
+
+.ctm-placement {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ctm-placement-chain {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 8px;
+  padding: 11px 12px;
+  border: 1px solid var(--ctm-line-soft);
+  border-radius: 12px;
+  background: var(--ctm-paper);
+  animation: ctm-node-in 0.34s var(--ctm-ease) both;
+  animation-delay: calc(var(--ctm-chain-index, 0) * 50ms);
+}
+
+.ctm-placement-leg {
+  min-width: 0;
+}
+
+.ctm-placement-text {
+  margin: 3px 0 0;
   font-size: 11.5px;
-  line-height: 1.5;
+  line-height: 1.45;
+  color: var(--ctm-ink-2);
+}
+
+.ctm-placement-muted {
+  color: var(--ctm-muted);
+  font-style: italic;
+}
+
+.ctm-placement-skill {
+  margin-top: 3px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--ctm-font-body);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ctm-violet-deep);
+  cursor: pointer;
+  text-align: left;
+}
+
+.ctm-placement-skill:hover {
+  text-decoration: underline;
+}
+
+.ctm-placement-meta {
+  margin: 5px 0 0;
+  font-size: 10px;
   color: var(--ctm-muted);
 }
 
-/* --------------------------------------------------------- recommendations
-   Each entry is a bordered block, not a card: the page already has panels, and
-   nesting a second card per recommendation would flatten the hierarchy. The
-   order number and the field name/value pairs do the work.
-   ----------------------------------------------------------------------- */
-
-.ctm-recs {
-  display: block;
+.ctm-placement-arrow {
+  align-self: center;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--ctm-lilac);
 }
 
-.ctm-rec-list {
-  list-style: none;
-  margin: 14px 0 0;
+.ctm-outcomes {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 12px 0 0;
   padding: 0;
+  list-style: none;
 }
 
-.ctm-rec {
-  padding: 14px 0;
-  border-top: 1px solid var(--ctm-line-soft);
+.ctm-outcome-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.4fr);
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--ctm-line-soft);
+  border-radius: 8px;
 }
 
-.ctm-rec-head {
+.ctm-outcome-reason {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ctm-muted);
+}
+
+.ctm-map {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ctm-map-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 9px;
+  border: 1px solid var(--ctm-line-soft);
+  border-radius: 8px;
+  font-size: 11.5px;
+  color: var(--ctm-ink-2);
+}
+
+.ctm-map + .ctm-map {
+  margin-top: 8px;
+}
+
+.ctm-map-count {
+  font-weight: 600;
+  color: var(--ctm-ink);
+}
+
+/* -------------------------------------------- toolbar, search, and chips */
+
+.ctm-toolbar {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 8px;
+  margin-top: 11px;
 }
 
-.ctm-rec-order {
-  font-family: var(--ctm-font-display);
-  font-size: 11px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--ctm-muted);
-  min-width: 20px;
+.ctm-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 220px;
+  min-width: 0;
 }
 
-.ctm-rec-name {
-  font-family: var(--ctm-font-display);
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ctm-ink);
-  margin: 0;
+.ctm-search-label {
+  position: relative;
+  display: flex;
+  align-items: center;
   flex: 1 1 auto;
   min-width: 0;
 }
 
-/* The direction word always accompanies the number, so the tint is never the
-   only carrier of the meaning. */
-.ctm-rec-move {
-  font-size: 11px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  padding: 2px 8px;
-  border-radius: 999px;
-  white-space: nowrap;
-}
-
-.ctm-rec-move.is-higher {
-  color: var(--ctm-rise);
-  background: var(--ctm-rise-bg);
-}
-
-.ctm-rec-move.is-lower {
-  color: var(--ctm-fall);
-  background: var(--ctm-fall-bg);
-}
-
-.ctm-basis {
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
-  gap: 2px 20px;
-}
-
-.ctm-basis-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 3px 0;
-  min-width: 0;
-}
-
-.ctm-basis-row dt {
-  flex: none;
-  width: 104px;
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 10.5px;
-  letter-spacing: 0.02em;
+.ctm-search-ic {
+  position: absolute;
+  left: 9px;
+  width: 14px;
+  height: 14px;
   color: var(--ctm-muted);
+  pointer-events: none;
 }
 
-.ctm-basis-row dd {
-  margin: 0;
-  min-width: 0;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--ctm-ink-2);
-  overflow-wrap: anywhere;
-}
-
-.ctm-basis-note {
-  color: var(--ctm-muted);
-}
-
-.ctm-basis-note.is-warn {
-  color: var(--ctm-fall);
-}
-
-.ctm-rec-more {
-  margin-top: 14px;
+.ctm-search-input {
   width: 100%;
-  padding: 10px 18px;
-  font-family: var(--ctm-font-body);
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ctm-ink);
-  background: var(--ctm-violet-pale);
-  border: 1px solid var(--ctm-violet-soft);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-}
-
-.ctm-rec-more:hover {
-  background: var(--ctm-violet-soft);
-  transform: translateY(-2px);
-}
-
-.ctm-rec-more:active {
-  transform: translateY(0);
-}
-
-.ctm-rec-evidence {
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid var(--ctm-line);
-}
-
-.ctm-rec-caveats {
-  list-style: none;
-  margin: 10px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.ctm-rec-caveat {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 11.5px;
-  line-height: 1.55;
-  color: var(--ctm-ink-2);
-}
-
-.ctm-rec-caveat-src {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--ctm-muted);
-}
-
-/* ------------------------------------------------------------------ report
-   The generate action is the page's only primary control, so it is the one place
-   the workspace violet fill is used: pills are for actions, and this is one.
-   ----------------------------------------------------------------------- */
-
-.ctm-report {
-  display: block;
-}
-
-.ctm-report-manifest,
-.ctm-report-warnings,
-.ctm-report-blocked {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--ctm-line-soft);
-}
-
-.ctm-report-blocked {
-  border-top-color: var(--ctm-fall);
-  border-top-style: solid;
-}
-
-.ctm-report-blocked-title {
-  display: block;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--ctm-fall);
-  margin-bottom: 6px;
-}
-
-.ctm-report-blockers,
-.ctm-report-warn-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.ctm-report-blockers li,
-.ctm-report-warn-list li {
-  font-size: 12.5px;
-  line-height: 1.55;
-  color: var(--ctm-ink-2);
-  padding-left: 14px;
-  position: relative;
-}
-
-.ctm-report-blockers li::before,
-.ctm-report-warn-list li::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 7px;
-  width: 5px;
-  height: 5px;
-  border-radius: 999px;
-  background: var(--ctm-muted);
-}
-
-.ctm-report-blockers li::before {
-  background: var(--ctm-fall);
-}
-
-.ctm-report-list {
-  list-style: none;
-  margin: 10px 0 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 2px 22px;
-}
-
-.ctm-report-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 9px 0;
-  border-bottom: 1px solid var(--ctm-line-soft);
-  min-width: 0;
-}
-
-.ctm-report-item-name {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--ctm-muted);
-}
-
-.ctm-report-item-body {
-  font-size: 12px;
-  line-height: 1.55;
-  color: var(--ctm-ink-2);
-}
-
-.ctm-report-generate {
-  margin-top: 18px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 22px;
-  font-family: var(--ctm-font-body);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ctm-card);
-  background: var(--ctm-violet);
-  border: 1px solid var(--ctm-violet);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-}
-
-.ctm-report-generate:hover {
-  background: var(--ctm-violet-deep);
-  border-color: var(--ctm-violet-deep);
-  transform: translateY(-2px);
-}
-
-.ctm-report-generate:active {
-  transform: translateY(0);
-}
-
-.ctm-report-note {
-  margin: 12px 0 0;
-  font-size: 11.5px;
-  line-height: 1.55;
-  color: var(--ctm-muted);
-  max-width: 76ch;
-}
-
-/* Reserved height so announcing the result does not shift the panel below it. */
-.ctm-report-result {
-  margin: 10px 0 0;
-  min-height: 1.2em;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--ctm-ink-2);
-}
-
-/* --------------------------------------------------------- learning path
-   A rail of stages. The rail is decorative; the stage number and the "After:"
-   line carry the order in text.
-   ----------------------------------------------------------------------- */
-
-.ctm-stages {
-  list-style: none;
-  margin: 10px 0 0;
-  padding: 0;
-}
-
-.ctm-stage {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: 12px;
-}
-
-.ctm-stage-rail {
-  position: relative;
-  display: flex;
-  justify-content: center;
-}
-
-.ctm-stage-rail::before {
-  content: '';
-  position: absolute;
-  top: 26px;
-  bottom: -10px;
-  width: 1px;
-  background: var(--ctm-line);
-}
-
-.ctm-stage:last-child .ctm-stage-rail::before {
-  display: none;
-}
-
-.ctm-stage-node {
-  position: relative;
-  z-index: 1;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--ctm-card);
+  min-height: 32px;
+  padding: 0 10px 0 28px;
   border: 1px solid var(--ctm-line);
-  color: var(--ctm-ink-2);
-  font-family: var(--ctm-font-display);
-  font-size: 11px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.ctm-stage-body {
-  padding-bottom: 16px;
-  min-width: 0;
-}
-
-.ctm-stage-label {
-  display: block;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--ctm-ink-2);
-}
-
-.ctm-stage-skills {
-  list-style: none;
-  margin: 7px 0 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 8px;
-}
-
-.ctm-stage-skill {
-  border: 1px solid var(--ctm-line);
-  border-radius: 8px;
-  padding: 9px 11px;
-  background: var(--ctm-card);
-}
-
-.ctm-stage-skill-head {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  flex-wrap: wrap;
-}
-
-.ctm-stage-skill-name {
-  font-family: var(--ctm-font-display);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  border-radius: 999px;
+  background: var(--ctm-paper);
+  font-family: var(--ctm-font-body);
+  font-size: 12px;
   color: var(--ctm-ink);
-  min-width: 0;
-  overflow-wrap: anywhere;
 }
 
-.ctm-stage-skill-hours {
-  margin-left: auto;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--ctm-violet);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+.ctm-search-input::placeholder {
+  color: var(--ctm-muted);
 }
 
-.ctm-stage-skill-after,
-.ctm-stage-skill-source {
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: var(--ctm-ink-2);
-  margin: 4px 0 0;
-  overflow-wrap: anywhere;
-}
-
-.ctm-stage-skill-source {
-  color: var(--ctm-ink-2);
-}
-
-/* A recorded fact the page cannot resolve, flagged rather than dropped. */
-.ctm-notice {
-  display: flex;
-  gap: 10px;
-  margin-top: 4px;
-  padding: 11px 13px;
-  border: 1px solid var(--ctm-tier-mid-line);
-  border-radius: 12px;
-  background: var(--ctm-tier-mid-bg);
-}
-
-.ctm-notice-icon {
+.ctm-search-count {
   flex: none;
-  width: 18px;
-  height: 18px;
-  color: var(--ctm-tier-mid-text);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 10.5px;
+  color: var(--ctm-muted);
 }
 
-.ctm-notice-icon svg {
-  width: 15px;
-  height: 15px;
-}
-
-.ctm-notice-title {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ctm-tier-mid-text);
-}
-
-.ctm-notice-list {
-  list-style: none;
-  margin: 5px 0 0;
-  padding: 0;
+.ctm-filterrow {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 4px;
 }
 
-.ctm-notice-list li {
+.ctm-filter {
+  min-height: 28px;
+  padding: 0 11px;
+  border: 1px solid var(--ctm-line);
+  border-radius: 999px;
+  background: var(--ctm-card);
+  font-family: var(--ctm-font-body);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ctm-ink-2);
+  cursor: pointer;
+  transition: background 0.18s var(--ctm-ease), border-color 0.18s var(--ctm-ease), color 0.18s var(--ctm-ease);
+}
+
+.ctm-filter:hover {
+  border-color: var(--ctm-violet-soft);
+  background: var(--ctm-violet-pale);
+}
+
+.ctm-filter.is-active {
+  background: var(--ctm-violet);
+  border-color: var(--ctm-violet);
+  color: var(--ctm-on-violet);
+}
+
+/* ------------------------------------------------- field and chip patterns */
+
+.ctm-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 9px;
+  margin: 0;
+}
+
+.ctm-facts + .ctm-facts {
+  margin-top: 9px;
+}
+
+.ctm-fact {
+  min-width: 0;
+}
+
+.ctm-fact.is-wide {
+  grid-column: 1 / -1;
+}
+
+.ctm-fact dt {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ctm-muted);
+}
+
+.ctm-fact dd {
+  margin: 3px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ctm-ink);
+  overflow-wrap: anywhere;
+}
+
+.ctm-fieldblock {
+  margin-top: 14px;
+}
+
+.ctm-fieldblock-label {
+  margin: 0 0 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ctm-muted);
+}
+
+.ctm-fieldblock-value {
+  min-width: 0;
+}
+
+.ctm-detail-lede {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ctm-ink-2);
+}
+
+.ctm-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--ctm-line);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.ctm-status-chip.is-plain,
+.ctm-status-chip.is-ok {
+  background: var(--ctm-rise-bg);
+  border-color: var(--ctm-rise-bg);
+  color: var(--ctm-rise);
+}
+
+.ctm-status-chip.is-warn {
+  background: var(--ctm-tier-mid-bg);
+  border-color: var(--ctm-tier-mid-line);
+  color: var(--ctm-tier-mid-text);
+}
+
+.ctm-status-chip.is-stop {
+  background: var(--ctm-fall-bg);
+  border-color: var(--ctm-fall-bg);
+  color: var(--ctm-fall);
+}
+
+.ctm-class-chip.is-core {
+  background: var(--ctm-tier-high-bg);
+  border-color: var(--ctm-tier-high-line);
+  color: var(--ctm-tier-high-text);
+}
+
+.ctm-class-chip.is-mid {
+  background: var(--ctm-tier-mid-bg);
+  border-color: var(--ctm-tier-mid-line);
+  color: var(--ctm-tier-mid-text);
+}
+
+.ctm-class-chip.is-noise {
+  background: var(--ctm-tier-low-bg);
+  border-color: var(--ctm-tier-low-line);
+  color: var(--ctm-tier-low-text);
+}
+
+.ctm-unrecorded {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--ctm-muted);
+}
+
+.ctm-unrecorded svg {
+  width: 13px;
+  height: 13px;
+  flex: none;
+}
+
+.ctm-hours {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ctm-hours svg {
+  width: 13px;
+  height: 13px;
+  color: var(--ctm-muted);
+}
+
+.ctm-hours-value {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.ctm-hours-source {
+  color: var(--ctm-muted);
+}
+
+.ctm-skillset {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
   flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ctm-skillset-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ctm-skillset-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 9px;
+  border: 1px solid var(--ctm-line-soft);
+  border-radius: 8px;
   font-size: 11.5px;
+}
+
+.ctm-skillset-name {
+  font-weight: 600;
+  color: var(--ctm-ink);
+  overflow-wrap: anywhere;
+}
+
+.ctm-skillset-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  color: var(--ctm-muted);
+}
+
+.ctm-skillset-coverage {
+  font-size: 10px;
+}
+
+.ctm-chainlist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ctm-chainlist li {
+  padding: 9px 10px;
+  border: 1px solid var(--ctm-line-soft);
+  border-radius: 8px;
+}
+
+.ctm-chain-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+}
+
+.ctm-chain-join {
+  font-size: 10.5px;
+  color: var(--ctm-muted);
+}
+
+.ctm-chain-parts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 7px 0 0;
+  font-size: 11px;
   line-height: 1.5;
   color: var(--ctm-ink-2);
 }
 
-/* ------------------------------------------------------- limits disclosure
-   The toggle becomes the header of its own panel on open, so the two read as
-   one object.
-   ----------------------------------------------------------------------- */
+.ctm-chain-label {
+  display: block;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ctm-muted);
+}
+
+.ctm-velocity {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ctm-velocity-glyph {
+  font-size: 10px;
+}
+
+.ctm-velocity.is-rise {
+  color: var(--ctm-rise);
+}
+
+.ctm-velocity.is-fall {
+  color: var(--ctm-fall);
+}
+
+.ctm-velocity.is-stable,
+.ctm-velocity.is-none {
+  color: var(--ctm-stable);
+}
+
+.ctm-velocity-label {
+  font-size: 10.5px;
+  color: var(--ctm-muted);
+}
+
+.ctm-slices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.ctm-slice {
+  padding: 9px 10px;
+  border: 1px solid var(--ctm-line-soft);
+  border-radius: 8px;
+  background: var(--ctm-paper);
+}
+
+.ctm-slice-label {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ctm-muted);
+}
+
+.ctm-slice-count,
+.ctm-slice-frequency {
+  margin: 3px 0 0;
+  font-size: 11.5px;
+  color: var(--ctm-ink);
+}
+
+.ctm-slice-frequency {
+  font-size: 10.5px;
+  color: var(--ctm-muted);
+}
+
+.ctm-inline-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--ctm-muted);
+}
+
+.ctm-inline-note svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  margin-top: 1px;
+}
+
+.ctm-limit {
+  margin-top: 14px;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: var(--ctm-tier-mid-bg);
+  border: 1px solid var(--ctm-tier-mid-line);
+}
+
+.ctm-limit-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ctm-tier-mid-text);
+}
+
+.ctm-limit-title svg {
+  width: 14px;
+  height: 14px;
+}
+
+.ctm-limit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ctm-tier-mid-text);
+}
+
+.ctm-limit-list li {
+  display: flex;
+  gap: 7px;
+}
+
+.ctm-notice {
+  margin-top: 12px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  background: var(--ctm-paper);
+  border: 1px solid var(--ctm-line);
+}
+
+.ctm-notice-error {
+  background: var(--ctm-fall-bg);
+  border-color: var(--ctm-fall-bg);
+}
+
+.ctm-notice-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ctm-ink);
+}
+
+.ctm-notice-title svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.ctm-notice-body {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--ctm-ink-2);
+}
+
+.ctm-notice-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--ctm-ink-2);
+}
+
+.ctm-status {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 26px 20px;
+  border-radius: var(--ctm-radius);
+  background: var(--ctm-card);
+  border: 1px solid var(--ctm-line);
+  text-align: center;
+  align-items: center;
+}
+
+.ctm-status-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ctm-ink);
+}
+
+.ctm-status-note {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--ctm-muted);
+}
+
+.ctm-spinner {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 2px solid var(--ctm-violet-soft);
+  border-top-color: var(--ctm-violet);
+  animation: ctm-spin 0.75s linear infinite;
+}
+
+@keyframes ctm-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ctm-retry {
+  margin-top: 11px;
+  min-height: 30px;
+  padding: 0 13px;
+  border: 1px solid var(--ctm-line);
+  border-radius: 999px;
+  background: var(--ctm-card);
+  font-family: var(--ctm-font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ctm-ink-2);
+  cursor: pointer;
+  transition: border-color 0.18s var(--ctm-ease), color 0.18s var(--ctm-ease);
+}
+
+.ctm-retry:hover {
+  border-color: var(--ctm-violet-soft);
+  color: var(--ctm-violet-deep);
+}
+
+/* ------------------------------------------------------------- disclosure */
 
 .ctm-disclosure {
-  margin-top: clamp(12px, 1.6vh, 18px);
+  margin-top: clamp(14px, 1.8vh, 22px);
+  border: 1px solid var(--ctm-line);
+  border-radius: var(--ctm-radius);
+  background: var(--ctm-card);
+  overflow: hidden;
 }
 
 .ctm-disclosure-btn {
-  width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 9px;
+  width: 100%;
   min-height: 44px;
-  padding: 10px clamp(12px, 1.4vw, 20px);
-  text-align: left;
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
   font-family: var(--ctm-font-body);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--ctm-ink-2);
-  background: var(--ctm-card);
-  border: 1px solid var(--ctm-line);
-  border-radius: 12px 12px 0 0;
+  text-align: left;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background 0.18s var(--ctm-ease);
 }
 
 .ctm-disclosure-btn:hover {
   background: var(--ctm-violet-pale);
-  border-color: var(--ctm-lilac);
-}
-
-.ctm-disclosure-btn.is-open {
-  border-radius: 12px 12px 0 0;
-  border-bottom-color: transparent;
-}
-
-.ctm-disclosure-title {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 10px;
-  min-width: 0;
-}
-
-.ctm-disclosure-count {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--ctm-ink-2);
 }
 
 .ctm-disclosure-chevron {
+  width: 16px;
+  height: 16px;
   flex: none;
+  color: var(--ctm-muted);
+  transition: transform 0.22s var(--ctm-ease);
+}
+
+.ctm-disclosure-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.ctm-disclosure-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ctm-muted);
+}
+
+.ctm-disclosure-count {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: var(--ctm-muted);
+}
+
+.ctm-disclosure-panel {
+  padding: 0 14px 16px;
+  animation: ctm-view-in 0.26s var(--ctm-ease) both;
+}
+
+.ctm-audit {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ctm-line-soft);
+}
+
+.ctm-audit-block {
+  min-width: 0;
+}
+
+.ctm-audit-title {
+  margin: 0 0 8px;
+  font-family: var(--ctm-font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ctm-ink);
+}
+
+.ctm-audit-note {
+  margin: 0 0 9px;
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--ctm-muted);
+}
+
+.ctm-audit-endpoints {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ctm-audit-flags {
+  grid-column: 1 / -1;
+}
+
+/* ----------------------------------------------------------------- drawer */
+
+.ctm-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(21, 19, 28, 0.34);
+  animation: ctm-fade-in 0.2s ease both;
+}
+
+@keyframes ctm-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 380–460px on a desktop viewport: wide enough for a field list, narrow enough
+   that the canvas behind it stays the subject. */
+.ctm-drawer {
+  display: flex;
+  flex-direction: column;
+  width: clamp(380px, 26vw, 440px);
+  max-width: 100vw;
+  height: 100%;
+  background: var(--ctm-card);
+  border-left: 1px solid var(--ctm-line);
+  box-shadow: -18px 0 40px rgba(21, 19, 28, 0.14);
+  animation: ctm-drawer-in 0.28s var(--ctm-ease) both;
+}
+
+@keyframes ctm-drawer-in {
+  from {
+    transform: translateX(18px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.ctm-drawer-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 15px 16px 12px;
+  border-bottom: 1px solid var(--ctm-line-soft);
+}
+
+.ctm-drawer-title {
+  margin: 3px 0 0;
+  font-family: var(--ctm-font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--ctm-ink);
+  overflow-wrap: anywhere;
+}
+
+.ctm-drawer-sub {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  color: var(--ctm-muted);
+}
+
+.ctm-drawer-close {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--ctm-violet);
-  transition: transform 0.2s ease;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--ctm-line);
+  border-radius: 8px;
+  background: var(--ctm-card);
+  color: var(--ctm-ink-2);
+  cursor: pointer;
+  transition: border-color 0.18s var(--ctm-ease), color 0.18s var(--ctm-ease);
 }
 
-.ctm-disclosure-chevron svg {
+.ctm-drawer-close:hover {
+  border-color: var(--ctm-violet-soft);
+  color: var(--ctm-violet-deep);
+}
+
+.ctm-drawer-close svg {
   width: 15px;
   height: 15px;
 }
 
-.ctm-disclosure-btn.is-open .ctm-disclosure-chevron {
-  transform: rotate(180deg);
+.ctm-drawer-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 14px 16px 22px;
 }
 
-.ctm-disclosure-panel {
-  border: 1px solid var(--ctm-line);
-  border-top: none;
-  border-radius: 0 0 12px 12px;
-  background: var(--ctm-card);
-  padding: clamp(12px, 1.4vw, 20px);
-  box-shadow:
-    0 16px 32px rgba(91, 70, 216, 0.05),
-    0 4px 12px rgba(16, 16, 16, 0.04);
-  animation: ctm-panel-in 0.28s ease both;
-}
-
-@keyframes ctm-panel-in {
-  from {
-    opacity: 0;
-    transform: translateY(5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.ctm-evidence-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
-.ctm-evidence {
-  border: 1px solid var(--ctm-line);
-  border-radius: 12px;
-  padding: 12px;
-  background: var(--ctm-paper);
-}
-
-.ctm-evidence-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.ctm-evidence-title {
-  font-family: var(--ctm-font-display);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ctm-ink);
-}
-
-.ctm-evidence-summary {
-  font-size: 12px;
-  line-height: 1.55;
-  color: var(--ctm-ink);
-  margin: 7px 0 0;
-}
-
-.ctm-evidence-scope,
-.ctm-evidence-source,
-.ctm-evidence-artifact {
-  font-size: 11px;
-  line-height: 1.5;
-  color: var(--ctm-ink-2);
-  margin: 4px 0 0;
-}
-
-.ctm-evidence-caveats {
-  list-style: none;
-  margin: 7px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.ctm-evidence-caveats li {
-  position: relative;
-  padding-left: 12px;
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: var(--ctm-ink-2);
-}
-
-.ctm-evidence-caveats li::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 7px;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--ctm-lilac);
-}
-
-.ctm-limits {
-  margin-top: 14px;
-  padding-top: 12px;
+.ctm-drawer-foot {
+  padding: 11px 16px;
   border-top: 1px solid var(--ctm-line-soft);
 }
 
-.ctm-limit-list {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
+/* ------------------------------------------------------------- responsive */
 
-.ctm-limit {
-  font-size: 11px;
-  color: var(--ctm-ink-2);
-  background: var(--ctm-line-soft);
-  border: 1px solid var(--ctm-line);
-  border-radius: 999px;
-  padding: 2px 9px;
-}
-
-/* ------------------------------------------------------------------ footer */
-
-.ctm-footer {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 16px;
-  padding: 10px 0 0;
-  border-top: 1px solid var(--ctm-line-soft);
-  font-size: 11.5px;
-  color: var(--ctm-ink-2);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ------------------------------------------------------------ request state
-   Loading, error and empty reuse one dashed paper surface and sit in the flow,
-   so nothing shifts when the record replaces them.
-   ----------------------------------------------------------------------- */
-
-.ctm-status {
-  margin-top: 16px;
-  border: 1px dashed var(--ctm-line);
-  border-radius: 12px;
-  background: var(--ctm-card);
-  padding: 12px 14px;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--ctm-ink-2);
-}
-
-.ctm-status.is-loading {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 52px;
-  color: var(--ctm-ink-2);
-}
-
-/* A 2px rule rather than a spinner, and the same height every time. */
-.ctm-status.is-loading::before {
-  content: '';
-  flex: none;
-  width: 46px;
-  height: 2px;
-  border-radius: 999px;
-  background: var(--ctm-violet-soft);
-  overflow: hidden;
-  animation: ctm-status-sweep 0.75s ease infinite;
-}
-
-@keyframes ctm-status-sweep {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(320%);
+@media (max-width: 1280px) {
+  .ctm-drawer {
+    width: clamp(340px, 34vw, 400px);
   }
 }
 
-.ctm-status.is-error {
-  border-style: solid;
-  border-color: var(--ctm-fall);
-  background: var(--ctm-fall-bg);
-}
-
-.ctm-status-title {
-  display: block;
-  font-family: var(--ctm-font-display);
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--ctm-ink);
-}
-
-.ctm-status-body {
-  margin: 4px 0 0;
-}
-
-.ctm-status-note {
-  margin: 6px 0 0;
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--ctm-ink-2);
-}
-
-/* ------------------------------------------------------------------- focus
-   The workspace controls use the workspace violet rather than inheriting the
-   global marketing indigo outline, at the same 2px / 2px-offset geometry.
-   ----------------------------------------------------------------------- */
-
-.ctm-row:focus-visible,
-.ctm-role:focus-visible,
-.ctm-disclosure-btn:focus-visible,
-.ctm-rec-more:focus-visible,
-.ctm-report-generate:focus-visible {
-  outline: 2px solid var(--ctm-violet);
-  outline-offset: 2px;
-}
-
-/* The filled generate button sits on the violet fill, so its ring is drawn in
-   the paper colour to stay visible against its own background. */
-.ctm-report-generate:focus-visible {
-  outline-color: var(--ctm-ink);
-  outline-offset: 3px;
-}
-
-.ctm-disclosure-btn:focus-visible {
-  border-radius: 12px 12px 0 0;
-}
-
-/* -------------------------------------------------------- entrance motion
-   Every entrance uses `backwards`, so once it finishes each element falls back
-   to its normal styles and nothing can be left stranded invisible. Durations and
-   easing are the §12 values: 0.28s panel reveal, 0.15s thumb-scale hold, `ease`.
-   ----------------------------------------------------------------------- */
-
-.ctm-head,
-.ctm-summary-card {
-  animation: ctm-card-in 0.28s ease backwards;
-}
-
-@keyframes ctm-card-in {
-  from {
-    opacity: 0;
-    transform: translateY(5px) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+@media (max-width: 1100px) {
+  .ctm-overview-grid,
+  .ctm-evo-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
-/* ------------------------------------------------------------ reduced motion
-   Delays are zeroed as well as durations: an entrance that kept its delay while
-   its duration collapsed would hold its `backwards` from-state — invisible
-   content — for the length of that delay.
-   ----------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  /* The rail collapses to its icons; the labels move into the title attribute so
+     the control is never unlabelled. */
+  .ctm-shell {
+    grid-template-columns: 66px minmax(0, 1fr);
+  }
+
+  .ctm-rail {
+    padding: 10px 8px;
+  }
+
+  .ctm-railbtn {
+    justify-content: center;
+    padding: 6px 4px;
+  }
+
+  .ctm-railbtn::before {
+    left: -9px;
+  }
+
+  .ctm-railbtn-text {
+    display: none;
+  }
+
+  .ctm-railcontext {
+    display: none;
+  }
+
+  .ctm-matrix {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ctm-placement-chain {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ctm-placement-arrow {
+    justify-self: start;
+    transform: rotate(90deg);
+  }
+}
+
+@media (max-width: 760px) {
+  /* The rail becomes a horizontal strip so the canvas gets the whole width. */
+  .ctm-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ctm-rail {
+    position: static;
+    overflow-x: auto;
+  }
+
+  .ctm-railnav {
+    flex-direction: row;
+    min-width: min-content;
+  }
+
+  .ctm-railbtn {
+    min-height: 38px;
+  }
+
+  .ctm-railbtn::before {
+    left: 50%;
+    top: auto;
+    bottom: -11px;
+    width: 0;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+    transform: translateX(-50%);
+    transition: width 0.24s var(--ctm-ease);
+  }
+
+  .ctm-railbtn.is-active::before {
+    width: 22px;
+    height: 3px;
+  }
+
+  .ctm-railbtn-text {
+    display: flex;
+  }
+
+  .ctm-railbtn-ic {
+    display: none;
+  }
+
+  /* A bottom sheet: full width, anchored to the bottom of the viewport. */
+  .ctm-scrim {
+    align-items: flex-end;
+  }
+
+  .ctm-drawer {
+    width: 100%;
+    height: auto;
+    max-height: 88vh;
+    border-left: 0;
+    border-top: 1px solid var(--ctm-line);
+    border-radius: 16px 16px 0 0;
+    animation: ctm-sheet-in 0.3s var(--ctm-ease) both;
+  }
+
+  @keyframes ctm-sheet-in {
+    from {
+      transform: translateY(24px);
+      opacity: 0;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+
+  .ctm-pulse {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+
+  .ctm-yearcol {
+    width: 232px;
+  }
+
+  .ctm-outcome-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ctm-slicecanvas-row {
+    grid-template-columns: 68px minmax(0, 1fr);
+  }
+
+  .ctm-slicecanvas-count {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 520px) {
+  .ctm-matrix {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ctm-flow-step {
+    flex-basis: 100%;
+  }
+
+  .ctm-flow-arrow {
+    justify-content: flex-start;
+    transform: rotate(90deg);
+  }
+}
+
+/* ---------------------------------------------------------- reduced motion
+   Every entrance above is decorative: the final state carries the recorded value,
+   so removing the motion removes nothing that was being communicated. */
 
 @media (prefers-reduced-motion: reduce) {
   .ctm *,
   .ctm *::before,
   .ctm *::after {
-    animation-duration: 0.01ms !important;
-    animation-delay: 0.01ms !important;
+    animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    transition-delay: 0.01ms !important;
+    transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
-}
 
-/* -------------------------------------------------------------- responsive
-   Grids collapse to one column, never to an intermediate width. The detail
-   panel stops being sticky once it is no longer beside the list, because a
-   sticky panel with nothing to stick against is just a stacking bug.
-   ----------------------------------------------------------------------- */
-
-@media (max-width: 1120px) {
-  .ctm-head {
-    align-items: flex-start;
-  }
-}
-
-@media (max-width: 880px) {
-  .ctm-split {
-    grid-template-columns: minmax(0, 1fr);
+  .ctm-view-body,
+  .ctm-tile,
+  .ctm-course,
+  .ctm-chipnode,
+  .ctm-placement-chain,
+  .ctm-drawer,
+  .ctm-slicecanvas-fill {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
 
-  .ctm-summary {
-    grid-template-columns: 1fr;
-  }
-
-  .ctm-evidence-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .ctm-detail {
-    position: static;
-  }
-}
-
-@media (max-width: 720px) {
-  /* The overlay scrim exists to keep the headline legible on top of the
-     illustration. On a narrow column the banner gets too short to carry overlaid
-     text, so the copy drops into normal flow directly beneath it. */
-  .ctm-hero-copy {
-    position: static;
-    background: var(--ctm-paper);
-    padding: 16px 20px;
-  }
-
-  .ctm-hero {
-    border-radius: 12px 12px 0 0;
-  }
-
-  .ctm-inner {
-    padding-bottom: 40px;
-  }
-
-  .ctm-slices,
-  .ctm-change-grid {
-    grid-template-columns: minmax(0, 1fr);
-    justify-items: start;
-  }
-
-  .ctm-slice-arrow {
-    transform: rotate(90deg);
-  }
-
-  .ctm-stage,
-  .ctm-basis {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .ctm-insufficient-list,
-  .ctm-report-list {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  /* The 104px fixed term column plus a gap leaves too little for the value on a
-     390px screen, so the field name stacks above its value instead. */
-  .ctm-basis-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1px;
-    padding: 5px 0;
-  }
-
-  .ctm-basis-row dt {
-    width: auto;
-  }
-
-  .ctm-stage-rail {
-    justify-content: flex-start;
-  }
-
-  .ctm-stage-rail::before {
-    display: none;
-  }
-
-  .ctm-stage-node {
-    margin-bottom: 6px;
-  }
-
-  .ctm-mover {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 2px;
-  }
-
-  .ctm-mover-delta {
-    text-align: left;
-  }
-}
-
-@media (max-width: 640px) {
-  /* The tier chip is hidden here, which leaves four grid children. Three
-     columns would push the hours value onto an implicit second row. */
-  .ctm-row {
-    grid-template-columns: 24px minmax(0, 1fr) auto auto;
-  }
-
-  .ctm-row .ctm-chip {
-    display: none;
-  }
-
-  .ctm-role {
-    min-height: 40px;
-  }
-
-  .ctm-disclosure-btn {
-    min-height: 48px;
-  }
-
-  .ctm-stage-skills {
-    grid-template-columns: minmax(0, 1fr);
+  /* The hero artwork keeps its resting opacity: cancelling only the entrance
+     must not make the image stronger for reduced-motion readers than for
+     everyone else. */
+  .ctm-top-art-img {
+    animation: none !important;
+    transform: none !important;
   }
 }

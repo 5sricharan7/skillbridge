@@ -1,0 +1,586 @@
+{
+  "contract_version": "1",
+  "record_id": "demo_curriculum_v1",
+  "record_kind": "demonstration",
+  "is_demo": true,
+  "is_representative": true,
+  "label": "Demonstration curriculum - representative structure, not a real programme",
+  "disclaimer": "Representative structure for the Curriculum Time Machine. No university, programme, course, credit, or academic-year record in this file describes a real institution.",
+  "source": {
+    "kind": "demo",
+    "reference": "curricula_demo/demo_curriculum.json",
+    "recorded_at": null,
+    "verified": null,
+    "note": "Hand-authored to demonstrate the Stage 8A curriculum data contract. Not derived from any institutional record."
+  },
+  "not_recorded": [
+    "course_cohort_enrolment",
+    "credit_transfer",
+    "curriculum_revision_history"
+  ],
+  "programmes": [
+    {
+      "programme_id": "demo_programme_computing",
+      "name": "Demonstration Programme in Computing",
+      "institution_name": null,
+      "award": null,
+      "faculty": null,
+      "duration_terms": null,
+      "total_credits": null,
+      "source": {
+        "kind": "demo",
+        "reference": null,
+        "recorded_at": null,
+        "verified": null,
+        "note": null
+      },
+      "curricula": [
+        {
+          "version_id": "demo_version_2026",
+          "version_label": "Demonstration version 2026",
+          "effective_from": null,
+          "effective_to": null,
+          "status": null,
+          "total_credits": null,
+          "source": {
+            "kind": "demo",
+            "reference": null,
+            "recorded_at": null,
+            "verified": null,
+            "note": null
+          },
+          "academic_years": [
+            {
+              "academic_year_id": "2026-2027",
+              "label": null,
+              "start_year": null,
+              "end_year": null,
+              "is_entry_cohort": null,
+              "source": {
+                "kind": "demo",
+                "reference": null,
+                "recorded_at": null,
+                "verified": null,
+                "note": null
+              },
+              "semesters": [
+                {
+                  "semester_id": "2026-2027-s1",
+                  "sequence": null,
+                  "term": null,
+                  "label": null,
+                  "start_date": null,
+                  "end_date": null,
+                  "recorded_credits": null,
+                  "source": {
+                    "kind": "demo",
+                    "reference": null,
+                    "recorded_at": null,
+                    "verified": null,
+                    "note": null
+                  },
+                  "courses": [
+                    {
+                      "course_id": "DEMO-101",
+                      "name": "Statistical Analysis",
+                      "code": null,
+                      "credits": null,
+                      "hours": null,
+                      "description": null,
+                      "level": null,
+                      "delivery_format": null,
+                      "is_elective": null,
+                      "source": {
+                        "kind": "manual_entry",
+                        "reference": null,
+                        "recorded_at": null,
+                        "verified": null,
+                        "note": "Course authored for the demonstration only."
+                      },
+                      "prerequisites": {
+                        "recorded": false,
+                        "course_ids": []
+                      },
+                      "skills": [
+                        {
+                          "skill": "statistical analysis",
+                          "input_skill": "Statistical Analysis",
+                          "canonical_skill": "statistical analysis",
+                          "match_type": "exact",
+                          "role_categories": [
+                            "data_science"
+                          ],
+                          "coverage": null,
+                          "notes": "Explicitly mapped by the author. Never inferred from the course title.",
+                          "source": {
+                            "kind": "manual_entry",
+                            "reference": null,
+                            "recorded_at": null,
+                            "verified": null,
+                            "note": null
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "course_id": "DEMO-102",
+                      "name": "Programming Foundations",
+                      "code": null,
+                      "credits": null,
+                      "hours": null,
+                      "description": null,
+                      "level": null,
+                      "delivery_format": null,
+                      "is_elective": null,
+                      "source": {
+                        "kind": "manual_entry",
+                        "reference": null,
+                        "recorded_at": null,
+                        "verified": null,
+                        "note": null
+                      },
+                      "prerequisites": {
+                        "recorded": true,
+                        "course_ids": []
+                      },
+                      "skills": [
+                        {
+                          "skill": "python",
+                          "input_skill": "Python",
+                          "canonical_skill": "python",
+                          "match_type": "exact",
+                          "role_categories": [
+                            "data_science",
+                            "backend_ml_engineer"
+                          ],
+                          "coverage": null,
+                          "notes": null,
+                          "source": {
+                            "kind": "manual_entry",
+                            "reference": null,
+                            "recorded_at": null,
+                            "verified": null,
+                            "note": null
+                          }
+                        },
+                        {
+                          "skill": "git",
+                          "input_skill": "Git",
+                          "canonical_skill": "git",
+                          "match_type": "exact",
+                          "role_categories": [
+                            "data_science",
+                            "backend_ml_engineer"
+                          ],
+                          "coverage": null,
+                          "notes": null,
+                          "source": {
+                            "kind": "manual_entry",
+                            "reference": null,
+                            "recorded_at": null,
+                            "verified": null,
+                            "note": null
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "course_id": "DEMO-206",
+                      "name": "Data Visualisation Workshop",
+                      "code": null,
+                      "credits": null,
+                      "hours": null,
+                      "description": null,
+                      "level": null,
+                      "delivery_format": null,
+                      "is_elective": null,
+                      "source": {
+                        "kind": "manual_entry",
+                        "reference": null,
+                        "recorded_at": null,
+                        "verified": null,
+                        "note": null
+                      },
+                      "prerequisites": {
+                        "recorded": true,
+                        "course_ids": []
+                      },
+                      "skills": [
+                        {
+                          "skill": "data visualization",
+                          "input_skill": "Data Visualization",
+                          "canonical_skill": "data visualization",
+                          "match_type": "exact",
+                          "role_categories": [
+                            "data_science"
+                          ],
+                          "coverage": null,
+                          "notes": null,
+                          "source": {
+                            "kind": "manual_entry",
+                            "reference": null,
+                            "recorded_at": null,
+                            "verified": null,
+                            "note": null
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "semester_id": "2026-2027-s2",
+                  "sequence": null,
+                  "term": null,
+                  "label": null,
+                  "start_date": null,
+                  "end_date": null,
+                  "recorded_credits": null,
+                  "source": {
+                    "kind": "demo",
+                    "reference": null,
+                    "recorded_at": null,
+                    "verified": null,
+                    "note": null
+                  },
+                  "courses": [
+                    {
+                      "course_id": "DEMO-103",
+                      "name": "Database Systems",
+                      "code": null,
+                      "credits": null,
+                      "hours": null,
+                      "description": null,
+                      "level": null,
+                      "delivery_format": null,
+                      "is_elective": null,
+                      "source": {
+                        "kind": "manual_entry",
+                        "reference": null,
+                        "recorded_at": null,
+                        "verified": null,
+                        "note": null
+                      },
+                      "prerequisites": {
+                        "recorded": true,
+                        "course_ids": [
+                          "DEMO-102"
+                        ]
+                      },
+                      "skills": [
+                        {
+                          "skill": "sql",
+                          "input_skill": "SQL",
+                          "canonical_skill": "sql",
+                          "match_type": "exact",
+                          "role_categories": [
+                            "data_science"
+                          ],
+                          "coverage": null,
+                          "notes": null,
+                          "source": {
+                            "kind": "manual_entry",
+                            "reference": null,
+                            "recorded_at": null,
+                            "verified": null,
+                            "note": null
+                          }
+                        },
+                        {
+                          "skill": "database",
+                          "input_skill": "Database Systems",
+                          "canonical_skill": "database",
+                          "match_type": "exact",
+                          "role_categories": [
+                            "data_science",
+                            "backend_ml_engineer"
+                          ],
+                          "coverage": null,
+                          "notes": null,
+                          "source": {
+                            "kind": "manual_entry",
+                            "reference": null,
+                            "recorded_at": null,
+                            "verified": null,
+                            "note": null
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "course_id": "DEMO-204",
+                      "name": "Technical Communication",
+                      "code": null,
+                      "credits": null,
+                      "hours": null,
+                      "description": null,
+                      "level": null,
+                      "delivery_format": null,
+                      "is_elective": null,
+                      "source": {
+                        "kind": "manual_entry",
+                        "reference": null,
+                        "recorded_at": null,
+                        "verified": null,
+                        "note": null
+                      },
+                      "prerequisites": {
+                        "recorded": false,
+                        "course_ids": []
+                      },
+                      "skills": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "academic_year_id": "2027-2028",
+              "label": null,
+              "start_year": null,
+              "end_year": null,
+              "is_entry_cohort": null,
+              "source": {
+                "kind": "demo",
+                "reference": null,
+                "recorded_at": null,
+                "verified": null,
+                "note": null
+              },
+              "semesters": [
+                {
+                  "semester_id": "2027-2028-s1",
+                  "sequence": null,
+                  "term": null,
+                  "label": null,
+                  "start_date": null,
+                  "end_date": null,
+                  "recorded_credits": null,
+                  "source": {
+                    "kind": "demo",
+                    "reference": null,
+                    "recorded_at": null,
+                    "verified": null,
+                    "note": null
+                  },
+                  "courses": [
+                    {
+                      "course_id": "DEMO-201",
+                      "name": "Applied Machine Learning",
+                      "code": null,
+                      "credits": null,
+                      "hours": null,
+                      "description": null,
+                      "level": null,
+                      "delivery_format": null,
+                      "is_elective": null,
+                      "source": {
+                        "kind": "manual_entry",
+                        "reference": null,
+                        "recorded_at": null,
+                        "verified": null,
+                        "note": null
+                      },
+                      "prerequisites": {
+                        "recorded": true,
+                        "course_ids": [
+                          "DEMO-101",
+                          "DEMO-103"
+                        ]
+                      },
+                      "skills": [
+                        {
+                          "skill": "machine learning",
+                          "input_skill": "Machine Learning",
+                          "canonical_skill": "machine learning",
+                          "match_type": "exact",
+                          "role_categories": [
+                            "data_science"
+                          ],
+                          "coverage": null,
+                          "notes": null,
+                          "source": {
+                            "kind": "manual_entry",
+                            "reference": null,
+                            "recorded_at": null,
+                            "verified": null,
+                            "note": null
+                          }
+                        },
+                        {
+                          "skill": "python",
+                          "input_skill": "Python",
+                          "canonical_skill": "python",
+                          "match_type": "exact",
+                          "role_categories": [
+                            "data_science"
+                          ],
+                          "coverage": null,
+                          "notes": null,
+                          "source": {
+                            "kind": "manual_entry",
+                            "reference": null,
+                            "recorded_at": null,
+                            "verified": null,
+                            "note": null
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "course_id": "DEMO-203",
+                      "name": "Edge Deployment Studio",
+                      "code": null,
+                      "credits": null,
+                      "hours": null,
+                      "description": null,
+                      "level": null,
+                      "delivery_format": null,
+                      "is_elective": null,
+                      "source": {
+                        "kind": "manual_entry",
+                        "reference": null,
+                        "recorded_at": null,
+                        "verified": null,
+                        "note": null
+                      },
+                      "prerequisites": {
+                        "recorded": true,
+                        "course_ids": [
+                          "DEMO-201"
+                        ]
+                      },
+                      "skills": [
+                        {
+                          "skill": "on-device inference",
+                          "input_skill": "on-device inference",
+                          "canonical_skill": null,
+                          "match_type": "unmatched",
+                          "role_categories": [],
+                          "coverage": null,
+                          "notes": "Deliberately outside the 87-skill vocabulary. Reported as unmatched, never dropped and never merged by token signature.",
+                          "source": {
+                            "kind": "manual_entry",
+                            "reference": null,
+                            "recorded_at": null,
+                            "verified": null,
+                            "note": null
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "semester_id": "2027-2028-s2",
+                  "sequence": null,
+                  "term": null,
+                  "label": null,
+                  "start_date": null,
+                  "end_date": null,
+                  "recorded_credits": null,
+                  "source": {
+                    "kind": "demo",
+                    "reference": null,
+                    "recorded_at": null,
+                    "verified": null,
+                    "note": null
+                  },
+                  "courses": [
+                    {
+                      "course_id": "DEMO-202",
+                      "name": "Deep Learning",
+                      "code": null,
+                      "credits": null,
+                      "hours": null,
+                      "description": null,
+                      "level": null,
+                      "delivery_format": null,
+                      "is_elective": null,
+                      "source": {
+                        "kind": "manual_entry",
+                        "reference": null,
+                        "recorded_at": null,
+                        "verified": null,
+                        "note": null
+                      },
+                      "prerequisites": {
+                        "recorded": true,
+                        "course_ids": [
+                          "DEMO-201"
+                        ]
+                      },
+                      "skills": [
+                        {
+                          "skill": "deep learning",
+                          "input_skill": "Deep Learning",
+                          "canonical_skill": "deep learning",
+                          "match_type": "exact",
+                          "role_categories": [
+                            "data_science"
+                          ],
+                          "coverage": null,
+                          "notes": null,
+                          "source": {
+                            "kind": "manual_entry",
+                            "reference": null,
+                            "recorded_at": null,
+                            "verified": null,
+                            "note": null
+                          }
+                        },
+                        {
+                          "skill": "tensorflow",
+                          "input_skill": "TensorFlow",
+                          "canonical_skill": "tensorflow",
+                          "match_type": "exact",
+                          "role_categories": [
+                            "data_science"
+                          ],
+                          "coverage": null,
+                          "notes": null,
+                          "source": {
+                            "kind": "manual_entry",
+                            "reference": null,
+                            "recorded_at": null,
+                            "verified": null,
+                            "note": null
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "course_id": "DEMO-205",
+                      "name": "Capstone Project",
+                      "code": null,
+                      "credits": null,
+                      "hours": null,
+                      "description": null,
+                      "level": null,
+                      "delivery_format": null,
+                      "is_elective": null,
+                      "source": {
+                        "kind": "manual_entry",
+                        "reference": null,
+                        "recorded_at": null,
+                        "verified": null,
+                        "note": null
+                      },
+                      "prerequisites": {
+                        "recorded": true,
+                        "course_ids": [
+                          "DEMO-999"
+                        ]
+                      },
+                      "skills": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
