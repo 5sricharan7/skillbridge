@@ -10,7 +10,7 @@
  * No icon library is added.
  */
 
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import {
   EMPTY_VALUE,
   classificationLabel,
@@ -48,6 +48,34 @@ export function StampIcon({ className = '' }) {
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
       <path d="M7 20.5h10" />
       <path d="M9 17.5h6l-.6-3.1-1.7-1.3V9.6a2.7 2.7 0 0 0-5.4 0v3.5l-1.7 1.3z" />
+    </svg>
+  )
+}
+
+/* One icon per workflow step, so a step is recognisable by shape alone in the
+   vertical stepper, the horizontal flow bar and the preview cards alike. */
+export function RosterIcon({ className = '' }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4.5 6.5h15M4.5 12h15M4.5 17.5h9" />
+    </svg>
+  )
+}
+
+export function PulseIcon({ className = '' }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 19.5h16" />
+      <path d="M7.5 19.5v-5M12 19.5V8M16.5 19.5v-8.5" />
+    </svg>
+  )
+}
+
+export function LinkIcon({ className = '' }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 13.8a4 4 0 0 0 5.7.2l2.6-2.6a4 4 0 0 0-5.7-5.7l-1.5 1.5" />
+      <path d="M14 10.2a4 4 0 0 0-5.7-.2l-2.6 2.6a4 4 0 0 0 5.7 5.7l1.5-1.5" />
     </svg>
   )
 }
@@ -298,40 +326,283 @@ export function GapRow({ row }) {
   )
 }
 
-/* ------------------------------------------------------------- states */
+/* ------------------------------------------------------------- workflow */
 
 /**
- * The empty state before a cohort has been analysed.
+ * The four steps of the institutional workflow, declared once.
  *
- * It states what the page will and will not do, because the two are easy to
- * confuse: it compares a submitted roster against a recorded baseline and does
- * not assess, score, rank or predict anyone.
+ * The vertical stepper, the horizontal flow bar and the preview cards all read
+ * from this list, so the page cannot offer two different vocabularies for the
+ * same sequence. `blurb` is the one-line explanation a reader gets before any
+ * data exists; it describes the step's purpose, never a result.
  */
-export function StartPanel({ onExample }) {
+export const COHORT_STEPS = [
+  {
+    id: 'roster',
+    num: '01',
+    title: 'Roster',
+    blurb: 'Add your students',
+    note: 'One JSON list, one student per record.',
+    Icon: RosterIcon,
+  },
+  {
+    id: 'pulse',
+    num: '02',
+    title: 'Cohort Pulse',
+    blurb: 'Coverage at a glance',
+    note: 'Recorded totals across the roster you submitted.',
+    Icon: PulseIcon,
+  },
+  {
+    id: 'gaps',
+    num: '03',
+    title: 'Skill Gaps',
+    blurb: 'Against the baseline',
+    note: 'Coverage beside recorded demand, widest gap first.',
+    Icon: MapIcon,
+  },
+  {
+    id: 'curriculum',
+    num: '04',
+    title: 'Curriculum Link',
+    blurb: 'Hand off to the CTM',
+    note: 'Open what this role teaches today.',
+    Icon: LinkIcon,
+  },
+]
+
+/**
+ * The horizontal workflow indicator.
+ *
+ * It reports position rather than offering a second way to jump: the stepper is
+ * the page's navigation, and a reader who clicked a step here and a different one
+ * there would have to guess which control won. Steps with no data behind them are
+ * marked `aria-disabled` and stay legible so the sequence is readable from the
+ * start — an unavailable capability is shown and explained, never hidden.
+ */
+export function FlowBar({ active, reached, onSelect, onLocked }) {
   return (
-    <div className="cohort-start">
-      <span className="cohort-start-ic" aria-hidden="true">
-        <CohortIcon />
-      </span>
-      <h2 className="cohort-start-title">Paste a roster to compare it against one role</h2>
-      <p className="cohort-start-lead">
-        The roster is a JSON list of students, each with an identifier and the skills that record names. The service
-        reports, for every skill, how much of the cohort records it and how often that role&rsquo;s recorded baseline names
-        it. The roster is held for that one request and stored nowhere.
-      </p>
-      <ul className="cohort-start-list">
-        <li>Coverage is a share of submitted records. It is not an assessed level, and no student is scored or ranked.</li>
-        <li>A skill the baseline does not record for the role gets no market figure, rather than a demand of zero.</li>
-        <li>The live posting sample is not part of this comparison. It is too small to carry a share.</li>
-      </ul>
-      {onExample ? (
-        <button type="button" className="cohort-example" onClick={onExample}>
-          Fill an example roster
-        </button>
-      ) : null}
+    <nav className="cohort-flow" aria-label="Cohort analysis steps">
+      <ol className="cohort-flow-list">
+        {COHORT_STEPS.map((step, index) => {
+          const isActive = step.id === active
+          const isOpen = reached.includes(step.id)
+          const state = isActive ? 'is-active' : isOpen ? 'is-open' : 'is-locked'
+          return (
+            <li key={step.id} className={`cohort-flow-item ${state}`}>
+              <button
+                type="button"
+                className="cohort-flow-btn"
+                aria-current={isActive ? 'step' : undefined}
+                aria-disabled={isOpen ? undefined : 'true'}
+                onClick={() => (isOpen ? onSelect(step.id) : onLocked(step))}
+              >
+                <span className="cohort-flow-ic" aria-hidden="true">
+                  <step.Icon />
+                </span>
+                <span className="cohort-flow-copy">
+                  <span className="cohort-flow-title">{step.title}</span>
+                  <span className="cohort-flow-sub">{step.blurb}</span>
+                </span>
+              </button>
+              {index < COHORT_STEPS.length - 1 ? (
+                <span className="cohort-flow-link" aria-hidden="true">
+                  <ArrowIcon />
+                </span>
+              ) : null}
+            </li>
+          )
+        })}
+      </ol>
+    </nav>
+  )
+}
+
+/**
+ * The vertical stepper: the page's only navigation between steps.
+ *
+ * Each entry is a real button carrying its number, an icon, a title and one line
+ * of description, so a reader learns the whole sequence from the rail alone. The
+ * rail is an ordered list because the steps are genuinely ordered.
+ */
+export function StepNav({ active, reached, onSelect, onLocked }) {
+  return (
+    <nav className="cohort-stepnav" aria-label="Cohort steps">
+      <ol className="cohort-steps">
+        {COHORT_STEPS.map((step, index) => {
+          const isActive = step.id === active
+          const isOpen = reached.includes(step.id)
+          const state = isActive ? 'is-active' : isOpen ? 'is-open' : 'is-locked'
+          return (
+            <li key={step.id} className={`cohort-step ${state}`}>
+              <button
+                type="button"
+                className="cohort-step-btn"
+                aria-current={isActive ? 'step' : undefined}
+                aria-disabled={isOpen ? undefined : 'true'}
+                onClick={() => (isOpen ? onSelect(step.id) : onLocked(step))}
+              >
+                <span className="cohort-step-badge" aria-hidden="true">
+                  <step.Icon />
+                  <span className="cohort-step-num">{step.num}</span>
+                </span>
+                <span className="cohort-step-copy">
+                  <span className="cohort-step-title">{step.title}</span>
+                  <span className="cohort-step-note">{step.note}</span>
+                </span>
+              </button>
+              {index < COHORT_STEPS.length - 1 ? <span className="cohort-step-rail" aria-hidden="true" /> : null}
+            </li>
+          )
+        })}
+      </ol>
+    </nav>
+  )
+}
+
+/**
+ * Three compact cards for the steps after the roster.
+ *
+ * These are navigation and explanation, not a preview of numbers: each carries a
+ * pictograph of the shape the step produces, and none of them shows a figure
+ * until the service has returned one.
+ */
+export function PreviewCards({ reached, onSelect, onLocked }) {
+  const steps = COHORT_STEPS.filter((step) => step.id !== 'roster')
+  return (
+    <ul className="cohort-previews">
+      {steps.map((step) => {
+        const isOpen = reached.includes(step.id)
+        return (
+          <li key={step.id} className={`cohort-preview${isOpen ? ' is-open' : ' is-locked'}`}>
+            <button
+              type="button"
+              className="cohort-preview-btn"
+              aria-disabled={isOpen ? undefined : 'true'}
+              onClick={() => (isOpen ? onSelect(step.id) : onLocked(step))}
+            >
+              <span className="cohort-preview-top">
+                <span className="cohort-preview-ic" aria-hidden="true">
+                  <step.Icon />
+                </span>
+                <PreviewGlyph step={step.id} />
+              </span>
+              <span className="cohort-preview-title">{step.title}</span>
+              <span className="cohort-preview-note">{step.note}</span>
+              <span className="cohort-preview-go">
+                {isOpen ? 'Open step' : 'Available after analysis'}
+                <ArrowIcon className="cohort-preview-arrow" />
+              </span>
+            </button>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+/**
+ * The pictograph on each preview card: the shape the step draws, at card scale.
+ *
+ * Purely decorative and built from the two comparison tints, so a card reads as
+ * "this step produces bars" before any bar exists.
+ */
+function PreviewGlyph({ step }) {
+  if (step === 'gaps') {
+    return (
+      <svg className="cohort-glyph" viewBox="0 0 64 26" aria-hidden="true" fill="none">
+        <rect x="2" y="4" width="34" height="6" rx="3" className="cohort-glyph-cohort" />
+        <rect x="2" y="16" width="20" height="6" rx="3" className="cohort-glyph-market" />
+      </svg>
+    )
+  }
+  if (step === 'pulse') {
+    return (
+      <svg className="cohort-glyph" viewBox="0 0 64 26" aria-hidden="true" fill="none">
+        <rect x="2" y="13" width="9" height="9" rx="2.5" className="cohort-glyph-cohort" />
+        <rect x="16" y="6" width="9" height="16" rx="2.5" className="cohort-glyph-cohort" />
+        <rect x="30" y="10" width="9" height="12" rx="2.5" className="cohort-glyph-market" />
+        <rect x="44" y="16" width="9" height="6" rx="2.5" className="cohort-glyph-market" />
+      </svg>
+    )
+  }
+  return (
+    <svg className="cohort-glyph" viewBox="0 0 64 26" aria-hidden="true" fill="none">
+      <circle cx="9" cy="13" r="5" className="cohort-glyph-cohort" />
+      <circle cx="32" cy="13" r="5" className="cohort-glyph-market" />
+      <circle cx="55" cy="13" r="5" className="cohort-glyph-cohort" />
+      <path d="M14 13h13M37 13h13" className="cohort-glyph-wire" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+/**
+ * The JSON editor, with a line-number gutter.
+ *
+ * A textarea is kept as the input rather than replaced by a code component: the
+ * repository holds no editor dependency and adding one for a gutter is not
+ * justified. The gutter is `aria-hidden` and mirrors scroll position on scroll,
+ * so it is decoration over a real control rather than a second editor.
+ */
+export function JsonEditor({ id, value, onChange, describedBy, rows = 9 }) {
+  const gutter = useRef(null)
+  const lineCount = value.split('\n').length
+
+  return (
+    <div className="cohort-editor">
+      <div className="cohort-editor-gutter" ref={gutter} aria-hidden="true">
+        {Array.from({ length: lineCount }, (_, index) => (
+          <span key={index}>{index + 1}</span>
+        ))}
+      </div>
+      <textarea
+        id={id}
+        className="cohort-roster"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        onScroll={(event) => {
+          if (gutter.current) gutter.current.scrollTop = event.currentTarget.scrollTop
+        }}
+        spellCheck={false}
+        rows={rows}
+        placeholder={'[\n  { "student_id": "S-001", "skills": ["python", "sql"] }\n]'}
+        aria-describedby={describedBy}
+      />
     </div>
   )
 }
+
+/**
+ * The roster step's illustration: skill tags become one cohort insight.
+ *
+ * It describes the pipeline, not a result. No number is drawn anywhere in it, so
+ * nothing on the initial state can be mistaken for a measurement.
+ */
+export function RosterIllustration() {
+  return (
+    <div className="cohort-figure" aria-hidden="true">
+      <svg viewBox="0 0 220 168" fill="none">
+        <rect x="4" y="10" width="86" height="148" rx="12" className="cohort-figure-panel" />
+        <rect x="18" y="26" width="40" height="9" rx="4.5" className="cohort-figure-tag" />
+        <rect x="18" y="45" width="58" height="9" rx="4.5" className="cohort-figure-tag is-2" />
+        <rect x="18" y="64" width="34" height="9" rx="4.5" className="cohort-figure-tag is-3" />
+        <rect x="18" y="83" width="50" height="9" rx="4.5" className="cohort-figure-tag" />
+        <rect x="18" y="102" width="28" height="9" rx="4.5" className="cohort-figure-tag is-2" />
+        <rect x="18" y="126" width="58" height="18" rx="9" className="cohort-figure-chip" />
+
+        <path d="M98 84h20" className="cohort-figure-wire" strokeWidth="2" strokeLinecap="round" />
+        <path d="m113 79 5 5-5 5" className="cohort-figure-wire" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+
+        <rect x="126" y="34" width="90" height="100" rx="12" className="cohort-figure-panel is-out" />
+        <rect x="140" y="52" width="34" height="34" rx="8" className="cohort-figure-node" />
+        <rect x="182" y="52" width="22" height="34" rx="8" className="cohort-figure-node is-bar" />
+        <rect x="140" y="100" width="62" height="7" rx="3.5" className="cohort-figure-tag is-3" />
+      </svg>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------- states */
 
 export function LoadingPanel() {
   return (
