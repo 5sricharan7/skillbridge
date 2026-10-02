@@ -20,6 +20,7 @@ if __package__:
     from .data.curriculum_recommendations import (
         build_role_curriculum_recommendations,
     )
+    from .data.market_demand import LivePostingsError, build_market_demand
     from .data.proofs import normalize_proofs
     from .engines.optimizer import optimize_roadmap
     from .engines.signal_engine import extract_signals
@@ -42,6 +43,7 @@ else:
     from data.curriculum_recommendations import (
         build_role_curriculum_recommendations,
     )
+    from data.market_demand import LivePostingsError, build_market_demand
     from data.proofs import normalize_proofs
     from engines.optimizer import optimize_roadmap
     from engines.signal_engine import extract_signals
@@ -162,6 +164,30 @@ def get_curriculum_intelligence(role: str) -> dict[str, object]:
                 "message": str(error),
                 "valid_roles": list(error.valid_roles),
             },
+        ) from error
+
+
+@app.get("/market-demand")
+def get_market_demand() -> dict[str, object]:
+    """Serve the prepared market baseline and the live freshness layer, apart.
+
+    ``skills`` and ``roles`` are the finalized artifacts: one prepared static
+    baseline, and the ranking the product already showed. ``fresh_signals`` are
+    individual recent observations from ``live_postings.csv``, published one by
+    one with no count, share, percentage or trend, because a sample this size
+    cannot carry one. The two are never merged, and no live row changes a
+    prepared figure.
+
+    ``live_data_last_updated`` is the newest posting date the live file records,
+    which is ``null`` when there is no live file yet. It is an observed date, not
+    a claim about when a scrape ran.
+    """
+    try:
+        return build_market_demand()
+    except LivePostingsError as error:
+        raise HTTPException(
+            status_code=500,
+            detail={"message": str(error)},
         ) from error
 
 
