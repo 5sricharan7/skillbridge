@@ -2,17 +2,24 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import './careerBridge.css'
 import {
   CAREER_BRIDGE_DEFAULT_BUDGET,
+  CAREER_BRIDGE_TARGET_ROLES,
+  NO_TARGET_ROLE,
   TREND_INSUFFICIENT,
   describeApiError,
   getRecalibrationMarks,
   formatPercent,
   isAbortError,
+  isSupportedTargetRole,
+  API_TARGET_ROLE,
   API_TARGET_ROLE_WARNING,
   ROADMAP_BUDGET_RANGE,
   loadDemoProfile,
   loadDemoRoadmap,
   loadDemoProofs,
   loadDemoVendorFlags,
+  loadRealProofs,
+  loadRealMarketDemand,
+  targetRoleLabel,
   submitRoadmap,
 } from '../data/careerBridgeSource'
 import { extractResumeText, validateResumeFile } from '../data/resumeExtraction'
@@ -180,7 +187,13 @@ const SettingsIcon = () => (
 /* Application-level navigation only. The global routes stay in the top navbar
    and are deliberately not repeated here. Group boundaries are drawn as
    separators, matching the reference's rhythm. Each destination switches the
-   workspace view inside /career-bridge — there is no per-destination route. */
+   workspace view inside /career-bridge — there is no per-destination route.
+
+   `realState` records what the SkillBridge service can source for a destination
+   in Real mode: 'full' and 'partial' destinations render from real records and
+   name their own unavailable fields; 'unavailable' is marked in the navigation
+   and states itself in the view. Every destination stays reachable either way —
+   a capability the API has not grown yet is labelled, never hidden. */
 const CAREER_BRIDGE_VIEWS = {
   overview: 'overview',
   resume: 'resume',
@@ -193,21 +206,34 @@ const CAREER_BRIDGE_VIEWS = {
   settings: 'settings',
 }
 
+const REAL_STATE_NOT_YET = 'unavailable'
+const REAL_NOT_YET_LABEL = 'Not in Real mode'
+
 const SIDEBAR_GROUPS = [
   {
     label: 'Career Bridge',
     items: [
-      { label: 'Overview', icon: <GaugeIcon />, view: CAREER_BRIDGE_VIEWS.overview },
-      { label: 'Resume Analyzer', icon: <FileIcon />, view: CAREER_BRIDGE_VIEWS.resume },
-      { label: 'Role Explorer', icon: <TargetIcon />, view: CAREER_BRIDGE_VIEWS.role },
-      { label: 'Skill Gap', icon: <RankIcon />, view: CAREER_BRIDGE_VIEWS.gap },
-      { label: 'Learning Planner', icon: <ClockIcon />, view: CAREER_BRIDGE_VIEWS.planner },
+      { label: 'Overview', icon: <GaugeIcon />, view: CAREER_BRIDGE_VIEWS.overview, realState: 'full' },
+      { label: 'Resume Analyzer', icon: <FileIcon />, view: CAREER_BRIDGE_VIEWS.resume, realState: 'partial' },
+      { label: 'Role Explorer', icon: <TargetIcon />, view: CAREER_BRIDGE_VIEWS.role, realState: 'full' },
+      { label: 'Skill Gap', icon: <RankIcon />, view: CAREER_BRIDGE_VIEWS.gap, realState: 'full' },
+      { label: 'Learning Planner', icon: <ClockIcon />, view: CAREER_BRIDGE_VIEWS.planner, realState: 'full' },
     ],
   },
   {
     items: [
-      { label: 'Market Insights', icon: <GlobeIcon />, view: CAREER_BRIDGE_VIEWS.market },
-      { label: 'Resources', icon: <BulbIcon />, view: CAREER_BRIDGE_VIEWS.resources },
+      {
+        label: 'Market Insights',
+        icon: <GlobeIcon />,
+        view: CAREER_BRIDGE_VIEWS.market,
+        realState: 'partial',
+      },
+      {
+        label: 'Resources',
+        icon: <BulbIcon />,
+        view: CAREER_BRIDGE_VIEWS.resources,
+        realState: REAL_STATE_NOT_YET,
+      },
     ],
   },
   {
@@ -227,20 +253,12 @@ function CareerBridgeSidebar({ view, mode, onChange }) {
             {group.label && <span className="cb-sidebar-label">{group.label}</span>}
             {group.items.map((item) => {
               const isActive = item.view === view
-              const unavailableInRealMode =
-                mode === 'real' &&
-                ![
-                  CAREER_BRIDGE_VIEWS.overview,
-                  CAREER_BRIDGE_VIEWS.resume,
-                  CAREER_BRIDGE_VIEWS.role,
-                ].includes(item.view)
+              const isRealUnsupported = mode === 'real' && item.realState === REAL_STATE_NOT_YET
               return (
                 <button
                   key={item.label}
                   type="button"
                   className={`cb-sidebar-link${isActive ? ' is-active' : ''}`}
-                  disabled={unavailableInRealMode}
-                  title={unavailableInRealMode ? 'Analysis views are available in Demo mode' : undefined}
                   aria-current={isActive ? 'page' : undefined}
                   onClick={() => onChange(item.view)}
                 >
@@ -248,6 +266,7 @@ function CareerBridgeSidebar({ view, mode, onChange }) {
                     {item.icon}
                   </span>
                   {item.label}
+                  {isRealUnsupported && <span className="cb-state-tag">{REAL_NOT_YET_LABEL}</span>}
                 </button>
               )
             })}
@@ -465,7 +484,7 @@ function ResumeInputCard({ file, status, text, error, onSelect, onClear }) {
   )
 }
 
-function JobDescriptionInputCard({ value, onChange, size = 'compact' }) {
+function JobDescriptionInputCard({ value, onChange, size = 'compact', children }) {
   const inputId = useId()
   const length = value.length
   const hasText = length > 0
@@ -507,21 +526,99 @@ function JobDescriptionInputCard({ value, onChange, size = 'compact' }) {
           {hasText ? 'Captured, not yet submitted' : 'Paste a job description to begin'}
         </span>
       </div>
+
+      {/* The target-role select shares this card rather than taking a fourth cell
+          in the three-column input row, so the approved Overview layout and its
+          shared row height are unchanged. */}
+      {children}
+    </div>
+  )
+}
+
+/* The only roles the SkillBridge service can plan, by backend identifier. The
+   identifier is what is sent as `target_role`; the label is presentation only.
+   "No target role" is a real option, not a placeholder: the service then plans
+   from the resume and the job description alone. */
+function TargetRoleSelect({ value, onChange, id, describedBy }) {
+  return (
+    <div className="cb-field">
+      <label className="cb-summary-label" htmlFor={id}>
+        Target role
+      </label>
+      <select
+        id={id}
+        className="cb-select"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        aria-describedby={describedBy}
+      >
+        <option value={NO_TARGET_ROLE}>No target role — plan from resume and job description</option>
+        {CAREER_BRIDGE_TARGET_ROLES.map((role) => (
+          <option key={role.id} value={role.id}>
+            {role.label}
+          </option>
+        ))}
+      </select>
+      <p className="cb-input-hint" id={describedBy}>
+        {value === NO_TARGET_ROLE
+          ? 'Sent without target_role. The service ranks the skills your resume and job description mention.'
+          : `Sent as target_role "${value}". The service adds that role's recorded hours and prerequisites.`}
+      </p>
+    </div>
+  )
+}
+
+/* The Role Explorer card for the same control the Overview stage note shows. */
+function TargetRoleCard({ value, onChange }) {
+  const inputId = useId()
+
+  return (
+    <div className="cb-summary-card cb-input-card">
+      <div className="cb-summary-top">
+        <span className="cb-summary-icon">
+          <TargetIcon />
+        </span>
+        <span className="cb-summary-label">Target role</span>
+        <span className="cb-state-tag">Backend role</span>
+      </div>
+      <TargetRoleSelect
+        id={inputId}
+        value={value}
+        onChange={onChange}
+        describedBy={`${inputId}-hint`}
+      />
+      <div className="cb-summary-foot">
+        <span className="cb-file-facts">
+          {value === NO_TARGET_ROLE ? 'No role sent' : `${CAREER_BRIDGE_TARGET_ROLES.length} roles the service can plan`}
+        </span>
+      </div>
     </div>
   )
 }
 
 const { min: MIN_HOURS, max: MAX_HOURS } = ROADMAP_BUDGET_RANGE
 
-/* The tick marks under the rail are the budget values at which the engine
-   re-weights hours and re-ranks skills, so they are the interaction made
-   visible rather than decoration. They are centred on the thumb by insetting
-   by half the thumb width, so a tick at 90h sits under a slider set to 90h. */
-function TimeCard({ budget, onChange, committedHours, band, marks, skillCount, mode = 'demo' }) {
-  const remaining = Math.max(0, budget - committedHours)
+/* The tick marks under the rail are the budget values at which the demo engine
+   re-weights hours and re-ranks skills, so they are the interaction made visible
+   rather than decoration. They are centred on the thumb by insetting by half the
+   thumb width, so a tick at 90h sits under a slider set to 90h. In Real mode the
+   service re-plans at every value, so no mark is singled out. */
+function TimeCard({
+  budget,
+  onChange,
+  committedHours,
+  availableHours,
+  hasRoute,
+  band,
+  marks,
+  skillCount,
+  mode = 'demo',
+}) {
+  const planned = Number.isFinite(availableHours) ? availableHours : budget
+  const remaining = Math.max(0, planned - committedHours)
   const ratio = ((budget - MIN_HOURS) / (MAX_HOURS - MIN_HOURS)) * 100
   const track = `linear-gradient(90deg, var(--cb-violet) 0%, var(--cb-violet) ${ratio}%, var(--cb-violet-soft) ${ratio}%, var(--cb-violet-soft) 100%)`
-  const committedRatio = budget > 0 ? Math.min(100, (committedHours / budget) * 100) : 0
+  const committedRatio = planned > 0 ? Math.min(100, (committedHours / planned) * 100) : 0
 
   return (
     <div className="cb-summary-card cb-time-card">
@@ -548,9 +645,9 @@ function TimeCard({ budget, onChange, committedHours, band, marks, skillCount, m
         style={{ background: track }}
         aria-label="Available learning hours"
         aria-valuetext={
-          mode === 'demo'
-            ? `${budget} hours. ${committedHours} hours committed, ${remaining} hours remaining.`
-              : `${budget} hours available for your roadmap.`
+          mode === 'demo' || hasRoute
+            ? `${budget} hours. ${committedHours} hours planned, ${remaining} hours remaining.`
+            : `${budget} hours available for your roadmap.`
         }
       />
 
@@ -558,7 +655,7 @@ function TimeCard({ budget, onChange, committedHours, band, marks, skillCount, m
         {marks.map((mark) => (
           <span
             key={mark.hours}
-            className={`cb-mark${mark.hours === band ? ' is-active' : ''}`}
+            className={`cb-mark${mode === 'demo' && mark.hours === band ? ' is-active' : ''}`}
             style={{ '--pct': mark.percent / 100 }}
           />
         ))}
@@ -587,9 +684,36 @@ function TimeCard({ budget, onChange, committedHours, band, marks, skillCount, m
             <span className="cb-summary-detail">All {skillCount} stops re-ranked, none dropped</span>
           </div>
         </>
+      ) : hasRoute ? (
+        /* Available, used and remaining are the service's own numbers: the budget
+           it echoed back and the hours of the route it returned. */
+        <>
+          <div className="cb-budget">
+            <span className="cb-budget-track">
+              <span className="cb-budget-used" style={{ width: `${committedRatio}%` }} />
+            </span>
+            <span className="cb-budget-readout">
+              <span>
+                <b>{committedHours}h</b> planned
+              </span>
+              <span>
+                <b>{remaining}h</b> remaining
+              </span>
+            </span>
+          </div>
+
+          <div className="cb-summary-foot">
+            <span className="cb-summary-status">
+              {planned}h budget · {skillCount} stops planned by the service
+            </span>
+            <span className="cb-summary-detail">Move the dial to request a new plan</span>
+          </div>
+        </>
       ) : (
         <div className="cb-summary-foot">
-          <span className="cb-file-state">{budget} hours available for your roadmap</span>
+          <span className="cb-file-state">
+            {budget} hours sent as budget_hours · no plan requested yet
+          </span>
         </div>
       )}
     </div>
@@ -637,7 +761,7 @@ function Disclosure({ label, iconKey, children, defaultOpen = false }) {
   )
 }
 
-function DetailPanel({ skill, total }) {
+function DetailPanel({ skill, total, mode = 'demo' }) {
   if (!skill) {
     return (
       <aside className="cb-panel cb-detail" aria-live="polite">
@@ -649,7 +773,13 @@ function DetailPanel({ skill, total }) {
 
   const velocity = skill.velocity
   const facts = [
-    { key: 'demand', label: 'Demand trend', value: `${skill.trend} · ${skill.demand}` },
+    {
+      key: 'demand',
+      label: 'Demand trend',
+      /* Real mode has no per-skill demand label: the service returns one only for
+         skills it holds a velocity history for, and those are shown below. */
+      value: skill.demand ? `${skill.trend} · ${skill.demand}` : `${skill.trend} · ${NOT_RECORDED}`,
+    },
     { key: 'position', label: 'Position', value: `${skill.position} of ${total}` },
     {
       key: 'prerequisites',
@@ -718,6 +848,7 @@ function DetailPanel({ skill, total }) {
               {formatPercent(velocity.percentage_change)} · baseline {velocity.baseline_count} to latest{' '}
               {velocity.latest_count}
             </p>
+            {mode === 'real' && <span className="cb-fact-note">From the service's recorded history · not live market data</span>}
           </div>
         )}
       </div>
@@ -768,6 +899,10 @@ const PROOF_ICONS = {
    unavailable rather than rendering an empty chip row. */
 const NOT_PROVIDED = 'Not provided by the service'
 
+/* Distinct from NOT_PROVIDED: the field exists in the contract but the service
+   holds no measurement for this skill, which is an answer, not a gap in the API. */
+const NOT_RECORDED = 'Not recorded for this skill'
+
 /* Each row is its own disclosure, so a reader opens only the method they care
    about. The heading wraps the button rather than sitting inside it — <h3> does
    not accept a <button>, the button does not accept an <h3>. */
@@ -793,6 +928,14 @@ function ProofRow({ proof, skill, flagCount }) {
             <span className="cb-proof-title">{proof.title}</span>
             <span className="cb-proof-summary">{proof.summary}</span>
           </span>
+          {/* Real proofs carry the service's own provenance: a recorded measurement
+              or an explicitly synthetic one. Nothing is presented as recorded
+              unless the service marked it recorded. */}
+          {proof.flag && (
+            <span className={`cb-proof-flag${proof.flag.startsWith('Synthetic') ? ' is-synthetic' : ''}`}>
+              {proof.flag}
+            </span>
+          )}
           <span className="cb-proof-state" aria-hidden="true">
             <ChevronIcon />
           </span>
@@ -817,6 +960,14 @@ function ProofRow({ proof, skill, flagCount }) {
                 : 'No external vendor signals available for this role yet, so the route rests on local analysis alone.'}
             </p>
           )}
+
+          {proof.facts?.length ? (
+            <ul className="cb-proof-facts">
+              {proof.facts.map((fact) => (
+                <li key={fact}>{fact}</li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       )}
     </article>
@@ -908,6 +1059,10 @@ function ResumeAnalyzerView({ mode, profile, resume, onSelect, onClear, roadmap 
                 The file is read locally. When you generate a roadmap, its extracted text is sent as plain text to the
                 SkillBridge service; the file itself is never uploaded.
               </p>
+              <p>
+                Skill extraction, parsing and match percentages stay in your browser — the service has no resume-analysis
+                endpoint, so there is nothing for it to return here.
+              </p>
             </>
           )}
         </ViewNote>
@@ -916,13 +1071,29 @@ function ResumeAnalyzerView({ mode, profile, resume, onSelect, onClear, roadmap 
   )
 }
 
-function RoleExplorerView({ mode, profile, roadmap, jobDescription, onChangeJobDescription }) {
+function RoleExplorerView({
+  mode,
+  profile,
+  roadmap,
+  jobDescription,
+  onChangeJobDescription,
+  targetRole,
+  onChangeTargetRole,
+}) {
+  const selectedRole = isSupportedTargetRole(targetRole) ? targetRole : null
+
   return (
     <ViewShell
       label="Role Explorer"
       title={mode === 'demo' ? profile.targetRole : 'Job description'}
       icon={<TargetIcon />}
-      meta={mode === 'demo' ? 'Demo role' : `${jobDescription.length.toLocaleString()} characters`}
+      meta={
+        mode === 'demo'
+          ? 'Demo role'
+          : `${jobDescription.length.toLocaleString()} characters${
+              selectedRole ? ` · ${targetRoleLabel(selectedRole)}` : ''
+            }`
+      }
     >
       <div className="cb-view-split is-stacked">
         {mode === 'demo' ? (
@@ -933,17 +1104,27 @@ function RoleExplorerView({ mode, profile, roadmap, jobDescription, onChangeJobD
             detail={`${profile.jobDescription.detail} in demo data`}
           />
         ) : (
-          <JobDescriptionInputCard value={jobDescription} onChange={onChangeJobDescription} size="tall" />
+          <>
+            <JobDescriptionInputCard value={jobDescription} onChange={onChangeJobDescription} size="tall" />
+            <TargetRoleCard value={targetRole} onChange={onChangeTargetRole} />
+          </>
         )}
         <ViewNote label={mode === 'demo' ? 'Demo data' : 'What happens next'} icon={FACT_ICONS.position}>
           {mode === 'demo' ? (
             <p>This role profile and its roadmap are curated demo content, not an analysis of a real job description.</p>
           ) : (
-            <p>Generate a roadmap from the Overview to submit this job description with your extracted resume text.</p>
+            <>
+              <p>Generate a roadmap from the Overview to submit this job description with your extracted resume text.</p>
+              <p>
+                Target role changes request a new plan on their own, once the Overview has both a resume and a job
+                description. This screen compares no roles: it is the input that scopes the plan.
+              </p>
+            </>
           )}
         </ViewNote>
       </div>
 
+      {mode === 'real' && <ClosestFitNotAvailable />}
       {mode === 'demo' && (
         <ul className="cb-view-list">
           {roadmap.map((skill) => (
@@ -960,9 +1141,43 @@ function RoleExplorerView({ mode, profile, roadmap, jobDescription, onChangeJobD
   )
 }
 
-function SkillGapView({ roadmap, onSelect }) {
+/* Closest-fit roles is the other Path B mode, and it has no source at all.
+   POST /roadmap is the only route that accepts a resume and a job description,
+   and it takes the target role from the caller and returns a plan for it; every
+   curriculum route takes a role on its own. So nothing the service holds measures
+   this learner against a role, and ordering the roles here would be a number
+   nobody recorded. The screen says so instead. Recorded market demand for all
+   three roles is on Market Insights, and it is about the corpus, not the learner. */
+function ClosestFitNotAvailable() {
+  return (
+    <div className="cb-view-empty">
+      <span className="cb-view-empty-ic" aria-hidden="true">
+        <TargetIcon />
+      </span>
+      <p>
+        The service cannot score this learner against a role. It plans the role you choose rather than comparing roles,
+        and none of its endpoints return a fit between your resume and a role.
+      </p>
+      <p className="cb-view-aside">
+        Ranking the roles for you here would mean inventing that comparison, so this screen states the gap instead.
+        Recorded demand for every role is on the Market Insights screen, and it describes the prepared corpus rather than
+        how well you fit.
+      </p>
+    </div>
+  )
+}
+
+function SkillGapView({ roadmap, onSelect, mode }) {
   return (
     <ViewShell label="Skill Gap" title="Priority skills" icon={<RankIcon />} meta={`${roadmap.length} skills`}>
+      {/* Neither source returns the size of the matched set, so the route is listed
+          in full without claiming to be a filtered slice of a larger one. */}
+      {mode === 'real' && (
+        <p className="cb-view-aside">
+          These are the {roadmap.length} stops the service planned inside the budget you submitted. It does not report
+          how many other skills it matched, so nothing is claimed about what was left out.
+        </p>
+      )}
       <ul className="cb-view-list cb-view-list-wide">
         {roadmap.map((skill) => (
           <li key={skill.id}>
@@ -987,7 +1202,18 @@ function SkillGapView({ roadmap, onSelect }) {
 
 /* The planner reuses the Overview slider and its budget state directly, so the
    two views can never disagree about the current time allocation. */
-function LearningPlannerView({ budget, onBudgetChange, committedHours, band, marks, roadmap, skillCount }) {
+function LearningPlannerView({
+  mode,
+  budget,
+  onBudgetChange,
+  committedHours,
+  availableHours,
+  band,
+  marks,
+  roadmap,
+  skillCount,
+  pending,
+}) {
   return (
     <ViewShell label="Learning Planner" title="Time budget" icon={<ClockIcon />} meta={`${skillCount} skills`}>
       <div className="cb-view-split">
@@ -995,15 +1221,25 @@ function LearningPlannerView({ budget, onBudgetChange, committedHours, band, mar
           budget={budget}
           onChange={onBudgetChange}
           committedHours={committedHours}
+          availableHours={availableHours}
+          hasRoute={mode === 'demo' || skillCount > 0}
           band={band}
           marks={marks}
           skillCount={skillCount}
+          mode={mode}
         />
-        <ViewNote label="Effect on the route" icon={FACT_ICONS.position}>
-          <p>
-            At {budget} hours the engine re-weights every stop. {committedHours} hours are committed and{' '}
-            {Math.max(0, budget - committedHours)} hours remain.
-          </p>
+        <ViewNote label={mode === 'demo' ? 'Effect on the route' : 'Requesting a plan'} icon={FACT_ICONS.position}>
+          {mode === 'demo' ? (
+            <p>
+              At {budget} hours the engine re-weights every stop. {committedHours} hours are committed and{' '}
+              {Math.max(0, budget - committedHours)} hours remain.
+            </p>
+          ) : (
+            <p>
+              The service plans against budget_hours, not local bands. Move the dial and it re-plans the route from your
+              resume and job description{pending ? ', one request shortly after you stop moving' : ''}.
+            </p>
+          )}
         </ViewNote>
       </div>
 
@@ -1021,19 +1257,264 @@ function LearningPlannerView({ budget, onBudgetChange, committedHours, band, mar
   )
 }
 
-function MarketInsightsView({ roadmap }) {
+/* Path B, market demand. Every figure below is a value the service recorded for
+   the prepared corpus in backend/data: the posting count each role recorded, the
+   share of those postings that name a skill, the Notebook 2 classification, and
+   the recorded velocity score. Roles are listed in recorded posting order, which
+   is a presentational sort of the only cross-role number the artifacts hold; it
+   is not a fit score, and it says nothing about the learner. The service records
+   a velocity score with no direction label, so none is inferred from its sign. */
+const MARKET_SKILLS_SHOWN = 5
+
+/* The live section lists recent postings individually. A small sample is shown whole
+   rather than trimmed into an implied "top" list, because ordering them by any score
+   would be inventing a ranking the source does not provide. */
+const MARKET_SIGNALS_SHOWN = 6
+
+function marketShare(value) {
+  return Number.isFinite(value) ? `${Math.round(value * 100)}%` : 'Not recorded'
+}
+
+function marketVelocityScore(value) {
+  return Number.isFinite(value) ? (Math.round(value * 100) / 100).toFixed(2) : 'Not recorded'
+}
+
+function marketCorpusSummary(corpus) {
+  const parts = []
+  if (Number.isFinite(corpus.datasetRows)) parts.push(`${corpus.datasetRows.toLocaleString()} postings`)
+  if (corpus.dateMin && corpus.dateMax) parts.push(`covering ${corpus.dateMin} to ${corpus.dateMax}`)
+  if (corpus.postingsArtifact) parts.push(`from ${corpus.postingsArtifact}`)
+  return parts.length ? parts.join(', ') : 'The service recorded no corpus bounds.'
+}
+
+/** The calendar day the source recorded, and nothing more.
+ *
+ *  The day is taken from the source's own ISO string rather than from a `Date`
+ *  parse, so the UI cannot shift a posting into a different day through a local
+ *  timezone. A value that is not an ISO date is reported as unrecorded. */
+function marketPostedDay(iso) {
+  const match = /^(\d{4}-\d{2}-\d{2})/.exec(String(iso ?? '').trim())
+  return match ? match[1] : null
+}
+
+function RecordedRoleDemand({ market }) {
+  const { roles, corpus, unavailableRoles } = market
+
   return (
-    <ViewShell label="Market Insights" title="Demand signals" icon={<GlobeIcon />} meta={`${roadmap.length} skills`}>
+    <>
+      <p className="cb-fact-label cb-view-section-label">Recorded role demand</p>
+      <p className="cb-view-aside">
+        A prepared static corpus, not a live feed — {marketCorpusSummary(corpus)}. Roles are listed by the posting count each
+        one recorded. Frequency is the share of that role's own postings naming the skill, and the velocity score is the
+        artifact's recorded number; the service attaches no direction to it, so none is read into the sign.
+        {unavailableRoles.length ? ` The service did not answer for ${unavailableRoles.join(', ')}.` : ''}
+      </p>
+      <ul className="cb-view-list cb-view-list-wide">
+        {roles.map((role, index) => {
+          const top = [...role.skills]
+            .filter((skill) => Number.isFinite(skill.frequency))
+            .sort((a, b) => b.frequency - a.frequency || a.name.localeCompare(b.name))
+            .slice(0, MARKET_SKILLS_SHOWN)
+          const scored = role.skills.map((skill) => skill.velocityScore).filter(Number.isFinite)
+
+          return (
+            <li key={role.id}>
+              <span className="cb-view-rank">{String(index + 1).padStart(2, '0')}</span>
+              <span className="cb-view-body">
+                <span className="cb-view-name">{role.label}</span>
+                <span className="cb-view-why">
+                  {top.length
+                    ? top.map((skill) => `${skill.name} ${marketShare(skill.frequency)}`).join(' · ')
+                    : 'No skill frequency recorded for this role'}
+                </span>
+                <span className="cb-view-why">
+                  {role.skills.length} skills recorded
+                  {scored.length
+                    ? ` · velocity scores ${marketVelocityScore(Math.min(...scored))} to ${marketVelocityScore(Math.max(...scored))}`
+                    : ' · no velocity score recorded'}
+                  {role.unrecordedVelocity === 0 ? ' · every skill records one' : ` · ${role.unrecordedVelocity} record none`}
+                </span>
+              </span>
+              <span className="cb-view-meta">
+                {role.plannable ? (
+                  <span className="cb-chip cb-chip-type">Plannable</span>
+                ) : (
+                  <span className="cb-chip cb-chip-hours">Not plannable</span>
+                )}
+                <span className="cb-view-demand">
+                  {Number.isFinite(role.postings) ? `${role.postings.toLocaleString()} postings` : 'Not recorded'}
+                </span>
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+    </>
+  )
+}
+
+/* Recent live postings, kept apart from the prepared ranking above.
+ *
+ * Everything shown is a field the source recorded for one posting: its title,
+ * company, location, own tags and own date. Nothing is counted, pooled, ranked or
+ * given a direction here. The sample is too small to carry an opening count, a
+ * share, a growth figure or a trend, so the service declares those unavailable and
+ * this section states the limit instead of estimating around it. A live posting
+ * never adds to a prepared posting count, and a live tag is never resolved into a
+ * prepared skill.
+ *
+ * `lastUpdated` is the newest posting date the live file records — an observed date,
+ * not a claim about when a scrape ran.
+ */
+function FreshSignals({ live, freshSignals, lastUpdated }) {
+  const sourceName = live.sourceName
+  const shown = freshSignals.slice(0, MARKET_SIGNALS_SHOWN)
+  const observed = lastUpdated ? marketPostedDay(lastUpdated) : null
+
+  return (
+    <>
+      <p className="cb-fact-label cb-view-section-label">Fresh signals</p>
+      <p className="cb-view-aside">
+        Recent live postings{sourceName ? ` from ${sourceName}` : ''}, shown one posting at a time with the skills its own
+        listing named. This sample is not merged into the prepared corpus above and does not change it: it is too small to
+        support an opening count, a demand share, a growth figure or a trend, so none is shown.
+      </p>
+      <p className="cb-view-aside">
+        {observed ? (
+          <>Live data last updated {observed}, the newest posting date recorded.</>
+        ) : (
+          <>No live data available yet. The prepared corpus above is unaffected.</>
+        )}
+      </p>
+
+      {shown.length ? (
+        <>
+          <ul className="cb-view-list cb-view-list-wide">
+            {shown.map((record) => (
+              <li key={record.jobId}>
+                <span className="cb-view-body">
+                  <span className="cb-view-name">{record.title}</span>
+                  <span className="cb-view-why">
+                    {[record.company, record.location].filter(Boolean).join(' · ') || 'Location not reported'}
+                  </span>
+                  <span className="cb-view-why">
+                    {record.skills.length ? record.skills.join(' · ') : 'No skills tagged by the source'}
+                  </span>
+                </span>
+                <span className="cb-view-meta">
+                  <span className="cb-view-demand">
+                    {marketPostedDay(record.postedAt) ? `Posted ${marketPostedDay(record.postedAt)}` : 'Date not recorded'}
+                  </span>
+                  <span className="cb-view-why">
+                    {record.experienceRequired ? `Experience: ${record.experienceRequired}` : 'Experience not reported'}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="cb-view-aside">
+            Showing {shown.length} of {freshSignals.length} recorded.
+          </p>
+        </>
+      ) : (
+        <div className="cb-view-empty">
+          <p>The service has no live postings recorded yet.</p>
+          <p className="cb-view-aside">
+            The prepared corpus above is unaffected — it is read from the finalized artifacts, not from this feed.
+          </p>
+        </div>
+      )}
+
+      {live.sourceHomepage && sourceName ? (
+        /* A plain follow link, and deliberately no rel="nofollow": the source asks
+           that it be named and linked so the traffic returns. */
+        <p className="cb-view-aside">
+          Source:{' '}
+          <a href={live.sourceHomepage} target="_blank" rel="noopener noreferrer">
+            {sourceName}
+          </a>
+          . Postings are reproduced as the source recorded them.
+        </p>
+      ) : null}
+    </>
+  )
+}
+
+/* A failed corpus read is an error, never a quiet fall back to demo figures, so
+   the empty state names what is missing rather than showing an empty ranking. */
+function MarketDemandUnavailable({ status, error }) {
+  if (status === 'loading') {
+    return (
+      <div className="cb-view-empty">
+        <span className="cb-view-empty-ic" aria-hidden="true">
+          <GlobeIcon />
+        </span>
+        <p>Reading the service's recorded corpus for every role.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="cb-view-empty">
+      <span className="cb-view-empty-ic" aria-hidden="true">
+        <GlobeIcon />
+      </span>
+      <p>{error || 'The service returned no recorded market demand.'}</p>
+      <p className="cb-view-aside">
+        Market demand reads a prepared static corpus, so there is nothing to substitute when that read fails.
+      </p>
+    </div>
+  )
+}
+
+function MarketInsightsView({ roadmap, mode, market, marketStatus, marketError }) {
+  /* Every figure on this screen is one the service holds: for the plan, a recorded
+     history if it has one or a plain statement that it does not; for demand, the
+     role's recorded posting count and skill frequencies. No ranking, pool or count
+     is inferred from skills that do. */
+  const recordedSkills = roadmap.filter((skill) => skill.velocity.baseline_count !== null).length
+
+  /* The header counts what the sections under it actually hold: the roles the
+     service recorded demand for, and the live postings it holds. The plan's
+     velocity coverage only says something once a plan exists, so a plan with no
+     skills is left out rather than printed as "0 of 0 recorded" beside postings
+     the service does hold. */
+  const headerCounts = market ? [`${market.roles.length} roles`, `${market.freshSignals.length} live postings`] : []
+  if (roadmap.length) headerCounts.push(`${recordedSkills}/${roadmap.length} skills with history`)
+
+  const meta = mode === 'demo' ? `${roadmap.length} skills` : headerCounts.join(' · ') || 'No counts held yet'
+
+  return (
+    <ViewShell label="Market Insights" title="Demand signals" icon={<GlobeIcon />} meta={meta}>
+      {mode === 'real' &&
+        (market ? <RecordedRoleDemand market={market} /> : <MarketDemandUnavailable status={marketStatus} error={marketError} />)}
+
+      {mode === 'real' && market && (
+        <FreshSignals
+          live={market.live}
+          freshSignals={market.freshSignals}
+          lastUpdated={market.liveDataLastUpdated}
+        />
+      )}
+
+      {mode === 'real' && <p className="cb-fact-label cb-view-section-label">Planned skills</p>}
+      {mode === 'real' && (
+        <p className="cb-view-aside">
+          From the service's per-skill velocity history — a recorded series, not a live market feed. Skills it holds no
+          history for are listed as unrecorded rather than estimated.
+        </p>
+      )}
       <ul className="cb-view-list cb-view-list-wide">
         {roadmap.map((skill) => (
           <li key={skill.id}>
             <span className="cb-view-rank">{String(skill.position).padStart(2, '0')}</span>
             <span className="cb-view-name">{skill.name}</span>
-            <span className="cb-view-demand">{skill.demand}</span>
+            <span className="cb-view-demand">{skill.demand ?? NOT_RECORDED}</span>
             <span className="cb-view-body">
               <span className="cb-view-why">
-                {formatPercent(skill.velocity.percentage_change)} · baseline {skill.velocity.baseline_count} to latest{' '}
-                {skill.velocity.latest_count}
+                {skill.velocity.baseline_count === null
+                  ? 'No velocity history for this skill'
+                  : `${formatPercent(skill.velocity.percentage_change)} · baseline ${skill.velocity.baseline_count} to latest ${skill.velocity.latest_count}`}
               </span>
             </span>
             <TrendMark trend={skill.trend} />
@@ -1044,7 +1525,30 @@ function MarketInsightsView({ roadmap }) {
   )
 }
 
-function ResourcesView({ roadmap }) {
+/* Resources is the one destination the service cannot source. It stays in the
+   navigation and states exactly that, rather than showing an empty list of the
+   real route's skills with nothing under them. */
+function ResourcesView({ roadmap, mode }) {
+  if (mode === 'real') {
+    return (
+      <ViewShell label="Resources" title="Recommended resources" icon={<BulbIcon />} meta="Not in Real mode">
+        <div className="cb-view-empty">
+          <span className="cb-view-empty-ic" aria-hidden="true">
+            <BulbIcon />
+          </span>
+          <p>
+            The SkillBridge service returns no courses, documents or links, so there is nothing real to recommend for the{' '}
+            {roadmap.length} planned {roadmap.length === 1 ? 'skill' : 'skills'}.
+          </p>
+          <p className="cb-view-aside">
+            Curriculum recommendations stay in Demo mode. Adding them to Real mode means adding a resource source to the
+            service first.
+          </p>
+        </div>
+      </ViewShell>
+    )
+  }
+
   return (
     <ViewShell label="Resources" title="Recommended resources" icon={<BulbIcon />} meta={`${roadmap.length} skills`}>
       <div className="cb-view-resources">
@@ -1140,7 +1644,39 @@ function TopMatchingRolesCard({ profile, roadmapLength, onOpen }) {
   )
 }
 
-function JobMarketInsightsCard({ roadmap, onOpen }) {
+/* Real mode has no ranking to show: the service plans for one role at a time and
+   scores nothing against the others. So this tile lists the roles it can plan,
+   names the one in use, and says that comparison is not something it returns. */
+function TargetRoleSummaryCard({ roadmapLength, targetRole, onOpen }) {
+  const selected = isSupportedTargetRole(targetRole)
+
+  return (
+    <SummaryTile
+      title="Target role"
+      icon={<TargetIcon />}
+      actionLabel="Change"
+      actionName="Change target role"
+      onAction={onOpen}
+    >
+      <p className="cb-tile-lead">{selected ? targetRoleLabel(targetRole) : 'No target role'}</p>
+      <p className="cb-tile-sub">
+        {roadmapLength} planned {roadmapLength === 1 ? 'skill' : 'skills'}
+        {selected ? ' · role hours included' : ' · resume and job description only'}
+      </p>
+      <ul className="cb-tile-roles">
+        {CAREER_BRIDGE_TARGET_ROLES.map((role) => (
+          <li key={role.id} className={role.id === targetRole ? 'is-selected' : undefined}>
+            <span className="cb-tile-role-name">{role.label}</span>
+            <span className="cb-tile-role-id">{role.id}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="cb-tile-sub">Matching and comparison across roles are not returned by the service.</p>
+    </SummaryTile>
+  )
+}
+
+function JobMarketInsightsCard({ roadmap, onOpen, mode }) {
   if (!roadmap.length) {
     return (
       <SummaryTile title="Job market insights" icon={<GlobeIcon />}>
@@ -1149,9 +1685,14 @@ function JobMarketInsightsCard({ roadmap, onOpen }) {
     )
   }
 
-  const ranked = [...roadmap].sort((a, b) => b.velocity.percentage_change - a.velocity.percentage_change)
+  /* A bar needs a recorded series. Skills the service holds no history for are
+     counted and stated, never ranked against ones it does — a null change is not
+     a small change, and treating it as one would invent a ranking. */
+  const recorded = roadmap.filter((skill) => skill.velocity.baseline_count !== null)
+  const unrecorded = roadmap.length - recorded.length
+  const ranked = [...recorded].sort((a, b) => b.velocity.percentage_change - a.velocity.percentage_change)
   const peak = Math.max(1, ...ranked.map((skill) => skill.velocity.percentage_change))
-  const rising = roadmap.filter((skill) => skill.trend === 'Rising').length
+  const rising = recorded.filter((skill) => skill.trend === 'Rising').length
   const leader = ranked[0]
 
   return (
@@ -1162,39 +1703,88 @@ function JobMarketInsightsCard({ roadmap, onOpen }) {
       actionName="View all job market insights"
       onAction={onOpen}
     >
-      <p className="cb-tile-lead">
-        {rising} of {roadmap.length} stops rising
-      </p>
-      <p className="cb-tile-sub">
-        Strongest signal {leader.name} {formatPercent(leader.velocity.percentage_change)}
-      </p>
+      {mode === 'real' ? (
+        <>
+          <p className="cb-tile-lead">
+            {recorded.length} of {roadmap.length} stops recorded
+          </p>
+          <p className="cb-tile-sub">
+            From the service's velocity history, not a live market feed.
+            {unrecorded > 0 && ` ${unrecorded} not recorded.`}
+          </p>
+          {leader && (
+            <ul className="cb-tile-bars">
+              {ranked.slice(0, 3).map((skill) => {
+                const change = skill.velocity.percentage_change
+                const isFall = change < 0
+                return (
+                  <li key={skill.id}>
+                    <span className="cb-tile-bar-name">{skill.name}</span>
+                    <span className="cb-tile-meter">
+                      <span
+                        className={`cb-tile-bar${isFall ? ' is-fall' : ''}`}
+                        style={{ width: `${isFall ? 0 : (change / peak) * 100}%` }}
+                      />
+                    </span>
+                    <span className={`cb-tile-bar-val${isFall ? ' is-fall' : ''}`}>{formatPercent(change)}</span>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </>
+      ) : (
+        <>
+          <p className="cb-tile-lead">
+            {rising} of {roadmap.length} stops rising
+          </p>
+          <p className="cb-tile-sub">
+            Strongest signal {leader.name} {formatPercent(leader.velocity.percentage_change)}
+          </p>
 
-      <ul className="cb-tile-bars">
-        {ranked.slice(0, 3).map((skill) => {
-          const change = skill.velocity.percentage_change
-          const isFall = change < 0
-          return (
-            <li key={skill.id}>
-              <span className="cb-tile-bar-name">{skill.name}</span>
-              <span className="cb-tile-meter">
-                <span
-                  className={`cb-tile-bar${isFall ? ' is-fall' : ''}`}
-                  style={{ width: `${isFall ? 0 : (change / peak) * 100}%` }}
-                />
-              </span>
-              <span className={`cb-tile-bar-val${isFall ? ' is-fall' : ''}`}>{formatPercent(change)}</span>
-            </li>
-          )
-        })}
-      </ul>
+          <ul className="cb-tile-bars">
+            {ranked.slice(0, 3).map((skill) => {
+              const change = skill.velocity.percentage_change
+              const isFall = change < 0
+              return (
+                <li key={skill.id}>
+                  <span className="cb-tile-bar-name">{skill.name}</span>
+                  <span className="cb-tile-meter">
+                    <span
+                      className={`cb-tile-bar${isFall ? ' is-fall' : ''}`}
+                      style={{ width: `${isFall ? 0 : (change / peak) * 100}%` }}
+                    />
+                  </span>
+                  <span className={`cb-tile-bar-val${isFall ? ' is-fall' : ''}`}>{formatPercent(change)}</span>
+                </li>
+              )
+            })}
+          </ul>
+        </>
+      )}
     </SummaryTile>
   )
 }
 
-function RecommendedResourcesCard({ roadmap, onOpen }) {
-  const picks = roadmap.slice(0, 2).flatMap((skill) =>
-    skill.resources.slice(0, 2).map((resource) => ({ resource, skill })),
-  ).slice(0, 3)
+function RecommendedResourcesCard({ roadmap, onOpen, mode }) {
+  /* The service returns no resources, so this tile states that instead of listing
+     the route's skills with nothing under them. */
+  if (mode === 'real') {
+    return (
+      <SummaryTile title="Recommended resources" icon={<BulbIcon />}>
+        <p className="cb-tile-lead">Not available in Real mode</p>
+        <p className="cb-tile-sub">
+          The service returns no courses or links for the {roadmap.length} planned{' '}
+          {roadmap.length === 1 ? 'skill' : 'skills'}.
+        </p>
+      </SummaryTile>
+    )
+  }
+
+  const picks = roadmap
+    .slice(0, 2)
+    .flatMap((skill) => skill.resources.slice(0, 2).map((resource) => ({ resource, skill })))
+    .slice(0, 3)
 
   return (
     <SummaryTile
@@ -1218,12 +1808,16 @@ function RecommendedResourcesCard({ roadmap, onOpen }) {
   )
 }
 
-function OverviewSummaryRow({ profile, roadmap, onOpenRoles, onOpenMarket, onOpenResources }) {
+function OverviewSummaryRow({ profile, roadmap, onOpenRoles, onOpenMarket, onOpenResources, mode, targetRole }) {
   return (
     <div className="cb-tiles">
-      <TopMatchingRolesCard profile={profile} roadmapLength={roadmap.length} onOpen={onOpenRoles} />
-      <JobMarketInsightsCard roadmap={roadmap} onOpen={onOpenMarket} />
-      <RecommendedResourcesCard roadmap={roadmap} onOpen={onOpenResources} />
+      {mode === 'demo' ? (
+        <TopMatchingRolesCard profile={profile} roadmapLength={roadmap.length} onOpen={onOpenRoles} />
+      ) : (
+        <TargetRoleSummaryCard roadmapLength={roadmap.length} targetRole={targetRole} onOpen={onOpenRoles} />
+      )}
+      <JobMarketInsightsCard roadmap={roadmap} onOpen={onOpenMarket} mode={mode} />
+      <RecommendedResourcesCard roadmap={roadmap} onOpen={onOpenResources} mode={mode} />
     </div>
   )
 }
@@ -1263,7 +1857,7 @@ function RoadmapStatus({ loading, pending, error, hasRoute }) {
   if (pending && hasRoute) {
     return (
       <p className="cb-status is-updating" aria-live="polite">
-        Recomputing the route for the new time budget…
+        Requesting an updated plan from the service…
       </p>
     )
   }
@@ -1277,7 +1871,19 @@ function RoadmapStatus({ loading, pending, error, hasRoute }) {
    lifecycle. Each effect cancels its own in-flight request, which both prevents a
    slow response overwriting a newer budget and avoids overlapping requests when
    the slider moves quickly. */
-const EMPTY_ROADMAP = { items: [], band: CAREER_BRIDGE_DEFAULT_BUDGET, committedHours: 0 }
+const EMPTY_ROADMAP = {
+  items: [],
+  band: CAREER_BRIDGE_DEFAULT_BUDGET,
+  committedHours: 0,
+  availableHours: null,
+  targetRole: null,
+}
+
+/* A route request is a real POST /roadmap, so moving the budget dial or changing
+   target role waits for the input to settle before it spends a request. Job
+   description text is deliberately not in this path: it is pasted and submitted
+   with the explicit button, not per keystroke. */
+const REAL_REPLAN_DELAY_MS = 350
 
 export default function CareerBridge() {
   const [mode, setMode] = useState('demo')
@@ -1286,6 +1892,11 @@ export default function CareerBridge() {
   const [evidenceOpen, setEvidenceOpen] = useState(false)
   const [view, setView] = useState(CAREER_BRIDGE_VIEWS.overview)
 
+  /* The configured role seeds the selector when the service can plan it; an
+     unsupported configured value is dropped to "no target role" rather than
+     offered as a choice that would fail. */
+  const [targetRole, setTargetRole] = useState(isSupportedTargetRole(API_TARGET_ROLE) ? API_TARGET_ROLE : NO_TARGET_ROLE)
+
   const [roadmapData, setRoadmapData] = useState(EMPTY_ROADMAP)
   const [proofs, setProofs] = useState([])
   const [vendorFlags, setVendorFlags] = useState([])
@@ -1293,6 +1904,9 @@ export default function CareerBridge() {
   const [roadmapPending, setRoadmapPending] = useState(false)
   const [roadmapError, setRoadmapError] = useState(null)
   const [auxError, setAuxError] = useState(null)
+  const [market, setMarket] = useState(null)
+  const [marketStatus, setMarketStatus] = useState('idle')
+  const [marketError, setMarketError] = useState(null)
 
   /* Real inputs remain separate from Demo data. The extracted text is submitted
      only when the user explicitly requests a real roadmap. */
@@ -1346,30 +1960,93 @@ export default function CareerBridge() {
   }, [budget, mode])
 
   /* Evidence and vendor flags decorate the route rather than drive it, so a
-     failure in one is reported instead of being swallowed into an empty list. */
+     failure in one is reported instead of being swallowed into an empty list.
+     Real mode reads the service's own /proofs records and labels each one by its
+     recorded provenance; Demo mode keeps the curated set. */
   useEffect(() => {
-    if (mode !== 'demo') {
-      setProofs([])
-      setVendorFlags([])
-      setAuxError(null)
+    let active = true
+    const controller = new AbortController()
+
+    if (mode === 'demo') {
+      Promise.all([
+        loadDemoProofs({ signal: controller.signal }),
+        loadDemoVendorFlags({ signal: controller.signal }),
+      ])
+        .then(([loadedProofs, loadedFlags]) => {
+          if (!active) return
+          setProofs(loadedProofs)
+          setVendorFlags(loadedFlags)
+          setAuxError(null)
+        })
+        .catch((error) => {
+          if (!active) return
+          setAuxError({
+            title: 'Demo insights unavailable',
+            message: error instanceof Error ? error.message : 'The local demo insights could not be loaded.',
+          })
+        })
+
+      return () => {
+        active = false
+        controller.abort()
+      }
+    }
+
+    /* Real mode asks the service for its role-scoped proof record only, so a role
+       that has none returns an empty panel rather than another role's figures. */
+    setProofs([])
+    setVendorFlags([])
+    loadRealProofs({ targetRole: isSupportedTargetRole(targetRole) ? targetRole : null, signal: controller.signal })
+      .then((rows) => {
+        if (!active) return
+        setProofs(rows)
+        setAuxError(null)
+      })
+      .catch((error) => {
+        if (!active || isAbortError(error)) return
+        setProofs([])
+        setAuxError({
+          title: 'Recorded insights unavailable',
+          message: error instanceof Error ? error.message : 'The service did not return its recorded proofs.',
+        })
+      })
+
+    return () => {
+      active = false
+      controller.abort()
+    }
+  }, [mode, targetRole])
+
+  /* Market demand covers every role the service records, not the role being
+     planned, so it is fetched once per mode and deliberately does not re-run for a
+     target-role or budget change — those must not spend another corpus read. It
+     keys off `mode` alone, aborts on cleanup, and ignores a response that arrives
+     after the mode has moved on. */
+  useEffect(() => {
+    if (mode === 'demo') {
+      setMarket(null)
+      setMarketStatus('idle')
+      setMarketError(null)
       return undefined
     }
 
     let active = true
     const controller = new AbortController()
-    Promise.all([loadDemoProofs({ signal: controller.signal }), loadDemoVendorFlags({ signal: controller.signal })])
-      .then(([loadedProofs, loadedFlags]) => {
+    setMarket(null)
+    setMarketStatus('loading')
+    setMarketError(null)
+
+    loadRealMarketDemand({ signal: controller.signal })
+      .then((loaded) => {
         if (!active) return
-        setProofs(loadedProofs)
-        setVendorFlags(loadedFlags)
-        setAuxError(null)
+        setMarket(loaded)
+        setMarketStatus('ready')
       })
       .catch((error) => {
-        if (!active) return
-        setAuxError({
-          title: 'Demo insights unavailable',
-          message: error instanceof Error ? error.message : 'The local demo insights could not be loaded.',
-        })
+        if (!active || isAbortError(error)) return
+        setMarket(null)
+        setMarketStatus('error')
+        setMarketError(error instanceof Error ? error.message : 'The service did not return its recorded market demand.')
       })
 
     return () => {
@@ -1381,6 +2058,10 @@ export default function CareerBridge() {
   const { band, committedHours } = roadmapData
 
   const roadmap = roadmapData.items
+  /* The budget the service actually planned against, which is its own echoed
+     value rather than the number the slider currently shows. */
+  const availableHours = Number.isFinite(roadmapData.availableHours) ? roadmapData.availableHours : budget
+  const plannedRole = isSupportedTargetRole(roadmapData.targetRole) ? roadmapData.targetRole : null
 
   /* Before the first response there is nothing to select, so the panel keeps its
      documented empty state rather than reaching into an empty array. */
@@ -1393,6 +2074,9 @@ export default function CareerBridge() {
 
   const handleSelect = (id) => setSelectedId(id)
 
+  /* Anything that changes the submitted text invalidates the route on screen: the
+     plan belongs to the text it was built from, so keeping it would misdescribe
+     what the service was actually asked. */
   const invalidateRealRoadmap = () => {
     roadmapRequestId.current += 1
     roadmapRequest.current?.abort()
@@ -1403,9 +2087,14 @@ export default function CareerBridge() {
     setRoadmapPending(false)
   }
 
+  /* Budget and target role are real request parameters, so changing them re-plans
+     the existing route after a short settle delay instead of discarding it. */
   const handleBudgetChange = (event) => {
-    if (mode === 'real') invalidateRealRoadmap()
     setBudget(Number(event.target.value))
+  }
+
+  const handleTargetRoleChange = (value) => {
+    setTargetRole(value)
   }
 
   const handleModeChange = (nextMode) => {
@@ -1469,31 +2158,25 @@ export default function CareerBridge() {
     setResume({ file: null, text: '', status: 'idle', error: null })
   }
 
-  const handleRealSubmit = () => {
-    if (resume.status !== 'ready' || !resume.text.trim() || !jobDescription.trim()) {
-      setRoadmapError({
-        kind: 'invalid-input',
-        title: 'Complete both inputs first',
-        message: 'Select and extract a resume, then enter a job description before generating a roadmap.',
-        detail: '',
-      })
-      return
-    }
-
+  /* One real roadmap request, shared by the explicit submit and the settle-then-
+   re-plan path. `quiet` keeps an existing route on screen while a replacement is
+   being fetched, so moving the dial never blanks the list it describes. */
+  const requestRealRoadmap = ({ quiet = false } = {}) => {
     roadmapRequestId.current += 1
     const requestId = roadmapRequestId.current
     const controller = new AbortController()
     roadmapRequest.current?.abort()
     roadmapRequest.current = controller
-    setRoadmapData(EMPTY_ROADMAP)
+    if (!quiet) setRoadmapData(EMPTY_ROADMAP)
     setRoadmapError(null)
-    setRoadmapLoading(true)
+    setRoadmapLoading(!quiet)
     setRoadmapPending(true)
 
     submitRoadmap({
       resumeText: resume.text,
       jdText: jobDescription,
       budgetHours: budget,
+      targetRole,
       signal: controller.signal,
     })
       .then((data) => {
@@ -1511,6 +2194,35 @@ export default function CareerBridge() {
         setRoadmapPending(false)
       })
   }
+
+  const handleRealSubmit = () => {
+    if (resume.status !== 'ready' || !resume.text.trim() || !jobDescription.trim()) {
+      setRoadmapError({
+        kind: 'invalid-input',
+        title: 'Complete both inputs first',
+        message: 'Select and extract a resume, then enter a job description before generating a roadmap.',
+        detail: '',
+      })
+      return
+    }
+
+    requestRealRoadmap()
+  }
+
+  /* Re-planning only happens for a route that already exists, because the explicit
+     button is what asks for the first one. The guards are read when the effect runs
+     — the same render that changed the budget or role — so they are not stale, and
+     they are deliberately not dependencies: a resume becoming ready or a job
+     description changing must not spend a request on its own. */
+  useEffect(() => {
+    if (mode !== 'real') return undefined
+    if (!roadmap.length) return undefined
+    if (resume.status !== 'ready' || !resume.text.trim() || !jobDescription.trim()) return undefined
+
+    const timer = setTimeout(() => requestRealRoadmap({ quiet: true }), REAL_REPLAN_DELAY_MS)
+    return () => clearTimeout(timer)
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [mode, budget, targetRole])
 
   /* Skill Gap lists the same stops the Overview detail panel describes, so picking
      one there selects it and returns to the view that can explain it. */
@@ -1590,13 +2302,22 @@ export default function CareerBridge() {
                 onSelect={handleResumeSelect}
                 onClear={handleResumeClear}
               />
-              <JobDescriptionInputCard value={jobDescription} onChange={handleJobDescriptionChange} />
+              <JobDescriptionInputCard value={jobDescription} onChange={handleJobDescriptionChange}>
+                <TargetRoleSelect
+                  id="cb-target-role-overview"
+                  value={targetRole}
+                  onChange={handleTargetRoleChange}
+                  describedBy="cb-target-role-overview-hint"
+                />
+              </JobDescriptionInputCard>
             </>
           )}
           <TimeCard
             budget={budget}
             onChange={handleBudgetChange}
             committedHours={committedHours}
+            availableHours={availableHours}
+            hasRoute={roadmap.length > 0}
             band={band}
             marks={marks}
             skillCount={roadmap.length}
@@ -1609,13 +2330,21 @@ export default function CareerBridge() {
           <div className="cb-stage-note">
             <strong>{roadmap.length ? 'Live roadmap from your inputs' : 'Build a roadmap from your inputs'}</strong>
             <p>
-              The extracted resume text, job description and available hours are sent to the SkillBridge service when
-              you submit. The file itself is never uploaded.
+              The extracted resume text, job description, target role and available hours are sent to the SkillBridge
+              service when you submit. The file itself is never uploaded.
             </p>
             {API_TARGET_ROLE_WARNING && (
               <p role="status">
                 Configured target role “{API_TARGET_ROLE_WARNING}” is not currently plannable. It will be omitted from
                 the request; the roadmap will use your resume and job description.
+              </p>
+            )}
+            {roadmap.length > 0 && (
+              <p>
+                {plannedRole
+                  ? `Planned for ${targetRoleLabel(plannedRole)} at ${availableHours}h.`
+                  : `Planned without a target role at ${availableHours}h.`}{' '}
+                Changing the hours or the role requests a new plan.
               </p>
             )}
             <div className="cb-real-submit-row">
@@ -1649,12 +2378,14 @@ export default function CareerBridge() {
 
         {/* The route itself still renders when this fails; the missing decoration
             is named rather than shown as if it had returned nothing. */}
-        {isDemo && auxError && isOverview && (
+        {auxError && isOverview && (
           <div className="cb-status is-error" role="status">
             <span className="cb-status-title">{auxError.title}</span>
             <p className="cb-status-body">
-              {auxError.message} The roadmap route is unaffected; its evidence and vendor
-              annotations are unavailable.
+              {auxError.message}{' '}
+              {isDemo
+                ? 'The roadmap route is unaffected; its evidence and vendor annotations are unavailable.'
+                : 'The roadmap route is unaffected; its recorded evidence is unavailable.'}
             </p>
           </div>
         )}
@@ -1705,7 +2436,7 @@ export default function CareerBridge() {
             )}
           </section>
 
-          <DetailPanel skill={selected} total={roadmap.length} />
+          <DetailPanel skill={selected} total={roadmap.length} mode={mode} />
         </div>
         )}
 
@@ -1727,26 +2458,41 @@ export default function CareerBridge() {
             roadmap={roadmap}
             jobDescription={jobDescription}
             onChangeJobDescription={handleJobDescriptionChange}
+            targetRole={targetRole}
+            onChangeTargetRole={handleTargetRoleChange}
           />
         )}
 
-        {isDemo && view === CAREER_BRIDGE_VIEWS.gap && <SkillGapView roadmap={roadmap} onSelect={handleGapSelect} />}
+        {view === CAREER_BRIDGE_VIEWS.gap && (
+          <SkillGapView roadmap={roadmap} onSelect={handleGapSelect} mode={mode} />
+        )}
 
-        {isDemo && view === CAREER_BRIDGE_VIEWS.planner && (
+        {view === CAREER_BRIDGE_VIEWS.planner && (
           <LearningPlannerView
+            mode={mode}
             budget={budget}
             onBudgetChange={handleBudgetChange}
             committedHours={committedHours}
+            availableHours={availableHours}
             band={band}
             marks={marks}
             roadmap={roadmap}
             skillCount={roadmap.length}
+            pending={roadmapPending}
           />
         )}
 
-        {isDemo && view === CAREER_BRIDGE_VIEWS.market && <MarketInsightsView roadmap={roadmap} />}
+        {view === CAREER_BRIDGE_VIEWS.market && (
+          <MarketInsightsView
+            roadmap={roadmap}
+            mode={mode}
+            market={market}
+            marketStatus={marketStatus}
+            marketError={marketError}
+          />
+        )}
 
-        {isDemo && view === CAREER_BRIDGE_VIEWS.resources && <ResourcesView roadmap={roadmap} />}
+        {view === CAREER_BRIDGE_VIEWS.resources && <ResourcesView roadmap={roadmap} mode={mode} />}
 
         {isDemo && view === CAREER_BRIDGE_VIEWS.community && (
           <ComingSoonView
@@ -1766,17 +2512,19 @@ export default function CareerBridge() {
           />
         )}
 
-        {isDemo && isOverview && (
+        {isOverview && (
           <OverviewSummaryRow
             profile={profile}
             roadmap={roadmap}
             onOpenRoles={() => setView(CAREER_BRIDGE_VIEWS.role)}
             onOpenMarket={() => setView(CAREER_BRIDGE_VIEWS.market)}
             onOpenResources={() => setView(CAREER_BRIDGE_VIEWS.resources)}
+            mode={mode}
+            targetRole={targetRole}
           />
         )}
 
-        {isDemo && isOverview && (
+        {isOverview && (
           <>
             <section className="cb-evidence" aria-labelledby="cb-evidence-title">
             <h2 className="cb-evidence-heading" id="cb-evidence-title">
@@ -1800,16 +2548,24 @@ export default function CareerBridge() {
           </h2>
           {evidenceOpen && (
             <div className="cb-evidence-panel cb-evidence-in" id="cb-evidence-panel">
-              <div className="cb-proofs">
-                {proofs.map((proof) => (
-                  <ProofRow
-                    proof={proof}
-                    skill={selected}
-                    flagCount={vendorFlags.length}
-                    key={proof.id}
-                  />
-                ))}
-              </div>
+              {proofs.length ? (
+                <div className="cb-proofs">
+                  {proofs.map((proof) => (
+                    <ProofRow
+                      proof={proof}
+                      skill={selected}
+                      flagCount={vendorFlags.length}
+                      key={proof.id}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="cb-detail-empty">
+                  {isDemo
+                    ? 'No demo insights to show.'
+                    : 'The service records no proof for this role yet, so there is nothing measured to show here.'}
+                </p>
+              )}
             </div>
           )}
         </section>
@@ -1823,7 +2579,10 @@ export default function CareerBridge() {
           ) : (
             <>
               <span>Real input mode · live service</span>
-              <span>Generate roadmap sends your resume text, job description and hours to the SkillBridge service.</span>
+              <span>
+                Generate roadmap sends your resume text, job description, target role and hours to the SkillBridge
+                service.
+              </span>
             </>
           )}
         </footer>

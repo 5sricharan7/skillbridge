@@ -540,6 +540,61 @@
   outline-offset: 2px;
 }
 
+/* Target role -----------------------------------------------------------------
+   A native <select> rather than a custom listbox: it is keyboard- and
+   screen-reader-correct without a popup implementation, and the role set is two
+   entries plus "no role", which a menu would not earn. It reuses the textarea's
+   field treatment so the two inputs read as one control family. */
+.cb-field {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+
+.cb-select {
+  width: 100%;
+  margin-top: 6px;
+  padding: 9px 10px;
+  border: 1px solid var(--cb-line);
+  border-radius: 8px;
+  background: var(--cb-paper);
+  color: var(--cb-ink);
+  font-family: var(--cb-font-body);
+  font-size: 13px;
+  line-height: 1.4;
+  transition: border-color 0.2s ease;
+}
+
+.cb-select:hover {
+  border-color: var(--cb-lilac);
+}
+
+.cb-select:focus-visible {
+  border-color: var(--cb-violet);
+  outline: 2px solid var(--cb-violet);
+  outline-offset: 2px;
+}
+
+/* Availability tags read as metadata, never as the control's own state, so they
+   stay flat: no violet fill that would compete with a selected role. */
+.cb-state-tag {
+  margin-left: auto;
+  padding: 3px 7px;
+  border: 1px solid var(--cb-line);
+  border-radius: 999px;
+  background: var(--cb-paper);
+  color: var(--cb-ink-2);
+  font-size: 9.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* In the sidebar the tag follows the label, so it cannot steal the right edge. */
+.cb-sidebar-link .cb-state-tag {
+  margin-left: 8px;
+}
+
 .cb-mode-row {
   display: flex;
   align-items: center;
@@ -1397,6 +1452,15 @@
   color: var(--cb-muted);
 }
 
+/* The scope of a figure, kept under the figure it qualifies. */
+.cb-fact-note {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--cb-ink-2);
+}
+
 .cb-fact-ic {
   width: 16px;
   height: 16px;
@@ -1547,12 +1611,29 @@
   text-overflow: ellipsis;
 }
 
+/* Stacked inside a body rather than sitting beside the row's metrics, the name is
+   an inline span, so the ellipsis above never applies to it and nowrap alone runs a
+   long title straight off the panel. It is a block here and wraps instead. A posting
+   title is what identifies the row, so it is not cut to an ellipsis. */
+.cb-view-body > .cb-view-name {
+  display: block;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+
 .cb-view-why {
   display: block;
   font-size: 11.5px;
   line-height: 1.45;
   color: var(--cb-muted);
   margin-top: 2px;
+  min-width: 0;
+  /* Skill tags, companies and locations arrive from the source as written and are
+     not edited to fit. One without spaces cannot break on its own, so it has to be
+     allowed to break inside its row rather than widen the page. */
+  overflow-wrap: anywhere;
 }
 
 .cb-view-hours,
@@ -1613,8 +1694,14 @@
 .cb-view-meta {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
   flex: none;
+  min-width: 0;
+  /* The metrics a row carries differ per view, and a scraped experience string can
+     be longer than the desktop row. Letting them stack keeps the row on one line
+     when it fits and off the page edge when it does not. */
+  flex-wrap: wrap;
 }
 
 .cb-view-resources {
@@ -1662,6 +1749,25 @@
   font-size: 13px;
   color: var(--cb-ink-2);
   margin: 0;
+}
+
+/* A scope note on a workspace view: what the numbers below do and do not cover.
+   It sits above the list so a reader meets the limit before the figures. */
+.cb-view-aside {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border-left: 3px solid var(--cb-line);
+  background: var(--cb-paper);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--cb-ink-2);
+}
+
+/* A view that carries more than one kind of evidence needs a label per kind, so
+   the reader can tell the role figures from the planned-skill figures. Spacing
+   only: the type is .cb-fact-label's. */
+.cb-view-section-label {
+  margin: 18px 0 8px;
 }
 
 /* Overview summary tiles ---------------------------------------------------- */
@@ -1858,6 +1964,44 @@
   flex-direction: column;
 }
 
+/* The roles the service can plan, listed with the identifier that is actually sent
+   as target_role. The selected one is marked by weight, a rule and text position
+   rather than a fill alone. */
+.cb-tile-roles {
+  list-style: none;
+  margin: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cb-tile-roles > li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--cb-line-soft);
+  color: var(--cb-ink-2);
+}
+
+.cb-tile-roles > li.is-selected {
+  border-bottom-color: var(--cb-violet-soft);
+  color: var(--cb-ink);
+  font-weight: 600;
+}
+
+.cb-tile-role-id {
+  font-family: var(--cb-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 10.5px;
+  color: var(--cb-ink-2);
+  font-weight: 400;
+}
+
+.cb-tile-roles > li.is-selected .cb-tile-role-id {
+  color: var(--cb-violet-deep);
+  font-weight: 600;
+}
+
 .cb-tile-resources > li {
   padding: 7px 0;
   border-bottom: 1px solid var(--cb-line-soft);
@@ -2042,6 +2186,7 @@
 
 .cb-proof-titles {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 3px;
   min-width: 0;
@@ -2058,6 +2203,45 @@
 .cb-proof-summary {
   font-size: 11.5px;
   line-height: 1.45;
+  color: var(--cb-ink-2);
+}
+
+/* Provenance, stated in words. A recorded measurement and an explicitly
+   synthetic one are both labelled, and the synthetic label says so — that
+   distinction is the point of showing the tag at all. */
+.cb-proof-flag {
+  flex: none;
+  align-self: flex-start;
+  margin-top: 7px;
+  padding: 3px 7px;
+  border: 1px solid var(--cb-line);
+  border-radius: 999px;
+  background: var(--cb-paper);
+  color: var(--cb-ink-2);
+  font-size: 9.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.cb-proof-flag.is-synthetic {
+  border-style: dashed;
+  border-color: var(--cb-ink-2);
+  color: var(--cb-ink-2);
+}
+
+/* The figures behind a proof, each copied from the served record. */
+.cb-proof-facts {
+  margin: 8px 0 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cb-proof-facts > li {
+  font-size: 12px;
+  line-height: 1.5;
   color: var(--cb-ink-2);
 }
 
@@ -2330,6 +2514,13 @@
     font-size: 16px;
   }
 
+  /* iOS Safari zooms a focused field below 16px, so the select matches the
+     textarea rather than keeping the desktop type size. */
+  .cb-select {
+    font-size: 16px;
+    min-height: 44px;
+  }
+
   .cb-icon-btn {
     width: 44px;
     height: 44px;
@@ -2365,6 +2556,14 @@
 
   .cb-view-pick {
     flex-wrap: wrap;
+  }
+
+  /* The header count is nowrap on the desktop row beside the title. A view that
+     counts more than one kind of record needs two or three of them, which no longer
+     fits beside the title here, so it wraps under it instead of widening the page. */
+  .cb-count {
+    white-space: normal;
+    text-align: right;
   }
 
   /* Hit areas: the desktop pill, disclosure row and tile link are all well under
