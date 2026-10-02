@@ -1,0 +1,1209 @@
+/* -----------------------------------------------------------------------
+   Institution / Cohort Dashboard — workspace styles.
+   Scoped to .cohort; does not touch global/homepage styles.
+
+   This is the fourth workspace token scope. Its values are identical to the
+   `--cb-*` set in careerBridge.css and the `--ctm-*` set in ctm.css,
+   re-declared here so this page stands alone and never inherits or fights the
+   homepage or another workspace. Every value is a documented DESIGN.md §3
+   colour: no hex value below is new, so no token was added to the design system
+   to produce this page.
+
+   The page is an application workspace, not a report: a compact header, one
+   roster composer, and one gap map. The map is the working surface — a
+   two-bar comparison per skill, a search that also matches student ids, and
+   filters that split the skills the baseline records from the ones it does not.
+   Nothing is hidden behind an interaction that would hide a recorded value:
+   every figure on screen is a value the service recorded.
+
+   One rule runs through the whole sheet: a missing measurement is drawn as a
+   missing measurement. A skill the baseline does not record gets no market bar
+   and an explicit "not recorded" note, because a zero-width bar beside a dash
+   reads as a recorded demand of zero, which is a different and untrue fact.
+   ----------------------------------------------------------------------- */
+
+.cohort {
+  /* Token re-declaration — identical values to careerBridge.css --cb-* */
+  --cohort-paper: #f8f7f3;
+  --cohort-card: #ffffff;
+  --cohort-ink: #15131c;
+  --cohort-ink-2: #4c4859;
+  --cohort-muted: #8d8794;
+  --cohort-violet: #5b46d8;
+  --cohort-violet-deep: #4433b0;
+  --cohort-lilac: #a79bf0;
+  --cohort-violet-soft: #e7e2fb;
+  --cohort-violet-pale: #f2effc;
+  /* Text drawn on a filled violet surface: the active role and filter chip.
+     5.9:1 against --cohort-violet, so it clears AA at body size. */
+  --cohort-on-violet: #ffffff;
+  --cohort-line: #e5e2e4;
+  --cohort-line-soft: #ece9e6;
+  --cohort-font-display: var(--font-display, 'Space Grotesk', 'Segoe UI', system-ui, sans-serif);
+  --cohort-font-body: var(--font-body, 'Public Sans', 'Segoe UI', system-ui, sans-serif);
+
+  /* Two comparison series, so a reader never has to match a bar to a legend by
+     position. Cohort coverage and recorded market demand are given distinct
+     treatments — a solid fill and a lighter, inset fill — because the two are
+     different kinds of thing, not two moods of the same thing. The names are
+     always printed beside them, so colour is never the only channel. */
+  --cohort-cohort-bar: #5b46d8;
+  --cohort-market-bar: #a79bf0;
+
+  /* Attention, used only where a recorded figure is one a reader should act on:
+     a skill nobody records, or one the baseline names more often than the
+     cohort does. Warm, matching --cb-fall. */
+  --cohort-attn-text: #c2503b;
+  --cohort-attn-bg: #f8e9e5;
+  --cohort-ahead-text: #1e7a4f;
+  --cohort-ahead-bg: #e6f1eb;
+
+  /* Three-tier classification tints, identical to the CTM set: the recorded
+     classes are core / mid / noise, a magnitude tier, so this is the documented
+     three-tier chip treatment and not a red/amber/green severity ramp. */
+  --cohort-tier-high-text: #4d3cc0;
+  --cohort-tier-high-bg: #f3eefb;
+  --cohort-tier-high-line: #ddd5f5;
+  --cohort-tier-mid-text: #7a6246;
+  --cohort-tier-mid-bg: #f4efe6;
+  --cohort-tier-mid-line: #e5dccb;
+  --cohort-tier-low-text: #3e7a55;
+  --cohort-tier-low-bg: #eaf3ec;
+  --cohort-tier-low-line: #d5e5db;
+
+  --cohort-ease: cubic-bezier(0.32, 0.72, 0.24, 1);
+  --cohort-radius: 16px;
+  --cohort-radius-tile: 8px;
+
+  position: relative;
+  background: var(--cohort-paper);
+  color: var(--cohort-ink);
+  /* Clears the fixed global navbar; this page has no per-page header above it. */
+  padding-top: clamp(72px, 8vw, 80px);
+  min-height: 100vh;
+}
+
+/* Visually hidden, still announced: the roster textarea and the search field
+   both need a real label without a visible one competing with the page copy. */
+.cohort-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Numbers are tabular so a column of recorded counts lines up and a value cannot
+   appear to change width while it settles. */
+.cohort-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.cohort-unit {
+  color: var(--cohort-muted);
+  font-size: 0.86em;
+}
+
+.cohort-muted {
+  color: var(--cohort-muted);
+}
+
+.cohort-code {
+  font-family: ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+  font-size: 11px;
+  color: var(--cohort-ink-2);
+  background: var(--cohort-violet-pale);
+  border: 1px solid var(--cohort-violet-soft);
+  border-radius: 5px;
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+
+.cohort-dash {
+  width: 14px;
+  height: 14px;
+  color: var(--cohort-muted);
+  vertical-align: -2px;
+}
+
+/* ------------------------------------------------------------------ shell */
+
+.cohort-shell {
+  width: min(100%, 1320px);
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3.2vw, 44px) 64px;
+}
+
+.cohort-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 1.8vh, 22px);
+}
+
+/* ------------------------------------------------------------------ header */
+
+.cohort-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: clamp(16px, 2.4vw, 32px);
+  align-items: end;
+  padding: clamp(18px, 2.4vw, 28px);
+  background: var(--cohort-card);
+  border: 1px solid var(--cohort-line);
+  border-radius: var(--cohort-radius);
+}
+
+.cohort-top-copy {
+  min-width: 0;
+}
+
+.cohort-kicker {
+  margin: 0 0 6px;
+  font-family: var(--cohort-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cohort-violet);
+}
+
+.cohort-topline {
+  margin: 0;
+  font-family: var(--cohort-font-display);
+  font-size: clamp(23px, 2.9vw, 34px);
+  font-weight: 600;
+  line-height: 1.14;
+  letter-spacing: -0.02em;
+  color: var(--cohort-ink);
+}
+
+/* The one emphasis in the headline, so the page has a single voice rather than
+   every line competing. */
+.cohort-topline em {
+  font-style: normal;
+  color: var(--cohort-violet);
+}
+
+.cohort-lead {
+  margin: 10px 0 0;
+  max-width: 68ch;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--cohort-ink-2);
+}
+
+.cohort-topmeta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cohort-rolefield {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.cohort-rolefield-label,
+.cohort-label {
+  margin: 0;
+  font-family: var(--cohort-font-display);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--cohort-muted);
+}
+
+.cohort-label-ic {
+  display: inline-flex;
+  vertical-align: -3px;
+  margin-right: 5px;
+  color: var(--cohort-violet);
+}
+
+.cohort-label-ic svg {
+  width: 14px;
+  height: 14px;
+}
+
+.cohort-roles,
+.cohort-filtergroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cohort-role,
+.cohort-filter {
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 1px solid var(--cohort-line);
+  border-radius: 999px;
+  background: var(--cohort-card);
+  font-family: var(--cohort-font-body);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--cohort-ink-2);
+  cursor: pointer;
+  transition: background 0.18s var(--cohort-ease), color 0.18s var(--cohort-ease),
+    border-color 0.18s var(--cohort-ease);
+}
+
+.cohort-role:hover,
+.cohort-filter:hover {
+  background: var(--cohort-violet-pale);
+  border-color: var(--cohort-violet-soft);
+  color: var(--cohort-ink);
+}
+
+.cohort-role.is-active,
+.cohort-filter.is-active {
+  background: var(--cohort-violet);
+  border-color: var(--cohort-violet);
+  color: var(--cohort-on-violet);
+}
+
+/* ---------------------------------------------------------------- composer */
+
+.cohort-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: clamp(16px, 2vw, 22px);
+  background: var(--cohort-card);
+  border: 1px solid var(--cohort-line);
+  border-radius: var(--cohort-radius);
+}
+
+.cohort-composer-heading,
+.cohort-map-heading {
+  min-width: 0;
+}
+
+.cohort-composer-title {
+  margin: 8px 0 0;
+  font-family: var(--cohort-font-display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--cohort-ink);
+}
+
+.cohort-composer-note {
+  margin: 8px 0 0;
+  max-width: 78ch;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--cohort-ink-2);
+}
+
+.cohort-roster {
+  width: 100%;
+  min-height: 150px;
+  padding: 12px 14px;
+  border: 1px solid var(--cohort-line);
+  border-radius: var(--cohort-radius-tile);
+  background: var(--cohort-violet-pale);
+  color: var(--cohort-ink);
+  font-family: ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+  font-size: 12.5px;
+  line-height: 1.62;
+  resize: vertical;
+  transition: border-color 0.18s var(--cohort-ease), background 0.18s var(--cohort-ease);
+}
+
+.cohort-roster::placeholder {
+  color: var(--cohort-muted);
+}
+
+.cohort-roster:hover {
+  border-color: var(--cohort-violet-soft);
+}
+
+.cohort-roster:focus-visible {
+  outline: 2px solid var(--cohort-violet);
+  outline-offset: 2px;
+  background: var(--cohort-card);
+}
+
+.cohort-composer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.cohort-submit,
+.cohort-bridge-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 9px 18px;
+  border: 1px solid var(--cohort-violet);
+  border-radius: 999px;
+  background: var(--cohort-violet);
+  color: var(--cohort-on-violet);
+  font-family: var(--cohort-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s var(--cohort-ease), border-color 0.18s var(--cohort-ease);
+}
+
+.cohort-submit:hover:not(:disabled),
+.cohort-bridge-btn:hover {
+  background: var(--cohort-violet-deep);
+  border-color: var(--cohort-violet-deep);
+}
+
+.cohort-submit:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.cohort-example,
+.cohort-retry {
+  min-height: 38px;
+  padding: 8px 14px;
+  border: 1px solid var(--cohort-line);
+  border-radius: 999px;
+  background: var(--cohort-card);
+  color: var(--cohort-ink-2);
+  font-family: var(--cohort-font-body);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: background 0.18s var(--cohort-ease), color 0.18s var(--cohort-ease),
+    border-color 0.18s var(--cohort-ease);
+}
+
+.cohort-example:hover,
+.cohort-retry:hover {
+  background: var(--cohort-violet-pale);
+  border-color: var(--cohort-violet-soft);
+  color: var(--cohort-ink);
+}
+
+.cohort-composer-meta {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--cohort-muted);
+}
+
+.cohort-composer-message {
+  margin: 0;
+  padding: 9px 12px;
+  border: 1px solid var(--cohort-violet-soft);
+  border-radius: var(--cohort-radius-tile);
+  background: var(--cohort-violet-pale);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--cohort-ink-2);
+}
+
+.cohort-composer-message.is-error {
+  border-color: #f0cec5;
+  background: var(--cohort-attn-bg);
+  color: #8f3826;
+}
+
+/* ----------------------------------------------------------------- states */
+
+.cohort-state,
+.cohort-start {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: clamp(20px, 2.6vw, 30px);
+  background: var(--cohort-card);
+  border: 1px solid var(--cohort-line);
+  border-radius: var(--cohort-radius);
+}
+
+.cohort-start-ic,
+.cohort-state-ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--cohort-violet-pale);
+  border: 1px solid var(--cohort-violet-soft);
+  color: var(--cohort-violet);
+}
+
+.cohort-start-ic svg,
+.cohort-state-ic svg {
+  width: 20px;
+  height: 20px;
+}
+
+.cohort-state-ic {
+  background: var(--cohort-attn-bg);
+  border-color: #f0cec5;
+  color: var(--cohort-attn-text);
+}
+
+.cohort-start-title,
+.cohort-state-title {
+  margin: 0;
+  font-family: var(--cohort-font-display);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--cohort-ink);
+}
+
+.cohort-start-lead,
+.cohort-state-lead {
+  margin: 0;
+  max-width: 74ch;
+  font-size: 13.5px;
+  line-height: 1.62;
+  color: var(--cohort-ink-2);
+}
+
+.cohort-state-detail {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--cohort-muted);
+}
+
+.cohort-start-list {
+  margin: 2px 0 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--cohort-ink-2);
+}
+
+.cohort-state-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--cohort-violet-soft);
+  border-top-color: var(--cohort-violet);
+  border-radius: 50%;
+  animation: cohort-spin 0.75s linear infinite;
+}
+
+@keyframes cohort-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------------------------------------------------------------- summary */
+
+.cohort-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 10px;
+}
+
+.cohort-stat {
+  min-width: 0;
+  padding: 14px 16px;
+  background: var(--cohort-card);
+  border: 1px solid var(--cohort-line);
+  border-radius: var(--cohort-radius-tile);
+}
+
+.cohort-stat-label {
+  margin: 0;
+  font-family: var(--cohort-font-display);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--cohort-muted);
+}
+
+.cohort-stat-value {
+  margin: 7px 0 0;
+  font-family: var(--cohort-font-display);
+  font-size: 27px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--cohort-ink);
+}
+
+.cohort-stat.is-warn .cohort-stat-value {
+  color: var(--cohort-attn-text);
+}
+
+.cohort-stat-note {
+  margin: 7px 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--cohort-muted);
+}
+
+/* -------------------------------------------------------------------- map */
+
+.cohort-map {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: clamp(16px, 2vw, 24px);
+  background: var(--cohort-card);
+  border: 1px solid var(--cohort-line);
+  border-radius: var(--cohort-radius);
+}
+
+.cohort-map-title {
+  margin: 8px 0 0;
+  font-family: var(--cohort-font-display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--cohort-ink);
+}
+
+.cohort-map-note {
+  margin: 8px 0 0;
+  max-width: 80ch;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--cohort-ink-2);
+}
+
+.cohort-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.cohort-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.cohort-search-ic {
+  position: absolute;
+  left: 11px;
+  width: 15px;
+  height: 15px;
+  color: var(--cohort-muted);
+  pointer-events: none;
+}
+
+.cohort-search-input {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  padding: 8px 12px 8px 33px;
+  border: 1px solid var(--cohort-line);
+  border-radius: 999px;
+  background: var(--cohort-card);
+  color: var(--cohort-ink);
+  font-family: var(--cohort-font-body);
+  font-size: 13px;
+  transition: border-color 0.18s var(--cohort-ease);
+}
+
+.cohort-search-input::placeholder {
+  color: var(--cohort-muted);
+}
+
+.cohort-search-input:focus-visible {
+  outline: 2px solid var(--cohort-violet);
+  outline-offset: 1px;
+  border-color: var(--cohort-violet);
+}
+
+.cohort-filter {
+  min-height: 30px;
+  padding: 4px 11px;
+  font-size: 11.5px;
+}
+
+.cohort-filtercount {
+  margin: 0 0 0 auto;
+  font-size: 11.5px;
+  color: var(--cohort-muted);
+  white-space: nowrap;
+}
+
+.cohort-empty {
+  margin: 0;
+  padding: 22px 16px;
+  border: 1px dashed var(--cohort-line);
+  border-radius: var(--cohort-radius-tile);
+  font-size: 13px;
+  color: var(--cohort-ink-2);
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------- rows */
+
+.cohort-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cohort-row {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--cohort-line-soft);
+  border-radius: var(--cohort-radius-tile);
+  background: var(--cohort-card);
+  transition: border-color 0.18s var(--cohort-ease);
+}
+
+.cohort-row:hover {
+  border-color: var(--cohort-violet-soft);
+}
+
+/* A row the baseline records nothing about. Marked with a dashed edge and an
+   explicit flag, so "no market figure" is visible before the reader reaches the
+   comparison rather than being inferred from an absent bar. */
+.cohort-row.is-unrecorded {
+  border-style: dashed;
+  background: var(--cohort-violet-pale);
+}
+
+.cohort-row-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cohort-row-name {
+  margin: 0;
+  min-width: 0;
+  font-family: var(--cohort-font-display);
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--cohort-ink);
+  overflow-wrap: anywhere;
+}
+
+.cohort-row-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.cohort-tier {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border: 1px solid var(--cohort-line);
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.cohort-tier.is-core {
+  color: var(--cohort-tier-high-text);
+  background: var(--cohort-tier-high-bg);
+  border-color: var(--cohort-tier-high-line);
+}
+
+.cohort-tier.is-mid {
+  color: var(--cohort-tier-mid-text);
+  background: var(--cohort-tier-mid-bg);
+  border-color: var(--cohort-tier-mid-line);
+}
+
+.cohort-tier.is-noise {
+  color: var(--cohort-tier-low-text);
+  background: var(--cohort-tier-low-bg);
+  border-color: var(--cohort-tier-low-line);
+}
+
+/* An unforeseen classification word. No tier colour, because mapping it onto one
+   would imply a magnitude the service did not state. */
+.cohort-tier.is-unknown {
+  color: var(--cohort-ink-2);
+  background: var(--cohort-card);
+}
+
+.cohort-row-flag {
+  padding: 2px 8px;
+  border: 1px solid var(--cohort-violet-soft);
+  border-radius: 999px;
+  background: var(--cohort-card);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--cohort-violet);
+}
+
+.cohort-row-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: end;
+  margin-top: 10px;
+}
+
+.cohort-compare {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cohort-compare-row {
+  display: grid;
+  grid-template-columns: minmax(96px, 128px) minmax(0, 1fr) 96px;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cohort-compare-label {
+  font-size: 11px;
+  color: var(--cohort-ink-2);
+}
+
+.cohort-compare-meter {
+  display: block;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--cohort-line-soft);
+  overflow: hidden;
+}
+
+.cohort-compare-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s var(--cohort-ease);
+}
+
+.cohort-compare-fill.is-cohort {
+  background: var(--cohort-cohort-bar);
+}
+
+/* Lighter and inset by a hairline top edge, so the two series are distinguishable
+   without relying on the label. The label is always present regardless. */
+.cohort-compare-fill.is-market {
+  background: var(--cohort-market-bar);
+  box-shadow: inset 0 1px 0 rgba(21, 19, 28, 0.12);
+}
+
+.cohort-compare-none {
+  font-size: 11px;
+  color: var(--cohort-muted);
+}
+
+.cohort-compare-val {
+  font-size: 11.5px;
+  color: var(--cohort-ink);
+  text-align: right;
+}
+
+.cohort-row-gap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  min-width: 72px;
+}
+
+.cohort-row-gap-label {
+  margin: 0;
+  font-family: var(--cohort-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cohort-muted);
+}
+
+.cohort-gap {
+  font-family: var(--cohort-font-display);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.cohort-gap.is-behind {
+  color: var(--cohort-attn-text);
+}
+
+.cohort-gap.is-ahead {
+  color: var(--cohort-ahead-text);
+}
+
+.cohort-gap.is-even {
+  color: var(--cohort-ink-2);
+}
+
+.cohort-gap.is-absent {
+  font-family: var(--cohort-font-body);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--cohort-muted);
+}
+
+/* Per-row detail behind a real disclosure, so the student list for a cohort of
+   any size stays one keystroke away without burying the comparison. */
+.cohort-record {
+  margin-top: 10px;
+}
+
+.cohort-record-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 2px;
+  border: 0;
+  background: transparent;
+  font-family: var(--cohort-font-body);
+  font-size: 11.5px;
+  color: var(--cohort-violet);
+  cursor: pointer;
+}
+
+.cohort-record-btn:hover {
+  color: var(--cohort-violet-deep);
+  text-decoration: underline;
+}
+
+.cohort-record-chevron {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s var(--cohort-ease);
+}
+
+.cohort-record-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.cohort-record-panel {
+  margin-top: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--cohort-violet-soft);
+  border-radius: var(--cohort-radius-tile);
+  background: var(--cohort-violet-pale);
+}
+
+.cohort-students {
+  font-size: 12px;
+  color: var(--cohort-ink-2);
+  overflow-wrap: anywhere;
+}
+
+.cohort-method {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--cohort-ink-2);
+}
+
+/* ----------------------------------------------------------------- bridge */
+
+.cohort-bridge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--cohort-violet-soft);
+  border-radius: var(--cohort-radius-tile);
+  background: var(--cohort-violet-pale);
+}
+
+.cohort-bridge-copy {
+  min-width: 0;
+  flex: 1 1 320px;
+}
+
+.cohort-bridge-note {
+  margin: 7px 0 0;
+  max-width: 74ch;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--cohort-ink-2);
+}
+
+.cohort-bridge-btn {
+  flex: 0 0 auto;
+}
+
+.cohort-bridge-arrow {
+  width: 15px;
+  height: 15px;
+}
+
+/* ------------------------------------------------------------------ facts */
+
+.cohort-facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 10px 16px;
+}
+
+.cohort-fact {
+  min-width: 0;
+}
+
+.cohort-fact.is-wide {
+  grid-column: 1 / -1;
+}
+
+.cohort-fact dt {
+  font-family: var(--cohort-font-display);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--cohort-muted);
+}
+
+.cohort-fact dd {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--cohort-ink);
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------- disclosure */
+
+.cohort-disclosure {
+  background: var(--cohort-card);
+  border: 1px solid var(--cohort-line);
+  border-radius: var(--cohort-radius);
+  overflow: hidden;
+}
+
+.cohort-disclosure-btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 16px;
+  border: 0;
+  background: transparent;
+  font-family: var(--cohort-font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cohort-ink);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.18s var(--cohort-ease);
+}
+
+.cohort-disclosure-btn:hover {
+  background: var(--cohort-violet-pale);
+}
+
+.cohort-disclosure-chevron {
+  width: 16px;
+  height: 16px;
+  color: var(--cohort-muted);
+  transition: transform 0.2s var(--cohort-ease);
+}
+
+.cohort-disclosure-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.cohort-disclosure-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cohort-disclosure-count {
+  flex: 0 0 auto;
+  font-family: var(--cohort-font-body);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--cohort-muted);
+}
+
+.cohort-disclosure-panel {
+  padding: 0 16px 16px;
+}
+
+.cohort-audit {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.cohort-audit-block {
+  min-width: 0;
+}
+
+.cohort-audit-title {
+  margin: 0 0 8px;
+  font-family: var(--cohort-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cohort-ink-2);
+}
+
+.cohort-audit-note {
+  margin: 0 0 10px;
+  max-width: 82ch;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--cohort-ink-2);
+}
+
+.cohort-audit-endpoints {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ----------------------------------------------------------------- notice */
+
+.cohort-notice {
+  padding: 12px 14px;
+  border: 1px solid #f0cec5;
+  border-radius: var(--cohort-radius-tile);
+  background: var(--cohort-attn-bg);
+}
+
+.cohort-notice-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 8px;
+  font-family: var(--cohort-font-display);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #8f3826;
+}
+
+.cohort-notice-title svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+}
+
+.cohort-notice-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: #8f3826;
+}
+
+/* ------------------------------------------------------------ focus + a11y */
+
+.cohort :is(button, input, textarea, a):focus-visible {
+  outline: 2px solid var(--cohort-violet);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ------------------------------------------------------------- responsive */
+
+/* Two columns cannot hold the header's headline beside the role group at this
+   width, so the group moves under the copy rather than squeezing either. */
+@media (max-width: 900px) {
+  .cohort-top {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .cohort-filtercount {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .cohort-row-body {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .cohort-row-tags {
+    margin-left: 0;
+  }
+
+  /* The gap figure moves inline with the bars rather than sitting alone at the
+     end of a row that is now one column. */
+  .cohort-row-gap {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  /* The series label and its number stay on one line; only the meter is allowed
+     to shrink, so a long skill name never pushes the figures off-screen. */
+  .cohort-compare-row {
+    grid-template-columns: minmax(0, 1fr) 92px;
+  }
+
+  .cohort-compare-label {
+    grid-column: 1 / -1;
+    margin-bottom: -2px;
+  }
+
+  .cohort-compare-meter {
+    grid-column: 1;
+  }
+
+  .cohort-compare-none {
+    grid-column: 1;
+  }
+
+  .cohort-compare-val {
+    grid-column: 2;
+  }
+
+  .cohort-bridge-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ------------------------------------------------------- reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .cohort-state-spinner {
+    animation: none;
+    border-top-color: var(--cohort-violet);
+  }
+
+  .cohort :is(button, input, textarea, .cohort-row, .cohort-compare-fill, .cohort-record-chevron, .cohort-disclosure-chevron) {
+    transition: none;
+  }
+}

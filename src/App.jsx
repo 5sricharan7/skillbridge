@@ -8,6 +8,7 @@ import FinalCTA from './components/FinalCTA'
 import CareerBridge from './components/CareerBridge'
 import CurriculumTimeMachine from './components/CurriculumTimeMachine'
 import Evidence from './components/Evidence'
+import CohortDashboard from './components/CohortDashboard'
 import MultiplierEffect from './components/MultiplierEffect'
 import RouteTransition from './components/RouteTransition'
 import CinematicOpening from './components/CinematicOpening'
@@ -18,6 +19,7 @@ const TITLES = {
   '/career-bridge': 'Career Bridge — SkillBridge',
   '/curriculum-time-machine': 'Curriculum Time Machine — SkillBridge',
   '/evidence': 'Evidence — SkillBridge',
+  '/cohort-dashboard': 'Cohort Dashboard — SkillBridge',
   '/multiplier-effect': 'Multiplier Effect — SkillBridge',
 }
 
@@ -88,6 +90,7 @@ export default function App() {
   if (path === '/career-bridge') page = <CareerBridge />
   else if (path === '/curriculum-time-machine') page = <CurriculumTimeMachine />
   else if (path === '/evidence') page = <Evidence />
+  else if (path === '/cohort-dashboard') page = <CohortDashboard />
   else if (path === '/multiplier-effect') page = <MultiplierEffect />
 
   return (

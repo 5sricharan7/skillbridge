@@ -10,6 +10,7 @@ if __package__:
         adapt_signals_for_role,
         validate_target_role,
     )
+    from .data.cohort_analysis import CohortInputError, build_cohort_analysis
     from .data.curriculum_gaps import build_role_curriculum_gaps
     from .data.curriculum_intelligence import build_role_curriculum_intelligence
     from .data.curriculum_record import (
@@ -25,7 +26,7 @@ if __package__:
     from .engines.optimizer import optimize_roadmap
     from .engines.signal_engine import extract_signals
     from .engines.velocity_engine import get_skill_velocity
-    from .schemas import RoadmapRequest, RoadmapResponse
+    from .schemas import CohortAnalysisRequest, RoadmapRequest, RoadmapResponse
 else:
     from data.adapters import (
         UnplannableTargetRoleError,
@@ -33,6 +34,7 @@ else:
         adapt_signals_for_role,
         validate_target_role,
     )
+    from data.cohort_analysis import CohortInputError, build_cohort_analysis
     from data.curriculum_gaps import build_role_curriculum_gaps
     from data.curriculum_intelligence import build_role_curriculum_intelligence
     from data.curriculum_record import (
@@ -48,7 +50,7 @@ else:
     from engines.optimizer import optimize_roadmap
     from engines.signal_engine import extract_signals
     from engines.velocity_engine import get_skill_velocity
-    from schemas import RoadmapRequest, RoadmapResponse
+    from schemas import CohortAnalysisRequest, RoadmapRequest, RoadmapResponse
 
 
 def _configured_cors_origins() -> list[str]:
@@ -130,6 +132,40 @@ def create_roadmap(payload: RoadmapRequest) -> RoadmapResponse:
         budget_hours=result["budget_hours"],
         roadmap=result["roadmap"],
     )
+
+
+@app.post("/cohort-analysis")
+def create_cohort_analysis(payload: CohortAnalysisRequest) -> dict[str, object]:
+    """Aggregate one submitted cohort against one role's recorded market baseline.
+
+    The cohort is the caller's own records and is held only for this request. The
+    market side is the prepared static baseline, read through the same builder as
+    ``GET /curriculum-intelligence/{role}``, and the live sample is never merged
+    into it: three live postings cannot carry a share of postings naming a skill.
+    """
+    try:
+        return build_cohort_analysis(payload.cohort, target_role=payload.target_role)
+    except UnknownTargetRoleError as error:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": str(error),
+                "valid_roles": list(error.valid_roles),
+            },
+        ) from error
+    except UnplannableTargetRoleError as error:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": str(error),
+                "plannable_roles": list(error.plannable_roles),
+            },
+        ) from error
+    except CohortInputError as error:
+        raise HTTPException(
+            status_code=422,
+            detail={"message": str(error)},
+        ) from error
 
 
 @app.get("/velocity/{skill}")

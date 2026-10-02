@@ -6,6 +6,7 @@ const LINKS = [
   { label: 'Career Bridge', to: '/career-bridge' },
   { label: 'Curriculum Time Machine', to: '/curriculum-time-machine' },
   { label: 'Evidence', to: '/evidence' },
+  { label: 'Cohort Dashboard', to: '/cohort-dashboard' },
   { label: 'Multiplier Effect', to: '/multiplier-effect' },
 ]
 
