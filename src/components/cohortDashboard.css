@@ -134,19 +134,34 @@
 
 /* ------------------------------------------------------------------ shell */
 
-.cohort-shell {
-  width: min(100%, 1320px);
-  margin: 0 auto;
-  padding: 0 clamp(16px, 3.2vw, 44px) 64px;
+/* One application shell, shared with Career Bridge, CTM and Evidence
+   (workspaceShell.css). The grid, the rail and the contextual card are its
+   business; this page only points the shell's tokens at its own palette and adds
+   the vertical rhythm between a step's surface and the panels below it. */
+.cohort {
+  --ws-paper: var(--cohort-paper);
+  --ws-card: var(--cohort-card);
+  --ws-ink: var(--cohort-ink);
+  --ws-ink-2: var(--cohort-ink-2);
+  --ws-muted: var(--cohort-muted);
+  --ws-violet: var(--cohort-violet);
+  --ws-violet-deep: var(--cohort-violet-deep);
+  --ws-lilac: var(--cohort-lilac);
+  --ws-violet-soft: var(--cohort-violet-soft);
+  --ws-violet-pale: var(--cohort-violet-pale);
+  --ws-line: var(--cohort-line);
+  --ws-line-soft: var(--cohort-line-soft);
+  --ws-font-display: var(--font-display);
+  --ws-font-body: var(--font-body);
 }
 
-.cohort-main {
-  min-width: 0;
+/* The shell owns the gap; this adds only the stack rhythm inside the content
+   column and the space above the first block. */
+.cohort .ws-main {
   display: flex;
   flex-direction: column;
   gap: clamp(14px, 1.8vh, 22px);
 }
-
 /* ------------------------------------------------------------------ header */
 
 /* The hero is compact and mostly text: the page's largest single element is the
@@ -297,274 +312,6 @@
   color: var(--cohort-on-violet);
 }
 
-/* ----------------------------------------------------------------- flow bar */
-
-/* The horizontal workflow indicator: position, not a second navigation. It sits
-   between the hero and the workspace so the four names are read before any of
-   them is clicked. */
-.cohort-flow {
-  margin-top: clamp(14px, 1.8vw, 20px);
-}
-
-.cohort-flow-list {
-  display: flex;
-  align-items: stretch;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border: 1px solid var(--cohort-line);
-  border-radius: var(--cohort-radius);
-  background: var(--cohort-card);
-}
-
-.cohort-flow-item {
-  display: flex;
-  align-items: center;
-  flex: 1 1 0;
-  min-width: 0;
-}
-
-.cohort-flow-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1 1 auto;
-  min-width: 0;
-  padding: 12px 14px;
-  border: 0;
-  border-radius: var(--cohort-radius-tile);
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.18s var(--cohort-ease);
-}
-
-.cohort-flow-btn:hover {
-  background: var(--cohort-violet-pale);
-}
-
-/* A step with no figures behind it stays legible and focusable; it says why it is
-   closed when pressed rather than silently ignoring the click. */
-.cohort-flow-item.is-locked .cohort-flow-btn,
-.cohort-flow-item.is-locked {
-  cursor: default;
-}
-
-.cohort-flow-item.is-locked .cohort-flow-btn {
-  opacity: 0.62;
-}
-
-.cohort-flow-ic {
-  display: inline-flex;
-  flex: none;
-  width: 28px;
-  height: 28px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--cohort-line);
-  border-radius: 50%;
-  color: var(--cohort-muted);
-  transition: background 0.18s var(--cohort-ease), color 0.18s var(--cohort-ease),
-    border-color 0.18s var(--cohort-ease);
-}
-
-.cohort-flow-ic svg {
-  width: 15px;
-  height: 15px;
-}
-
-.cohort-flow-item.is-active .cohort-flow-ic {
-  background: var(--cohort-violet);
-  border-color: var(--cohort-violet);
-  color: var(--cohort-on-violet);
-}
-
-.cohort-flow-item.is-open .cohort-flow-ic {
-  color: var(--cohort-violet);
-  border-color: var(--cohort-violet-soft);
-}
-
-.cohort-flow-copy {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.cohort-flow-title {
-  font-family: var(--cohort-font-display);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--cohort-ink);
-}
-
-.cohort-flow-item.is-active .cohort-flow-title {
-  color: var(--cohort-violet-deep);
-}
-
-.cohort-flow-sub {
-  font-size: 11.5px;
-  line-height: 1.4;
-  color: var(--cohort-muted);
-  overflow-wrap: anywhere;
-}
-
-.cohort-flow-link {
-  display: inline-flex;
-  flex: none;
-  color: var(--cohort-line);
-}
-
-.cohort-flow-link svg {
-  width: 15px;
-  height: 15px;
-}
-
-/* --------------------------------------------------------------- workspace */
-
-/* The stepper on the left, the step's own surface on the right. The rail is fixed
-   and the card grows, so the sequence never moves while the content changes. */
-.cohort-grid {
-  display: grid;
-  grid-template-columns: minmax(232px, 268px) minmax(0, 1fr);
-  gap: clamp(16px, 2vw, 26px);
-  align-items: start;
-  margin-top: clamp(16px, 2vw, 24px);
-}
-
-.cohort-workspace {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(12px, 1.6vw, 16px);
-}
-
-/* ------------------------------------------------------------------ stepper */
-
-.cohort-stepnav {
-  min-width: 0;
-}
-
-.cohort-steps {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.cohort-step {
-  position: relative;
-}
-
-.cohort-step-btn {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  width: 100%;
-  padding: 12px;
-  border: 1px solid transparent;
-  border-radius: var(--cohort-radius-tile);
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.18s var(--cohort-ease), border-color 0.18s var(--cohort-ease);
-}
-
-.cohort-step-btn:hover {
-  background: var(--cohort-violet-pale);
-}
-
-.cohort-step.is-locked .cohort-step-btn {
-  cursor: default;
-  opacity: 0.6;
-}
-
-.cohort-step.is-active .cohort-step-btn {
-  background: var(--cohort-violet-pale);
-  border-color: var(--cohort-violet-soft);
-}
-
-/* The circular icon, with the step number inside it, so number and symbol are one
-   object rather than two competing markers. */
-.cohort-step-badge {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border: 1px solid var(--cohort-line);
-  border-radius: 50%;
-  background: var(--cohort-card);
-  color: var(--cohort-muted);
-  transition: background 0.18s var(--cohort-ease), color 0.18s var(--cohort-ease),
-    border-color 0.18s var(--cohort-ease);
-}
-
-.cohort-step-badge svg {
-  width: 16px;
-  height: 16px;
-}
-
-.cohort-step-num {
-  font-family: var(--cohort-font-display);
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: inherit;
-}
-
-.cohort-step.is-open .cohort-step-badge {
-  color: var(--cohort-violet);
-  border-color: var(--cohort-violet-soft);
-}
-
-.cohort-step.is-active .cohort-step-badge {
-  background: var(--cohort-violet);
-  border-color: var(--cohort-violet);
-  color: var(--cohort-on-violet);
-}
-
-.cohort-step-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.cohort-step-title {
-  font-family: var(--cohort-font-display);
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--cohort-ink);
-}
-
-.cohort-step.is-active .cohort-step-title {
-  color: var(--cohort-violet-deep);
-}
-
-.cohort-step-note {
-  font-size: 11.5px;
-  line-height: 1.45;
-  color: var(--cohort-muted);
-  overflow-wrap: anywhere;
-}
-
-/* The thin connector between steps. It stops short of the next badge so it reads
-   as a rail rather than as a border around every item. */
-.cohort-step-rail {
-  position: absolute;
-  left: 28px;
-  top: 46px;
-  bottom: -12px;
-  width: 1px;
-  background: var(--cohort-line);
-}
-
-.cohort-step.is-active .cohort-step-rail {
-  background: var(--cohort-violet-soft);
-}
-
 /* ------------------------------------------------------------- step surface */
 
 .cohort-steppanel {
@@ -628,11 +375,13 @@
 
 /* ------------------------------------------------------ roster editor block */
 
-/* The composer row: editor and caption chips on the left, the pipeline
-   illustration on the right. */
+/* The roster composer row: editor and caption chips on the left, the workflow
+   illustration on the right. The illustration column is capped at 260px so the
+   plate sits beside the editor at a readable size instead of stretching to the
+   full card width. */
 .cohort-roster-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(150px, 210px);
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
   gap: clamp(14px, 2vw, 22px);
   align-items: start;
 }
@@ -739,185 +488,25 @@
   gap: 10px;
 }
 
-/* The pipeline illustration. It draws shapes only — no figure appears anywhere in
-   it, so nothing on an un-analysed page can be read as a measurement. */
+/* The workflow illustration: students' skills in, cohort insights out.
+   `max-width` caps it at the documented 260px so it can never widen its column
+   or push the card into horizontal scroll, and `height: auto` keeps the asset's
+   2.02:1 aspect ratio — never stretched, never cropped. */
+/* The illustration sits in its own column beside the JSON editor and is capped by
+   width only. The plate is 1159x1358, so at the 240px cap it renders about 281px
+   tall — a natural companion to the editor rather than a tower beside it. `height:
+   auto` is what preserves the ratio; nothing here crops, rotates or stretches. */
 .cohort-figure {
   align-self: center;
   min-width: 0;
 }
 
-.cohort-figure svg {
+.cohort-figure-img {
   display: block;
   width: 100%;
+  max-width: 240px;
   height: auto;
-}
-
-.cohort-figure-panel {
-  fill: var(--cohort-violet-pale);
-  stroke: var(--cohort-violet-soft);
-  stroke-width: 1;
-}
-
-.cohort-figure-panel.is-out {
-  fill: var(--cohort-card);
-  stroke: var(--cohort-violet-soft);
-}
-
-.cohort-figure-tag {
-  fill: var(--cohort-lilac);
-}
-
-.cohort-figure-tag.is-2 {
-  fill: var(--cohort-violet);
-  opacity: 0.55;
-}
-
-.cohort-figure-tag.is-3 {
-  fill: var(--cohort-violet);
-  opacity: 0.32;
-}
-
-.cohort-figure-chip {
-  fill: none;
-  stroke: var(--cohort-lilac);
-  stroke-width: 1;
-  stroke-dasharray: 3 3;
-}
-
-.cohort-figure-node {
-  fill: var(--cohort-violet);
-  opacity: 0.85;
-}
-
-.cohort-figure-node.is-bar {
-  fill: var(--cohort-lilac);
-}
-
-.cohort-figure-wire {
-  stroke: var(--cohort-lilac);
-  fill: none;
-}
-
-/* ------------------------------------------------------------- preview cards */
-
-.cohort-previews {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(12px, 1.6vw, 16px);
-  margin: clamp(16px, 2vw, 24px) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.cohort-preview {
-  min-width: 0;
-}
-
-.cohort-preview-btn {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  width: 100%;
-  height: 100%;
-  padding: 14px;
-  border: 1px solid var(--cohort-line);
-  border-radius: var(--cohort-radius-tile);
-  background: var(--cohort-card);
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 0.18s var(--cohort-ease), background 0.18s var(--cohort-ease);
-}
-
-.cohort-preview-btn:hover {
-  border-color: var(--cohort-violet-soft);
-  background: var(--cohort-violet-pale);
-}
-
-.cohort-preview.is-locked .cohort-preview-btn {
-  cursor: default;
-}
-
-.cohort-preview.is-locked .cohort-preview-btn:hover {
-  border-color: var(--cohort-line);
-  background: var(--cohort-card);
-}
-
-.cohort-preview-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.cohort-preview-ic {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  flex: none;
-  border: 1px solid var(--cohort-line);
-  border-radius: 50%;
-  color: var(--cohort-violet);
-}
-
-.cohort-preview-ic svg {
-  width: 15px;
-  height: 15px;
-}
-
-.cohort-glyph {
-  width: 62px;
-  height: 25px;
-  flex: none;
-  overflow: visible;
-}
-
-.cohort-glyph-cohort {
-  fill: var(--cohort-violet);
-}
-
-.cohort-glyph-market {
-  fill: var(--cohort-lilac);
-}
-
-.cohort-glyph-wire {
-  stroke: var(--cohort-violet-soft);
-  fill: none;
-}
-
-.cohort-preview-title {
-  font-family: var(--cohort-font-display);
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--cohort-ink);
-}
-
-.cohort-preview-note {
-  flex: 1 1 auto;
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: var(--cohort-muted);
-  overflow-wrap: anywhere;
-}
-
-.cohort-preview-go {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--cohort-violet);
-}
-
-.cohort-preview.is-locked .cohort-preview-go {
-  color: var(--cohort-muted);
-  font-weight: 500;
-}
-
-.cohort-preview-arrow {
-  width: 14px;
-  height: 14px;
+  margin-inline: auto;
 }
 
 /* ------------------------------------------------------------ roster editor */
@@ -1553,6 +1142,150 @@
   height: 15px;
 }
 
+/* ------------------------------------------------------- institutional loop */
+
+/* The panel that explains why this page and the Curriculum Time Machine are one
+   product. Collapsed it is a single row of type; open it adds the three-stop
+   chain and one button. It is a disclosure and not a navigation bar, so nothing
+   here is a destination that the top navigation does not already offer. */
+.cohort-loop {
+  border: 1px solid var(--cohort-line);
+  border-radius: var(--cohort-radius);
+  background: var(--cohort-card);
+}
+
+.cohort-loop-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cohort-loop-toggle:hover {
+  background: var(--cohort-violet-pale);
+}
+
+.cohort-loop-chevron {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--cohort-muted);
+  transition: transform 160ms var(--cohort-ease);
+}
+
+.cohort-loop.is-open .cohort-loop-chevron {
+  transform: rotate(180deg);
+}
+
+.cohort-loop-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cohort-loop-title {
+  font-family: var(--cohort-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cohort-violet);
+}
+
+.cohort-loop-sub {
+  font-size: 12.5px;
+  color: var(--cohort-ink-2);
+}
+
+.cohort-loop-body {
+  padding: 0 16px 16px;
+}
+
+.cohort-loop-chain {
+  margin: 0;
+  padding: 14px 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  border-top: 1px solid var(--cohort-line-soft);
+}
+
+.cohort-loop-stop {
+  flex: 1 1 190px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid var(--cohort-line-soft);
+  border-radius: var(--cohort-radius-tile);
+  background: var(--cohort-paper);
+}
+
+.cohort-loop-name {
+  font-family: var(--cohort-font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--cohort-ink);
+}
+
+.cohort-loop-note {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--cohort-muted);
+}
+
+.cohort-loop-arrow {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-top: 1.5px solid var(--cohort-lilac);
+  border-right: 1.5px solid var(--cohort-lilac);
+  transform: rotate(45deg);
+}
+
+.cohort-loop-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid var(--cohort-violet);
+  border-radius: 999px;
+  background: var(--cohort-violet);
+  color: #fff;
+  font-family: var(--cohort-font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 140ms var(--cohort-ease);
+}
+
+.cohort-loop-go:hover {
+  background: var(--cohort-violet-deep);
+}
+
+.cohort-loop-go-arrow {
+  width: 14px;
+  height: 14px;
+}
+
+.cohort-loop-go:focus-visible,
+.cohort-loop-toggle:focus-visible {
+  outline: 2px solid var(--cohort-violet);
+  outline-offset: 2px;
+}
+
 /* ------------------------------------------------------------------ facts */
 
 .cohort-facts {
@@ -1744,73 +1477,12 @@
     margin-left: 0;
   }
 
-  /* The stepper becomes a horizontal progress control: the four steps still read
-     in order, but as a scannable strip above the card instead of a rail beside
-     it. The connector turns horizontal to match. */
-  .cohort-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .cohort-steps {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-  }
-
-  .cohort-step {
-    flex: 1 1 0;
-    min-width: 0;
-  }
-
-  .cohort-step-btn {
-    height: 100%;
-  }
-
-  .cohort-step-rail {
-    left: auto;
-    right: -6px;
-    top: 28px;
-    bottom: auto;
-    width: 8px;
-    height: 1px;
-  }
-
   .cohort-roster-grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .cohort-figure {
-    max-width: 220px;
-  }
-
-  .cohort-previews {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
   }
 }
 
 @media (max-width: 720px) {
-  /* The flow bar duplicates the stepper's sequence, so on the narrowest screens
-     it drops its descriptions and keeps names plus icons: the order stays legible
-     without pushing the card below the fold. */
-  .cohort-flow-sub {
-    display: none;
-  }
-
-  .cohort-flow-btn {
-    padding: 10px;
-    justify-content: center;
-  }
-
-  .cohort-flow-copy {
-    align-items: center;
-    text-align: center;
-  }
-
-  .cohort-flow-title {
-    font-size: 12px;
-  }
-
   .cohort-select {
     font-size: 16px;
     min-height: 44px;
@@ -1881,7 +1553,7 @@
     border-top-color: var(--cohort-violet);
   }
 
-  .cohort :is(button, input, textarea, select, a, .cohort-row, .cohort-compare-fill, .cohort-record-chevron, .cohort-disclosure-chevron, .cohort-flow-ic, .cohort-step-badge) {
+  .cohort :is(button, input, textarea, select, a, .cohort-row, .cohort-compare-fill, .cohort-record-chevron, .cohort-disclosure-chevron, .cohort-loop-chevron) {
     transition: none;
   }
 }

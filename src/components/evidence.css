@@ -29,164 +29,35 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Layout Shell — Full Width Workspace                                */
+/* Shell Bridge — see workspaceShell.css                               */
 /* ------------------------------------------------------------------ */
 
-.ev-shell {
-  display: grid;
-  grid-template-columns: clamp(210px, 16vw, 244px) minmax(0, 1fr);
-  align-items: start;
-  width: 100%;
+/* The rail, the grid, the item shape and the contextual card are the shared
+   application shell. The `--ws-*` block is an alias layer and nothing else: it
+   points the shell's tokens at this page's own documented `--ev-*` values, so
+   the shell renders in Evidence's colours without ever naming them itself. */
+.ev-page {
+  --ws-paper: var(--ev-paper);
+  --ws-card: var(--ev-card);
+  --ws-ink: var(--ev-ink);
+  --ws-ink-2: var(--ev-ink-2);
+  --ws-muted: var(--ev-muted);
+  --ws-violet: var(--ev-violet);
+  --ws-violet-deep: var(--ev-violet-deep);
+  --ws-lilac: var(--ev-lilac);
+  --ws-violet-soft: var(--ev-violet-soft);
+  --ws-violet-pale: var(--ev-violet-pale);
+  --ws-line: var(--ev-line);
+  --ws-line-soft: var(--ev-line-soft);
+  --ws-font-display: var(--font-display);
+  --ws-font-body: var(--font-body);
 }
 
-/* ------------------------------------------------------------------ */
-/* Sidebar                                                             */
-/* ------------------------------------------------------------------ */
 
-.ev-sidebar {
-  position: sticky;
-  top: 80px;
-  height: calc(100vh - 80px);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  padding: 20px 12px 20px 16px;
-  border-right: 1px solid var(--ev-line-soft);
-  min-width: 0;
-}
-
-.ev-sidebar-label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--ev-muted);
-  padding: 0 10px 8px;
-}
-
-.ev-sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.ev-sidebar-btn {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  width: 100%;
-  min-height: 40px;
-  padding: 0 10px;
-  border: 1px solid transparent;
-  border-radius: 9px;
-  font-family: var(--font-body);
-  font-size: 12.5px;
-  font-weight: 600;
-  text-align: left;
-  color: var(--ev-ink-2);
-  background: transparent;
-  cursor: pointer;
-  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
-}
-
-.ev-sidebar-ic {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 16px;
-  height: 16px;
-  color: var(--ev-muted);
-  transition: color 0.18s ease, transform 0.18s ease;
-}
-
-.ev-sidebar-ic svg {
-  width: 15px;
-  height: 15px;
-}
-
-.ev-sidebar-btn:hover {
-  background: var(--ev-violet-pale);
-  color: var(--ev-ink);
-}
-
-.ev-sidebar-btn:hover .ev-sidebar-ic {
-  color: var(--ev-violet);
-  transform: translateX(1px);
-}
-
-.ev-sidebar-btn.is-active {
-  background: var(--ev-violet-pale);
-  border-color: var(--ev-violet-soft);
-  color: var(--ev-violet);
-}
-
-.ev-sidebar-btn.is-active .ev-sidebar-ic {
-  color: var(--ev-violet);
-  transform: translateX(2px);
-}
-
-.ev-sidebar-btn:focus-visible {
-  outline: 2px solid var(--ev-violet);
-  outline-offset: 2px;
-}
-
-.ev-sidebar-badge {
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 10px 11px;
-  border: 1px solid var(--ev-violet-soft);
-  border-radius: 12px;
-  background: var(--ev-violet-pale);
-}
-
-.ev-sidebar-badge-ic {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 24px;
-  height: 24px;
-  border-radius: 7px;
-  background: var(--ev-card);
-  border: 1px solid var(--ev-violet-soft);
-  color: var(--ev-violet);
-}
-
-.ev-sidebar-badge-ic svg {
-  width: 13px;
-  height: 13px;
-}
-
-.ev-sidebar-badge-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  line-height: 1.3;
-}
-
-.ev-sidebar-badge-sm {
-  font-size: 10px;
-  color: var(--ev-muted);
-}
-
-.ev-sidebar-badge-lg {
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ev-violet);
-}
-
-/* ------------------------------------------------------------------ */
-/* Main Content Column                                                 */
-/* ------------------------------------------------------------------ */
-
+/* The shared shell renders the content column; this page only adds its own
+   bottom breathing room. */
 .ev-main {
-  min-width: 0;
-  padding: 0 0 54px;
+  padding-bottom: 54px;
 }
 
 /* Shallow Hero Section */
@@ -271,6 +142,18 @@
 /* Inner Content Area */
 .ev-content {
   padding: 20px clamp(20px, 2.5vw, 32px);
+}
+
+.ev-disclaimer {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--ev-line);
+  border-left: 3px solid var(--ev-muted);
+  border-radius: 8px;
+  background: var(--ev-card);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ev-ink-2);
 }
 
 /* Top 4 Highlights Row */
@@ -627,6 +510,46 @@
   overflow: visible;
 }
 
+.ev-chart-source {
+  font-size: 10.5px;
+  color: var(--ev-muted);
+  margin-top: 8px;
+}
+
+.ev-grid-line {
+  stroke: var(--ev-line-soft);
+}
+
+.ev-axis-line {
+  stroke: var(--ev-line);
+}
+
+.ev-axis-label {
+  fill: var(--ev-muted);
+}
+
+.ev-axis-year {
+  fill: var(--ev-ink-2);
+}
+
+.ev-line-rising {
+  stroke: var(--ev-violet);
+}
+
+.ev-line-declining {
+  stroke: var(--ev-fall);
+}
+
+.ev-dot-rising {
+  fill: var(--ev-card);
+  stroke: var(--ev-violet);
+}
+
+.ev-dot-declining {
+  fill: var(--ev-card);
+  stroke: var(--ev-fall);
+}
+
 /* Takeaway bullets */
 .ev-takeaways {
   display: flex;
@@ -687,46 +610,29 @@
   gap: 10px;
 }
 
-.ev-bar-row {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.ev-bar-row-label {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--ev-ink);
-}
-
-.ev-bar-pair {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.ev-dual-bar {
-  height: 6px;
+.ev-ref-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  padding: 1px 8px;
   border-radius: 999px;
-  overflow: hidden;
-  background: var(--ev-line-soft);
-  display: flex;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.6;
 }
 
-.ev-dual-fill-sb {
-  height: 100%;
-  background: var(--ev-violet);
-  border-radius: 999px;
-  transition: width 0.4s ease;
+.ev-ref-chip.is-in {
+  color: var(--ev-rise);
+  background: var(--ev-rise-bg);
 }
 
-.ev-dual-fill-ext {
-  height: 100%;
-  background: var(--ev-lilac);
-  border-radius: 999px;
-  transition: width 0.4s ease;
+.ev-ref-chip.is-out {
+  /* --ev-fall on --ev-fall-bg fails AA for small text (DESIGN.md 3.4), so the
+     tint is background only and the label uses --ev-ink-2. */
+  color: var(--ev-ink-2);
+  background: var(--ev-fall-bg);
 }
 
 .ev-gauge-box {
@@ -775,7 +681,7 @@
 
 .ev-gauge-sub {
   font-size: 10.5px;
-  color: var(--ev-muted);
+  color: var(--ev-ink-2);
   margin-top: 2px;
 }
 
@@ -811,7 +717,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--ev-muted);
+  color: var(--ev-ink-2);
 }
 
 .ev-metric-badge {
@@ -1064,33 +970,6 @@
 }
 
 @media (max-width: 880px) {
-  .ev-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .ev-sidebar {
-    position: static;
-    height: auto;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding: 10px 14px;
-    border-right: none;
-    border-bottom: 1px solid var(--ev-line-soft);
-    gap: 4px;
-  }
-
-  .ev-sidebar-label,
-  .ev-sidebar-badge {
-    display: none;
-  }
-
-  .ev-sidebar-nav {
-    flex-direction: row;
-    gap: 4px;
-    flex-wrap: nowrap;
-  }
-
   .ev-chart-split,
   .ev-proof-b-grid,
   .ev-methodology-teaser {
@@ -1143,7 +1022,6 @@
   }
 
   .ev-budget-col:hover,
-  .ev-sidebar-btn:hover,
   .ev-overview-card:hover {
     transform: none;
   }
@@ -1221,12 +1099,13 @@
 .ev-role-scope {
   margin-bottom: 12px;
   font-size: 12px;
-  color: var(--ev-muted);
+  color: var(--ev-ink-2);
 }
 
-.ev-role-scope-rest {
-  margin-left: 6px;
-  color: var(--ev-muted);
+.ev-scope-note {
+  margin: 0 0 16px;
+  font-size: 11.5px;
+  color: var(--ev-ink-2);
 }
 
 .ev-source-urls {
@@ -1250,4 +1129,540 @@
   margin: 8px 0 0;
   font-size: 12px;
   color: var(--ev-muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* Visual data representations — all figures trace to the data above   */
+/* ------------------------------------------------------------------ */
+
+/* Overview in-card mini-visuals ------------------------------------- */
+.ev-ov-viz {
+  margin: 0 0 10px;
+  padding: 8px 0 2px;
+  border-top: 1px solid var(--ev-line-soft);
+}
+
+.ev-mini-viz {
+  display: block;
+  width: 100%;
+  height: 46px;
+}
+
+.ev-mini-axis,
+.ev-mini-rail {
+  stroke: var(--ev-line-soft);
+}
+
+.ev-mini-rising {
+  stroke: var(--ev-violet);
+}
+
+.ev-mini-merge {
+  stroke: var(--ev-lilac);
+}
+
+.ev-mini-bar-sb {
+  fill: var(--ev-violet);
+}
+
+.ev-mini-bar-base {
+  fill: var(--ev-line);
+}
+
+.ev-mini-dot-on {
+  fill: var(--ev-violet);
+  stroke: none;
+}
+
+.ev-mini-dot-off {
+  fill: none;
+  stroke: var(--ev-line);
+  stroke-width: 1.5;
+}
+
+/* Proof A illustrative flag and watermark --------------------------- */
+.ev-chart-flag {
+  margin-left: auto;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ev-ink-2);
+  background: var(--ev-line-soft);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.ev-watermark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: clamp(28px, 7vw, 54px);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ev-ink);
+  opacity: 0.05;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Proof B role tabs, flow, meter and skill chips -------------------- */
+.ev-role-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.ev-role-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--ev-line);
+  background: var(--ev-card);
+  color: var(--ev-ink-2);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.ev-role-tab:hover {
+  border-color: var(--ev-lilac);
+}
+
+.ev-role-tab.is-active {
+  border-color: var(--ev-violet-soft);
+  background: var(--ev-violet-pale);
+  color: var(--ev-violet);
+}
+
+.ev-role-tab-val {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--ev-violet);
+}
+
+.ev-role-tab:not(.is-active) .ev-role-tab-val {
+  color: var(--ev-ink-2);
+}
+
+.ev-flow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ev-flow-node {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 6px;
+  border-radius: 10px;
+  border: 1px solid var(--ev-line-soft);
+  background: var(--ev-card);
+}
+
+.ev-flow-node.is-accent {
+  border-color: var(--ev-violet-soft);
+  background: var(--ev-violet-pale);
+}
+
+.ev-flow-num {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ev-violet);
+  font-variant-numeric: tabular-nums;
+}
+
+.ev-flow-cap {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ev-ink-2);
+  text-align: center;
+}
+
+.ev-flow-arrow {
+  display: inline-flex;
+  color: var(--ev-muted);
+  flex: none;
+}
+
+.ev-flow-arrow svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ev-dot-meter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.ev-dot-meter-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.ev-meter-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ev-line);
+  background: transparent;
+}
+
+.ev-meter-dot.is-on {
+  border-color: var(--ev-violet);
+  background: var(--ev-violet);
+}
+
+.ev-dot-meter-label {
+  font-size: 11px;
+  color: var(--ev-ink-2);
+}
+
+.ev-skill-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ev-chip-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ev-chip-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ev-ink-2);
+}
+
+.ev-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ev-skill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--ev-line);
+  background: var(--ev-card);
+  color: var(--ev-ink);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ev-skill-chip svg {
+  width: 12px;
+  height: 12px;
+  flex: none;
+}
+
+.ev-skill-chip.is-in {
+  border-color: var(--ev-rise-bg);
+  background: var(--ev-rise-bg);
+  color: var(--ev-rise);
+}
+
+.ev-skill-chip.is-out {
+  border-color: var(--ev-line);
+  color: var(--ev-ink-2);
+}
+
+.ev-skill-chip:hover {
+  border-color: var(--ev-violet-soft);
+}
+
+.ev-skill-chip.is-selected {
+  border-color: var(--ev-violet);
+  box-shadow: 0 0 0 2px var(--ev-violet-pale);
+}
+
+.ev-chip-freq {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 10px;
+  color: var(--ev-ink-2);
+}
+
+.ev-skill-chip.is-in .ev-chip-freq {
+  color: var(--ev-rise);
+}
+
+.ev-chip-empty {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--ev-ink-2);
+}
+
+.ev-chip-evidence {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--ev-violet-soft);
+  background: var(--ev-violet-pale);
+  animation: ev-fade-up 0.22s ease both;
+}
+
+.ev-chip-evidence-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+  font-size: 12px;
+  color: var(--ev-ink);
+}
+
+.ev-chip-evidence-note,
+.ev-chip-evidence-freq {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ev-ink-2);
+}
+
+.ev-chip-evidence-freq {
+  margin-top: 5px;
+  color: var(--ev-ink-2);
+}
+
+/* Proof C paired mini-bars and legend ------------------------------- */
+.ev-metric-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 10px;
+  font-size: 11px;
+  color: var(--ev-ink-2);
+}
+
+.ev-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.ev-legend-swatch.is-sb {
+  background: var(--ev-violet);
+}
+
+.ev-legend-swatch.is-base {
+  background: var(--ev-line);
+}
+
+.ev-synthetic-tag {
+  margin-left: auto;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ev-ink-2);
+  background: var(--ev-line-soft);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.ev-metric-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 4px 0 2px;
+}
+
+.ev-metric-bar-track {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ev-line-soft);
+  overflow: hidden;
+}
+
+.ev-metric-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.ev-metric-bar-fill.is-sb {
+  background: var(--ev-violet);
+}
+
+.ev-metric-bar-fill.is-base {
+  background: var(--ev-line);
+}
+
+/* Proof E plan-merge visual and same-plan tag ----------------------- */
+.ev-plan-merge {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--ev-line-soft);
+  border-radius: 12px;
+  background: var(--ev-paper);
+}
+
+.ev-plan-merge-svg {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+}
+
+.ev-plan-rail {
+  stroke: var(--ev-line);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.ev-plan-rail-label {
+  fill: var(--ev-ink-2);
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-display);
+}
+
+.ev-plan-merge-line {
+  stroke: var(--ev-lilac);
+  stroke-width: 2.5;
+}
+
+.ev-plan-merge-node {
+  fill: var(--ev-violet);
+}
+
+.ev-plan-merge-caption {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ev-ink-2);
+}
+
+.ev-same-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ev-ink-2);
+  background: var(--ev-line-soft);
+  border-radius: 999px;
+  padding: 2px 7px;
+}
+
+/* Methodology glyph boxes and pipeline timeline --------------------- */
+.ev-param-glyph {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 6px;
+  padding: 7px 9px;
+  border: 1px solid var(--ev-line-soft);
+  border-radius: 9px;
+  background: var(--ev-card);
+}
+
+.ev-param-glyph-ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 26px;
+  flex: none;
+  color: var(--ev-violet);
+}
+
+.ev-param-glyph-ic svg {
+  width: 32px;
+  height: 24px;
+}
+
+.ev-param-glyph-val {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ev-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.ev-param-glyph-unit {
+  font-size: 10px;
+  color: var(--ev-ink-2);
+}
+
+.ev-pipe-step {
+  position: relative;
+  padding-top: 20px;
+}
+
+.ev-pipe-node {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ev-violet);
+  box-shadow: 0 0 0 3px var(--ev-violet-pale);
+}
+
+.ev-pipe-step::after {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: 24px;
+  right: -10px;
+  height: 1px;
+  background: var(--ev-line);
+}
+
+.ev-pipe-step:last-child::after {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .ev-flow {
+    flex-wrap: wrap;
+  }
+
+  .ev-flow-arrow {
+    transform: rotate(90deg);
+  }
+
+  .ev-pipe-step::after {
+    display: none;
+  }
+
+  .ev-synthetic-tag {
+    margin-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ev-chip-evidence {
+    animation: none;
+  }
 }

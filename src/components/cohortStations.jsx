@@ -372,171 +372,6 @@ export const COHORT_STEPS = [
 ]
 
 /**
- * The horizontal workflow indicator.
- *
- * It reports position rather than offering a second way to jump: the stepper is
- * the page's navigation, and a reader who clicked a step here and a different one
- * there would have to guess which control won. Steps with no data behind them are
- * marked `aria-disabled` and stay legible so the sequence is readable from the
- * start — an unavailable capability is shown and explained, never hidden.
- */
-export function FlowBar({ active, reached, onSelect, onLocked }) {
-  return (
-    <nav className="cohort-flow" aria-label="Cohort analysis steps">
-      <ol className="cohort-flow-list">
-        {COHORT_STEPS.map((step, index) => {
-          const isActive = step.id === active
-          const isOpen = reached.includes(step.id)
-          const state = isActive ? 'is-active' : isOpen ? 'is-open' : 'is-locked'
-          return (
-            <li key={step.id} className={`cohort-flow-item ${state}`}>
-              <button
-                type="button"
-                className="cohort-flow-btn"
-                aria-current={isActive ? 'step' : undefined}
-                aria-disabled={isOpen ? undefined : 'true'}
-                onClick={() => (isOpen ? onSelect(step.id) : onLocked(step))}
-              >
-                <span className="cohort-flow-ic" aria-hidden="true">
-                  <step.Icon />
-                </span>
-                <span className="cohort-flow-copy">
-                  <span className="cohort-flow-title">{step.title}</span>
-                  <span className="cohort-flow-sub">{step.blurb}</span>
-                </span>
-              </button>
-              {index < COHORT_STEPS.length - 1 ? (
-                <span className="cohort-flow-link" aria-hidden="true">
-                  <ArrowIcon />
-                </span>
-              ) : null}
-            </li>
-          )
-        })}
-      </ol>
-    </nav>
-  )
-}
-
-/**
- * The vertical stepper: the page's only navigation between steps.
- *
- * Each entry is a real button carrying its number, an icon, a title and one line
- * of description, so a reader learns the whole sequence from the rail alone. The
- * rail is an ordered list because the steps are genuinely ordered.
- */
-export function StepNav({ active, reached, onSelect, onLocked }) {
-  return (
-    <nav className="cohort-stepnav" aria-label="Cohort steps">
-      <ol className="cohort-steps">
-        {COHORT_STEPS.map((step, index) => {
-          const isActive = step.id === active
-          const isOpen = reached.includes(step.id)
-          const state = isActive ? 'is-active' : isOpen ? 'is-open' : 'is-locked'
-          return (
-            <li key={step.id} className={`cohort-step ${state}`}>
-              <button
-                type="button"
-                className="cohort-step-btn"
-                aria-current={isActive ? 'step' : undefined}
-                aria-disabled={isOpen ? undefined : 'true'}
-                onClick={() => (isOpen ? onSelect(step.id) : onLocked(step))}
-              >
-                <span className="cohort-step-badge" aria-hidden="true">
-                  <step.Icon />
-                  <span className="cohort-step-num">{step.num}</span>
-                </span>
-                <span className="cohort-step-copy">
-                  <span className="cohort-step-title">{step.title}</span>
-                  <span className="cohort-step-note">{step.note}</span>
-                </span>
-              </button>
-              {index < COHORT_STEPS.length - 1 ? <span className="cohort-step-rail" aria-hidden="true" /> : null}
-            </li>
-          )
-        })}
-      </ol>
-    </nav>
-  )
-}
-
-/**
- * Three compact cards for the steps after the roster.
- *
- * These are navigation and explanation, not a preview of numbers: each carries a
- * pictograph of the shape the step produces, and none of them shows a figure
- * until the service has returned one.
- */
-export function PreviewCards({ reached, onSelect, onLocked }) {
-  const steps = COHORT_STEPS.filter((step) => step.id !== 'roster')
-  return (
-    <ul className="cohort-previews">
-      {steps.map((step) => {
-        const isOpen = reached.includes(step.id)
-        return (
-          <li key={step.id} className={`cohort-preview${isOpen ? ' is-open' : ' is-locked'}`}>
-            <button
-              type="button"
-              className="cohort-preview-btn"
-              aria-disabled={isOpen ? undefined : 'true'}
-              onClick={() => (isOpen ? onSelect(step.id) : onLocked(step))}
-            >
-              <span className="cohort-preview-top">
-                <span className="cohort-preview-ic" aria-hidden="true">
-                  <step.Icon />
-                </span>
-                <PreviewGlyph step={step.id} />
-              </span>
-              <span className="cohort-preview-title">{step.title}</span>
-              <span className="cohort-preview-note">{step.note}</span>
-              <span className="cohort-preview-go">
-                {isOpen ? 'Open step' : 'Available after analysis'}
-                <ArrowIcon className="cohort-preview-arrow" />
-              </span>
-            </button>
-          </li>
-        )
-      })}
-    </ul>
-  )
-}
-
-/**
- * The pictograph on each preview card: the shape the step draws, at card scale.
- *
- * Purely decorative and built from the two comparison tints, so a card reads as
- * "this step produces bars" before any bar exists.
- */
-function PreviewGlyph({ step }) {
-  if (step === 'gaps') {
-    return (
-      <svg className="cohort-glyph" viewBox="0 0 64 26" aria-hidden="true" fill="none">
-        <rect x="2" y="4" width="34" height="6" rx="3" className="cohort-glyph-cohort" />
-        <rect x="2" y="16" width="20" height="6" rx="3" className="cohort-glyph-market" />
-      </svg>
-    )
-  }
-  if (step === 'pulse') {
-    return (
-      <svg className="cohort-glyph" viewBox="0 0 64 26" aria-hidden="true" fill="none">
-        <rect x="2" y="13" width="9" height="9" rx="2.5" className="cohort-glyph-cohort" />
-        <rect x="16" y="6" width="9" height="16" rx="2.5" className="cohort-glyph-cohort" />
-        <rect x="30" y="10" width="9" height="12" rx="2.5" className="cohort-glyph-market" />
-        <rect x="44" y="16" width="9" height="6" rx="2.5" className="cohort-glyph-market" />
-      </svg>
-    )
-  }
-  return (
-    <svg className="cohort-glyph" viewBox="0 0 64 26" aria-hidden="true" fill="none">
-      <circle cx="9" cy="13" r="5" className="cohort-glyph-cohort" />
-      <circle cx="32" cy="13" r="5" className="cohort-glyph-market" />
-      <circle cx="55" cy="13" r="5" className="cohort-glyph-cohort" />
-      <path d="M14 13h13M37 13h13" className="cohort-glyph-wire" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-/**
  * The JSON editor, with a line-number gutter.
  *
  * A textarea is kept as the input rather than replaced by a code component: the
@@ -573,35 +408,98 @@ export function JsonEditor({ id, value, onChange, describedBy, rows = 9 }) {
 }
 
 /**
- * The roster step's illustration: skill tags become one cohort insight.
+ * The roster step's illustration: the cohort workflow plate.
  *
- * It describes the pipeline, not a result. No number is drawn anywhere in it, so
- * nothing on the initial state can be mistaken for a measurement.
+ * It states the same pipeline the rail and the Institutional Loop state in words
+ * -- students in, SkillBridge organizes, cohort insights out -- and carries no
+ * figure anywhere, so nothing on the initial state can be mistaken for a
+ * measurement.
+ *
+ * `width` and `height` are the plate's intrinsic pixels, so the browser knows the
+ * ratio before the file loads and the image is never stretched, cropped or
+ * rotated. At 1159x1358 the plate is close to square, so the illustration column
+ * can cap it by WIDTH alone and it lands at a natural size beside the editor
+ * rather than towering over it.
  */
 export function RosterIllustration() {
   return (
-    <div className="cohort-figure" aria-hidden="true">
-      <svg viewBox="0 0 220 168" fill="none">
-        <rect x="4" y="10" width="86" height="148" rx="12" className="cohort-figure-panel" />
-        <rect x="18" y="26" width="40" height="9" rx="4.5" className="cohort-figure-tag" />
-        <rect x="18" y="45" width="58" height="9" rx="4.5" className="cohort-figure-tag is-2" />
-        <rect x="18" y="64" width="34" height="9" rx="4.5" className="cohort-figure-tag is-3" />
-        <rect x="18" y="83" width="50" height="9" rx="4.5" className="cohort-figure-tag" />
-        <rect x="18" y="102" width="28" height="9" rx="4.5" className="cohort-figure-tag is-2" />
-        <rect x="18" y="126" width="58" height="18" rx="9" className="cohort-figure-chip" />
-
-        <path d="M98 84h20" className="cohort-figure-wire" strokeWidth="2" strokeLinecap="round" />
-        <path d="m113 79 5 5-5 5" className="cohort-figure-wire" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-
-        <rect x="126" y="34" width="90" height="100" rx="12" className="cohort-figure-panel is-out" />
-        <rect x="140" y="52" width="34" height="34" rx="8" className="cohort-figure-node" />
-        <rect x="182" y="52" width="22" height="34" rx="8" className="cohort-figure-node is-bar" />
-        <rect x="140" y="100" width="62" height="7" rx="3.5" className="cohort-figure-tag is-3" />
-      </svg>
+    <div className="cohort-figure">
+      <img
+        className="cohort-figure-img"
+        src="/references/19acabe3-b5fa-4496-bd9e-7aa751f30ecb.png"
+        alt="Students' skills are processed into cohort-level insights"
+        width={1159}
+        height={1358}
+        decoding="async"
+      />
     </div>
   )
 }
 
+/**
+ * The Institutional Loop -- why this page and the Curriculum Time Machine are two
+ * ends of one product.
+ *
+ * A disclosure, not a second navigation bar: one row until a reader opens it, and
+ * it explains a relationship rather than offering a destination of its own. The
+ * one action inside it goes to the CTM, which is already reachable from the top
+ * navigation, so nothing here is reachable only through this panel.
+ *
+ * Every figure it reports is a value the service returned for this roster. Before
+ * a comparison exists it states the relationship and no number, so an un-analysed
+ * page cannot imply a measurement it does not have.
+ */
+export function InstitutionalLoop({ analysis, roleLabel, onOpen }) {
+  const [open, setOpen] = useState(false)
+  const bodyId = useId()
+  const observed = analysis ? formatCount(analysis.distinctCohortSkills) : null
+
+  return (
+    <section className={`cohort-loop${open ? ' is-open' : ''}`}>
+      <button
+        type="button"
+        className="cohort-loop-toggle"
+        aria-expanded={open}
+        aria-controls={bodyId}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <ChevronIcon className="cohort-loop-chevron" />
+        <span className="cohort-loop-head">
+          <span className="cohort-loop-title">Institutional Loop</span>
+          <span className="cohort-loop-sub">Cohort gaps are the input to the curriculum</span>
+        </span>
+      </button>
+
+      <div className="cohort-loop-body" id={bodyId} hidden={!open}>
+        <ol className="cohort-loop-chain">
+          <li className="cohort-loop-stop">
+            <span className="cohort-loop-name">Cohort Dashboard</span>
+            <span className="cohort-loop-note">
+              {observed ? `${observed} skills observed` : 'Submit a roster to observe skills'}
+            </span>
+          </li>
+          <li className="cohort-loop-arrow" aria-hidden="true" />
+          <li className="cohort-loop-stop">
+            <span className="cohort-loop-name">Skill gaps identified</span>
+            <span className="cohort-loop-note">
+              {analysis ? `Compared against ${roleLabel}` : 'Available once a roster is analysed'}
+            </span>
+          </li>
+          <li className="cohort-loop-arrow" aria-hidden="true" />
+          <li className="cohort-loop-stop">
+            <span className="cohort-loop-name">Curriculum Time Machine</span>
+            <span className="cohort-loop-note">Does the curriculum already teach it?</span>
+          </li>
+        </ol>
+
+        <button type="button" className="cohort-loop-go" onClick={onOpen}>
+          Open Curriculum Time Machine
+          <ArrowIcon className="cohort-loop-go-arrow" />
+        </button>
+      </div>
+    </section>
+  )
+}
 /* ------------------------------------------------------------- states */
 
 export function LoadingPanel() {

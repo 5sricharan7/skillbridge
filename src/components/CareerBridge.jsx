@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { WorkspaceShell, WorkspaceRail, RailContext } from './workspaceShell'
 import './careerBridge.css'
 import {
   CAREER_BRIDGE_DEFAULT_BUDGET,
@@ -21,7 +22,26 @@ import {
   loadRealMarketDemand,
   targetRoleLabel,
   submitRoadmap,
+  submitSkillCompletion,
 } from '../data/careerBridgeSource'
+import {
+  COMPLETION_ACTION_LABEL,
+  COMPLETION_ACTION_PENDING_LABEL,
+  COMPLETION_ASSERTED_LABEL,
+  COMPLETION_SOURCE_LABEL,
+  COMPLETION_STATUS_COMPLETED,
+  COMPLETION_STATUS_ERROR,
+  COMPLETION_VERIFICATION_NOTE,
+  assertedSkills,
+  completionObservedRows,
+  completionProvenanceRows,
+  completionRejectionReason,
+  completionValidationRows,
+  createCompletionFlow,
+  createCompletionState,
+  isSkillAsserted,
+  mergeCompletionResult,
+} from '../data/careerBridgeCompletion'
 import { extractResumeText, validateResumeFile } from '../data/resumeExtraction'
 
 /* ---------------------------------------------------------------- icons */
@@ -213,23 +233,25 @@ const SIDEBAR_GROUPS = [
   {
     label: 'Career Bridge',
     items: [
-      { label: 'Overview', icon: <GaugeIcon />, view: CAREER_BRIDGE_VIEWS.overview, realState: 'full' },
-      { label: 'Resume Analyzer', icon: <FileIcon />, view: CAREER_BRIDGE_VIEWS.resume, realState: 'partial' },
-      { label: 'Role Explorer', icon: <TargetIcon />, view: CAREER_BRIDGE_VIEWS.role, realState: 'full' },
-      { label: 'Skill Gap', icon: <RankIcon />, view: CAREER_BRIDGE_VIEWS.gap, realState: 'full' },
-      { label: 'Learning Planner', icon: <ClockIcon />, view: CAREER_BRIDGE_VIEWS.planner, realState: 'full' },
+      { label: 'Overview', note: 'The one-page brief', icon: <GaugeIcon />, view: CAREER_BRIDGE_VIEWS.overview, realState: 'full' },
+      { label: 'Resume Analyzer', note: 'What your resume records', icon: <FileIcon />, view: CAREER_BRIDGE_VIEWS.resume, realState: 'partial' },
+      { label: 'Role Explorer', note: 'What the role asks for', icon: <TargetIcon />, view: CAREER_BRIDGE_VIEWS.role, realState: 'full' },
+      { label: 'Skill Gap', note: 'Where you fall short', icon: <RankIcon />, view: CAREER_BRIDGE_VIEWS.gap, realState: 'full' },
+      { label: 'Learning Planner', note: 'What to do next', icon: <ClockIcon />, view: CAREER_BRIDGE_VIEWS.planner, realState: 'full' },
     ],
   },
   {
     items: [
       {
         label: 'Market Insights',
+        note: 'Recorded demand for the role',
         icon: <GlobeIcon />,
         view: CAREER_BRIDGE_VIEWS.market,
         realState: 'partial',
       },
       {
         label: 'Resources',
+        note: 'Guides and references',
         icon: <BulbIcon />,
         view: CAREER_BRIDGE_VIEWS.resources,
         realState: REAL_STATE_NOT_YET,
@@ -238,56 +260,40 @@ const SIDEBAR_GROUPS = [
   },
   {
     items: [
-      { label: 'Community', icon: <CommunityIcon />, view: CAREER_BRIDGE_VIEWS.community },
-      { label: 'Settings', icon: <SettingsIcon />, view: CAREER_BRIDGE_VIEWS.settings },
+      { label: 'Community', note: 'Share a pathway', icon: <CommunityIcon />, view: CAREER_BRIDGE_VIEWS.community },
+      { label: 'Settings', note: 'Mode and account', icon: <SettingsIcon />, view: CAREER_BRIDGE_VIEWS.settings },
     ],
   },
 ]
 
+/* The same groups, mapped onto the shared shell's item contract. The rail owns
+   the shape; this file owns what Career Bridge means. */
+function sidebarRailGroups(view, mode) {
+  return SIDEBAR_GROUPS.map((group) => ({
+    label: group.label,
+    items: group.items.map((item) => ({
+      id: item.view,
+      label: item.label,
+      note: item.note,
+      icon: item.icon,
+      tag: mode === 'real' && item.realState === REAL_STATE_NOT_YET ? REAL_NOT_YET_LABEL : null,
+    })),
+  }))
+}
+
 function CareerBridgeSidebar({ view, mode, onChange }) {
   return (
-    <aside className="cb-sidebar">
-      <nav className="cb-sidebar-nav" aria-label="Career Bridge application">
-        {SIDEBAR_GROUPS.map((group, groupIndex) => (
-          <div className={`cb-sidebar-group${groupIndex > 0 ? ' is-separated' : ''}`} key={group.label ?? groupIndex}>
-            {group.label && <span className="cb-sidebar-label">{group.label}</span>}
-            {group.items.map((item) => {
-              const isActive = item.view === view
-              const isRealUnsupported = mode === 'real' && item.realState === REAL_STATE_NOT_YET
-              return (
-                <button
-                  key={item.label}
-                  type="button"
-                  className={`cb-sidebar-link${isActive ? ' is-active' : ''}`}
-                  aria-current={isActive ? 'page' : undefined}
-                  onClick={() => onChange(item.view)}
-                >
-                  <span className="cb-sidebar-ic" aria-hidden="true">
-                    {item.icon}
-                  </span>
-                  {item.label}
-                  {isRealUnsupported && <span className="cb-state-tag">{REAL_NOT_YET_LABEL}</span>}
-                </button>
-              )
-            })}
-          </div>
-        ))}
-      </nav>
-
-      {/* Presentational only — no destination, so it is not a link or a button. */}
-      <div className="cb-promo">
-        <span className="cb-promo-ic" aria-hidden="true">
-          <TrendGlyphUp />
-        </span>
-        <span className="cb-promo-text">
-          <span className="cb-promo-sm">Small skills.</span>
-          <span className="cb-promo-lg">big futures.</span>
-        </span>
-        <span className="cb-promo-arrow" aria-hidden="true">
-          <ArrowUpRightIcon />
-        </span>
-      </div>
-    </aside>
+    <WorkspaceRail
+      label="Career Bridge"
+      navLabel="Career Bridge application"
+      groups={sidebarRailGroups(view, mode)}
+      activeId={view}
+      onSelect={onChange}
+      /* The one contextual card every workspace ends its rail with. Here it
+         carries the page's line rather than any figure: an un-analysed page has
+         nothing recorded to report, and must not imply otherwise. */
+      context={<RailContext label="Career Bridge" meta="Small skills. Big futures." />}
+    />
   )
 }
 
@@ -1148,6 +1154,11 @@ function RoleExplorerView({
    this learner against a role, and ordering the roles here would be a number
    nobody recorded. The screen says so instead. Recorded market demand for all
    three roles is on Market Insights, and it is about the corpus, not the learner. */
+/* Stage 11 stated this as a flat "cannot score learner". Stage 14C added one
+   thing the service really can do — compare its own model-internal signals
+   before and after a completion the learner asserted — so the wording now
+   separates the two rather than either denying the new one or letting it sound
+   like a score. Nothing else here is relaxed: the broader limits still stand. */
 function ClosestFitNotAvailable() {
   return (
     <div className="cb-view-empty">
@@ -1155,13 +1166,19 @@ function ClosestFitNotAvailable() {
         <TargetIcon />
       </span>
       <p>
-        The service cannot score this learner against a role. It plans the role you choose rather than comparing roles,
-        and none of its endpoints return a fit between your resume and a role.
+        The service cannot score this learner against a role. It plans the role you choose rather than comparing
+        roles, and none of its endpoints return a fit between your resume and a role.
       </p>
       <p className="cb-view-aside">
-        Ranking the roles for you here would mean inventing that comparison, so this screen states the gap instead.
-        Recorded demand for every role is on the Market Insights screen, and it describes the prepared corpus rather than
-        how well you fit.
+        SkillBridge can compare its own model-internal signals before and after a learner-asserted skill completion;
+        this is not a verified learner or employability score. Mark a stop complete on the Overview and the route is
+        re-planned, and the difference between the two plans is shown as what it is — a change in the engine's own
+        requirement signal for one skill, reported against a completion you stated, which nothing here verifies.
+      </p>
+      <p className="cb-view-aside">
+        Ranking the roles for you here would still mean inventing that comparison, so this screen states the gap
+        instead. Recorded demand for every role is on the Market Insights screen, and it describes the prepared corpus
+        rather than how well you fit.
       </p>
     </div>
   )
@@ -1865,6 +1882,132 @@ function RoadmapStatus({ loading, pending, error, hasRoute }) {
   return null
 }
 
+/* -------------------------------------------- learner-asserted completion
+
+   Stage 14C. The action is deliberately the quietest control in the row: a
+   small text button under the stop, never a filled or accented one, because
+   what it records is a claim the learner made and not a measurement. Once it is
+   asserted the row states so in words, next to the two labels that make the
+   claim's standing explicit. */
+
+function CompletionAction({ skill, asserted, pending, disabled, onAssert }) {
+  if (asserted) {
+    return (
+      <p className="cb-assert-done">
+        <span className="cb-chip cb-chip-asserted">{COMPLETION_ASSERTED_LABEL}</span>
+        <span className="cb-assert-done-source">{COMPLETION_SOURCE_LABEL}</span>
+        <span className="cb-assert-done-note">{COMPLETION_VERIFICATION_NOTE}</span>
+      </p>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      className="cb-assert"
+      onClick={() => onAssert(skill)}
+      disabled={disabled || pending}
+      title={COMPLETION_VERIFICATION_NOTE}
+    >
+      {pending ? COMPLETION_ACTION_PENDING_LABEL : COMPLETION_ACTION_LABEL}
+    </button>
+  )
+}
+
+/* One row of figures. The rows come from `completionValidationRows`, so the
+   labels and values are decided in one tested place and this only decides how a
+   row looks. `tone` carries presentation intent — never meaning — so the verdict
+   stays readable without colour. */
+function CompletionFigures({ rows }) {
+  return (
+    <dl className="cb-assert-figures">
+      {rows.map((row) => (
+        <div key={row.key} className={`cb-assert-figure is-${row.tone}`}>
+          <dt>{row.label}</dt>
+          <dd>
+            {row.tone === 'consistent' && (
+              <span className="cb-assert-tick" aria-hidden="true">
+                <CheckIcon />
+              </span>
+            )}
+            {row.value}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
+/* The comparison itself. It is presented as a model-internal comparison with
+   the assertion stated on it, never as a gain the learner earned: the figure is
+   the engine's own score for a text, and the provenance block says which text.
+
+   Three groups in a fixed order, because they are three different kinds of
+   claim. The figures are the result. The provenance says what produced them.
+   The unavailable block says what nobody measured — and it is last, and quieter
+   than both, so the panel does not spend its emphasis on an absence.
+
+   `assertionCount` is the session's total and `position` is this comparison's
+   place in it. They are different numbers and both are shown, because the nth
+   comparison was made against a text that already contained the earlier
+   assertions: the figure is never "everything I did this session". */
+function CompletionResultPanel({ result, assertionCount, position }) {
+  const rows = completionValidationRows(result)
+
+  return (
+    <section className="cb-assert-panel" aria-label="Model-internal validation after this completion">
+      <span className="cb-label cb-label-route">
+        <span className="cb-label-ic" aria-hidden="true">
+          <RouteIcon />
+        </span>
+        Model-internal validation
+      </span>
+      <h3 className="cb-assert-title">
+        <span className="cb-assert-skill">{result.label}</span>
+      </h3>
+      <CompletionFigures rows={rows} />
+      {!result.gapClosed && result.gapStatusNote && (
+        <p className="cb-assert-gap-note">{result.gapStatusNote}</p>
+      )}
+
+      <dl className="cb-assert-provenance">
+        {completionProvenanceRows(result).map((row) => (
+          <div key={row.key} className="cb-assert-provenance-row">
+            <dt>{row.label}</dt>
+            <dd>{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+
+      {/* Secondary on purpose. These two figures have no input to be computed
+          from, so the block says so in words instead of showing a zero that
+          would read as "the learner did not improve". */}
+      <div className="cb-assert-observed">
+        <p className="cb-assert-observed-label">Not measured here</p>
+        <dl className="cb-assert-observed-rows">
+          {completionObservedRows(result).map((row) => (
+            <div key={row.key} className="cb-assert-observed-row">
+              <dt>{row.label}</dt>
+              <dd>{row.value}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="cb-assert-observed-note">{result.observedNote}</p>
+      </div>
+
+      <p className="cb-assert-source">
+        <strong>{COMPLETION_SOURCE_LABEL}</strong> — {COMPLETION_VERIFICATION_NOTE}
+      </p>
+      <p className="cb-view-aside">
+        {result.boundaryNote} Before and after are two plans of the same texts, differing only by this assertion.{' '}
+        {assertionCount > 1
+          ? `${assertionCount} skills are asserted in this session; this is comparison ${position} of ${assertionCount}, so only this skill's own figures are shown.`
+          : 'This is the first assertion in this session.'}
+      </p>
+    </section>
+  )
+}
+
 /* ----------------------------------------------------------------- page */
 
 /* Roadmap and proof requests are service calls in API mode, so the page owns their
@@ -1916,6 +2059,19 @@ export default function CareerBridge() {
   const roadmapRequestId = useRef(0)
   const roadmapRequest = useRef(null)
 
+  /* Stage 14C. The session holds the skills this learner has asserted complete,
+     in memory only: there is no storage write anywhere in this flow, and a
+     reload starts from nothing. The flow object owns the request lifecycle
+     (duplicate guard, supersede, abort) so the component only renders. */
+  const [completions, setCompletions] = useState(createCompletionState)
+  const [completionResults, setCompletionResults] = useState([])
+  const [completionError, setCompletionError] = useState(null)
+  const [completionPending, setCompletionPending] = useState(null)
+  const completionFlow = useRef(null)
+  if (!completionFlow.current) {
+    completionFlow.current = createCompletionFlow({ submit: submitSkillCompletion })
+  }
+
   const profile = useMemo(() => loadDemoProfile(), [])
   const marks = useMemo(() => getRecalibrationMarks(), [])
 
@@ -1924,6 +2080,7 @@ export default function CareerBridge() {
       resumeRequestId.current += 1
       roadmapRequestId.current += 1
       roadmapRequest.current?.abort()
+      completionFlow.current?.cancel()
     },
     [],
   )
@@ -2074,6 +2231,20 @@ export default function CareerBridge() {
 
   const handleSelect = (id) => setSelectedId(id)
 
+  /* An assertion belongs to the learner context it was made in. Changing the
+     submitted text or the mode abandons that context, so any in-flight
+     comparison is cancelled and the session starts empty rather than carrying
+     claims into a comparison they were not made against. */
+  const resetCompletions = () => {
+    completionFlow.current?.cancel()
+    if (completions.skills.length || completionResults.length || completionError) {
+      setCompletions(createCompletionState())
+      setCompletionResults([])
+      setCompletionError(null)
+    }
+    setCompletionPending(null)
+  }
+
   /* Anything that changes the submitted text invalidates the route on screen: the
      plan belongs to the text it was built from, so keeping it would misdescribe
      what the service was actually asked. */
@@ -2081,6 +2252,7 @@ export default function CareerBridge() {
     roadmapRequestId.current += 1
     roadmapRequest.current?.abort()
     roadmapRequest.current = null
+    resetCompletions()
     setRoadmapData(EMPTY_ROADMAP)
     setRoadmapError(null)
     setRoadmapLoading(false)
@@ -2102,6 +2274,7 @@ export default function CareerBridge() {
     roadmapRequestId.current += 1
     roadmapRequest.current?.abort()
     roadmapRequest.current = null
+    resetCompletions()
     setRoadmapData(EMPTY_ROADMAP)
     setRoadmapError(null)
     setRoadmapPending(false)
@@ -2177,6 +2350,10 @@ export default function CareerBridge() {
       jdText: jobDescription,
       budgetHours: budget,
       targetRole,
+      /* Skills asserted so far travel with every plan, so a moved dial or a
+         changed role re-plans from the same skill state the completion recorded
+         rather than dropping the learner back to the text they started with. */
+      completedSkills: assertedSkills(completions),
       signal: controller.signal,
     })
       .then((data) => {
@@ -2209,6 +2386,76 @@ export default function CareerBridge() {
     requestRealRoadmap()
   }
 
+  /* One learner assertion. The skill is recorded, the route is re-planned with it
+     added by the service, and both results come back for the model-internal
+     comparison. Nothing here is a claim that the learner improved: the panel
+     states the assertion's standing next to the figures.
+
+     A duplicate click never reaches the flow's request, because the flow refuses
+     an already-asserted skill before it spends anything, and an in-flight
+     comparison is superseded by the next one rather than racing it. */
+  const handleAssertComplete = async (skill) => {
+    if (mode !== 'real' || completionPending || roadmapPending) return
+
+    setCompletionPending(skill)
+    setCompletionError(null)
+
+    const outcome = await completionFlow.current.run({
+      state: completions,
+      skill,
+      context: { targetRole, resumeText: resume.text, jdText: jobDescription },
+      inputs: {
+        resumeText: resume.text,
+        jdText: jobDescription,
+        budgetHours: budget,
+        targetRole,
+      },
+    })
+
+    setCompletionPending(null)
+
+    /* Nothing was recorded and nothing was sent: a duplicate, a blank name, or no
+       learner text to compare against. The row stays as it was, and the reason is
+       stated rather than swallowed — a click that does nothing visible would be
+       indistinguishable from a broken control. */
+    if (!outcome.accepted) {
+      setCompletionError({
+        kind: 'rejected',
+        title: 'Nothing was recorded',
+        message: completionRejectionReason(outcome.reason),
+        detail: '',
+      })
+      return
+    }
+
+    setCompletions(outcome.state)
+
+    if (outcome.status === COMPLETION_STATUS_ERROR) {
+      /* A payload this page refused is not an outage, and saying the service is
+         unavailable when it answered would misreport what happened. The refusal
+         names itself instead. */
+      const described = describeApiError(outcome.error)
+      setCompletionError(
+        outcome.error?.kind === 'malformed'
+          ? { ...described, title: 'Could not read that comparison' }
+          : described,
+      )
+      return
+    }
+
+    if (outcome.status !== COMPLETION_STATUS_COMPLETED) return
+
+    /* The re-planned route replaces the one on screen, which is what "replanned"
+       means here: the learner keeps planning from the route their assertion
+       produced, and the stopped skill is no longer a stop. */
+    setRoadmapData(outcome.result.after)
+    setRoadmapError(null)
+    /* One panel per asserted skill. Each comparison was measured against the text
+       as it stood when that assertion was made, so they are kept side by side
+       rather than replaced or added into a session figure. */
+    setCompletionResults((current) => mergeCompletionResult(current, outcome.result))
+  }
+
   /* Re-planning only happens for a route that already exists, because the explicit
      button is what asks for the first one. The guards are read when the effect runs
      — the same render that changed the budget or role — so they are not stale, and
@@ -2236,10 +2483,8 @@ export default function CareerBridge() {
 
   return (
     <section className="career-bridge" id="career-bridge">
-      <div className="cb-shell">
-        <CareerBridgeSidebar view={view} mode={mode} onChange={setView} />
-        <div className="cb-main-col">
-          <div className="cb-inner">
+      <WorkspaceShell rail={<CareerBridgeSidebar view={view} mode={mode} onChange={setView} />}>
+        <div className="cb-inner">
         <CareerBridgeModeSwitch mode={mode} onChange={handleModeChange} />
 
         {isOverview && (
@@ -2410,7 +2655,7 @@ export default function CareerBridge() {
               {roadmap.map((skill, index) => {
                 const isActive = selected?.id === skill.id
                 return (
-                  <li key={skill.id}>
+                  <li key={skill.id} className="cb-route-item">
                     <button
                       type="button"
                       className={`cb-route${isActive ? ' is-active' : ''}`}
@@ -2425,6 +2670,20 @@ export default function CareerBridge() {
                       </span>
                       <TrendMark trend={skill.trend} />
                     </button>
+                    {/* Real mode only: the assertion needs the service to compare
+                        two plans against each other, and a demo route has no
+                        plans to compare. */}
+                    {mode === 'real' && (
+                      <div className="cb-route-assert">
+                        <CompletionAction
+                          skill={skill.name}
+                          asserted={isSkillAsserted(completions, skill.name)}
+                          pending={completionPending === skill.name}
+                          disabled={Boolean(completionPending) || roadmapPending}
+                          onAssert={handleAssertComplete}
+                        />
+                      </div>
+                    )}
                   </li>
                 )
               })}
@@ -2434,6 +2693,31 @@ export default function CareerBridge() {
                  collapsing to nothing when the service returns no route. */
               <p className="cb-detail-empty">No route to show for this time budget yet.</p>
             )}
+
+            {/* Two failures, stated differently because they are different things:
+                a refused request keeps the assertion (the learner did say it, so
+                what is missing is only the comparison), while a request the flow
+                never sent leaves nothing recorded. The note says which. */}
+            {completionError && (
+              <div className="cb-status is-error" role="alert">
+                <span className="cb-status-title">{completionError.title}</span>
+                <p className="cb-status-body">{completionError.message}</p>
+                <p className="cb-status-note">
+                  {completionError.kind === 'rejected'
+                    ? 'Nothing was sent to the service and this stop is unchanged.'
+                    : 'The completion is still recorded for this session, so it cannot be asserted twice. Only the model-internal comparison is missing.'}
+                </p>
+              </div>
+            )}
+
+            {completionResults.map((result, index) => (
+              <CompletionResultPanel
+                key={result.skill}
+                result={result}
+                assertionCount={completions.skills.length}
+                position={index + 1}
+              />
+            ))}
           </section>
 
           <DetailPanel skill={selected} total={roadmap.length} mode={mode} />
@@ -2589,8 +2873,7 @@ export default function CareerBridge() {
           </>
         )}
           </div>
-        </div>
-      </div>
+        </WorkspaceShell>
     </section>
   )
 }

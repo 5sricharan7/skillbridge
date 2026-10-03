@@ -1,0 +1,388 @@
+/* -----------------------------------------------------------------------
+   SkillBridge application shell — the ONE frame every workspace sits in.
+
+   Four routes (Career Bridge, Cohort Dashboard, Curriculum Time Machine,
+   Evidence) are four intelligence workspaces, not four websites. Before this
+   sheet each page owned its own rail geometry and the four did not match: the
+   sidebar column ranged 210–268px, the gap was present on one page and absent
+   on three, item heights were 40px and 46px, icon containers were a bare 16px
+   stroke on three pages and a 26px tinted tile on one, only one page drew a
+   descriptor under the label, only one page drew an active indicator bar, and
+   only one page had a contextual card pinned to the bottom. A reader moving
+   between workspaces had to re-learn the navigation each time.
+
+   This sheet is that one frame. It is deliberately normalized toward the
+   Curriculum Time Machine rail, which was already the most complete of the
+   four: a tinted icon tile, a title plus a short descriptor, a purple active
+   bar, and a contextual card at the foot.
+
+   TOKEN CONTRACT
+   This sheet declares no colours of its own. It reads `--ws-*`, and each page
+   scope (.career-bridge, .ctm, .ev-page, .cohort) aliases those onto its own
+   documented tokens — `--cb-*`, `--ctm-*`, `--ev-*`, `--cohort-*`. The four
+   scopes keep their own palettes and stay independent; the shell simply reads
+   whichever one is in scope, so it can never drift from a page that re-tunes
+   its own surface. Adding a fifth workspace means adding one alias block.
+
+   Only radii are declared here, because radii are not page-scoped: the two
+   values are DESIGN.md §8's panel radius (16px) and its icon-tile radius (8px).
+   ----------------------------------------------------------------------- */
+
+.ws-shell {
+  /* DESIGN.md §8. Declared on the shell rather than aliased, so a workspace
+     that has no radius token of its own still resolves to the documented set. */
+  --ws-radius: 16px;
+  --ws-radius-tile: 8px;
+  --ws-ease: cubic-bezier(0.32, 0.72, 0.24, 1);
+
+  width: min(100%, 1560px);
+  margin: 0 auto;
+  padding: 0 clamp(28px, 3.4vw, 40px) 56px;
+  display: grid;
+  /* The one sidebar width. `minmax(0, 1fr)` on the main column is mandatory:
+     it is what lets long skill names ellipsize instead of forcing the grid to
+     overflow (DESIGN.md §5). */
+  grid-template-columns: clamp(220px, 16vw, 240px) minmax(0, 1fr);
+  gap: clamp(28px, 2.6vw, 32px);
+  align-items: start;
+}
+
+.ws-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 1.8vh, 24px);
+}
+
+/* ------------------------------------------------------------------- rail */
+
+.ws-rail {
+  position: sticky;
+  top: 80px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px 10px 14px;
+  background: var(--ws-card);
+  border: 1px solid var(--ws-line);
+  border-radius: var(--ws-radius);
+}
+
+.ws-rail-label {
+  padding: 0 10px 2px;
+  font-family: var(--ws-font-display);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ws-muted);
+}
+
+.ws-railnav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* A group after the first is separated by a hairline, so a long rail reads as
+   sections rather than as one undifferentiated list. */
+.ws-rail-group.is-separated {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ws-line-soft);
+}
+
+/* ------------------------------------------------------------------- item */
+
+/* One navigation row. Every item on every workspace is this shape: an icon
+   tile, a title, and a one-line descriptor. There is no text-only variant —
+   a row that cannot carry its icon does not belong in the rail. */
+.ws-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 46px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  /* 9px is DESIGN.md §8's route-row radius. */
+  border-radius: 9px;
+  background: transparent;
+  font-family: var(--ws-font-body);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+/* The active indicator: a short purple bar on the leading edge. Drawn as a
+   pseudo-element rather than a border so the row keeps its 1px hairline box
+   (DESIGN.md §8 — no 2px+ borders). */
+.ws-item::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  width: 3px;
+  height: 0;
+  border-radius: 0 3px 3px 0;
+  background: var(--ws-violet);
+  transform: translateY(-50%);
+  transition: height 0.18s ease;
+}
+
+.ws-item:hover {
+  background: var(--ws-violet-pale);
+  color: var(--ws-ink);
+}
+
+.ws-item:focus-visible {
+  outline: 2px solid var(--ws-violet);
+  outline-offset: 2px;
+}
+
+.ws-item.is-active {
+  background: var(--ws-violet-pale);
+  border-color: var(--ws-violet-soft);
+  color: var(--ws-violet);
+}
+
+.ws-item.is-active::before {
+  height: 24px;
+}
+
+/* A step with nothing behind it yet stays legible and focusable. It reports
+   why it is closed when pressed rather than ignoring the click silently. */
+.ws-item.is-locked {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.ws-item.is-locked:hover {
+  background: transparent;
+  color: inherit;
+}
+
+/* The icon tile: 8px per DESIGN.md §8's icon-tile radius, on the page ground
+   so it reads as a container rather than as a chip. */
+.ws-item-ic {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--ws-paper);
+  color: var(--ws-muted);
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.ws-item-ic svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ws-item.is-active .ws-item-ic {
+  color: var(--ws-violet);
+  background: var(--ws-violet-soft);
+}
+
+.ws-item-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+/* The number shares the title's line where a workflow is numbered, so a
+   numbered rail is no taller than an unnumbered one. */
+.ws-item-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ws-item-num {
+  flex: none;
+  font-family: var(--ws-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ws-muted);
+}
+
+.ws-item.is-active .ws-item-num {
+  color: var(--ws-violet);
+}
+
+.ws-item-label {
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.ws-item-note {
+  min-width: 0;
+  font-size: 10.5px;
+  line-height: 1.25;
+  color: var(--ws-muted);
+  overflow-wrap: anywhere;
+}
+
+/* An inline state note (Career Bridge's "Not in Real mode"). */
+.ws-item-tag {
+  margin-left: auto;
+  align-self: center;
+  flex: none;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--ws-violet-pale);
+  font-size: 9.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ws-muted);
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------- context footer */
+
+/* The one bottom contextual card. It explains where the workspace is, and is
+   pushed to the foot with `margin-top: auto` so a short rail does not leave a
+   block of dead space beneath it. */
+.ws-railcontext {
+  margin-top: auto;
+  padding: 10px 11px;
+  border: 1px solid var(--ws-violet-soft);
+  border-radius: 12px;
+  background: var(--ws-violet-pale);
+}
+
+.ws-railcontext-label {
+  display: block;
+  font-family: var(--ws-font-display);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ws-muted);
+}
+
+.ws-railcontext-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ws-railcontext-list li {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--ws-violet-soft);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ws-violet-deep);
+}
+
+.ws-railcontext-meta {
+  display: block;
+  margin: 8px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ws-muted);
+}
+
+.ws-railcontext-empty {
+  display: block;
+  margin: 8px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ws-muted);
+}
+
+/* ------------------------------------------------------------- responsive */
+
+/* Below this width a 220px rail would leave the workspace too narrow to work
+   in, so the rail becomes a horizontal scroller sitting above the content.
+   This is the behaviour Evidence already shipped, extended to all four.
+   The icons stay at every width — an item never loses its icon. */
+@media (max-width: 880px) {
+  .ws-shell {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .ws-rail {
+    position: static;
+    overflow-x: auto;
+    padding: 10px 10px 12px;
+  }
+
+  .ws-rail-label {
+    display: none;
+  }
+
+  .ws-railnav {
+    flex-direction: row;
+    gap: 4px;
+  }
+
+  .ws-rail-group {
+    display: flex;
+    gap: 4px;
+  }
+
+  .ws-rail-group.is-separated {
+    margin-top: 4px;
+    padding-top: 4px;
+  }
+
+  .ws-item {
+    width: auto;
+    min-height: 40px;
+    flex: none;
+  }
+
+  /* The indicator turns horizontal to match the row it now sits in. */
+  .ws-item::before {
+    left: 50%;
+    top: auto;
+    bottom: -12px;
+    width: 0;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+    transform: translateX(-50%);
+  }
+
+  .ws-item.is-active::before {
+    width: 22px;
+    height: 3px;
+  }
+
+  .ws-railcontext {
+    display: none;
+  }
+}
+
+/* The descriptor is the first thing to go when a rail row runs out of room.
+   The title and its icon still carry the item. */
+@media (max-width: 720px) {
+  .ws-item-note {
+    display: none;
+  }
+
+  .ws-item {
+    min-height: 38px;
+  }
+
+  .ws-shell {
+    padding-bottom: 40px;
+  }
+}

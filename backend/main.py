@@ -10,7 +10,13 @@ if __package__:
         adapt_signals_for_role,
         validate_target_role,
     )
+    from .data.calibration import CALIBRATION_NOT_AVAILABLE
     from .data.cohort_analysis import CohortInputError, build_cohort_analysis
+    from .data.completion import (
+        CompletionInputError,
+        build_skill_completion_comparison,
+        resume_text_with_assertions,
+    )
     from .data.curriculum_gaps import build_role_curriculum_gaps
     from .data.curriculum_intelligence import build_role_curriculum_intelligence
     from .data.curriculum_record import (
@@ -23,10 +29,19 @@ if __package__:
     )
     from .data.market_demand import LivePostingsError, build_market_demand
     from .data.proofs import normalize_proofs
+    from .data.roadmap_pipeline import plan_roadmap
     from .engines.optimizer import optimize_roadmap
-    from .engines.signal_engine import extract_signals
+    from .engines.signal_engine import compute_skill_signals, extract_signals
     from .engines.velocity_engine import get_skill_velocity
-    from .schemas import CohortAnalysisRequest, RoadmapRequest, RoadmapResponse
+    from .schemas import (
+        CalibrationRecord,
+        CalibrationResponse,
+        CohortAnalysisRequest,
+        RoadmapRequest,
+        RoadmapResponse,
+        SkillCompletionRequest,
+        SkillCompletionResponse,
+    )
 else:
     from data.adapters import (
         UnplannableTargetRoleError,
@@ -34,7 +49,13 @@ else:
         adapt_signals_for_role,
         validate_target_role,
     )
+    from data.calibration import CALIBRATION_NOT_AVAILABLE
     from data.cohort_analysis import CohortInputError, build_cohort_analysis
+    from data.completion import (
+        CompletionInputError,
+        build_skill_completion_comparison,
+        resume_text_with_assertions,
+    )
     from data.curriculum_gaps import build_role_curriculum_gaps
     from data.curriculum_intelligence import build_role_curriculum_intelligence
     from data.curriculum_record import (
@@ -47,10 +68,19 @@ else:
     )
     from data.market_demand import LivePostingsError, build_market_demand
     from data.proofs import normalize_proofs
+    from data.roadmap_pipeline import plan_roadmap
     from engines.optimizer import optimize_roadmap
-    from engines.signal_engine import extract_signals
+    from engines.signal_engine import compute_skill_signals, extract_signals
     from engines.velocity_engine import get_skill_velocity
-    from schemas import CohortAnalysisRequest, RoadmapRequest, RoadmapResponse
+    from schemas import (
+        CalibrationRecord,
+        CalibrationResponse,
+        CohortAnalysisRequest,
+        RoadmapRequest,
+        RoadmapResponse,
+        SkillCompletionRequest,
+        SkillCompletionResponse,
+    )
 
 
 def _configured_cors_origins() -> list[str]:
@@ -75,63 +105,101 @@ def get_health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-def _enrich_with_velocity(signals: list[object]) -> list[dict[str, object]]:
-    enriched: list[dict[str, object]] = []
-    for signal in signals:
-        if not isinstance(signal, dict):
-            continue
-        skill = signal.get("skill")
-        if not isinstance(skill, str) or not skill.strip():
-            continue
-        try:
-            velocity = get_skill_velocity(skill)
-        except (TypeError, ValueError):
-            velocity = {}
-        trend = (
-            velocity.get("trend", "insufficient_data")
-            if isinstance(velocity, dict)
-            else "insufficient_data"
-        )
-        enriched_signal = dict(signal)
-        enriched_signal["trend"] = trend
-        enriched.append(enriched_signal)
-    return enriched
-
-
 @app.post("/roadmap", response_model=RoadmapResponse)
 def create_roadmap(payload: RoadmapRequest) -> RoadmapResponse:
-    target_role = None
-    if payload.target_role is not None:
-        try:
-            target_role = validate_target_role(payload.target_role)
-        except UnknownTargetRoleError as error:
-            raise HTTPException(
-                status_code=422,
-                detail={
-                    "message": str(error),
-                    "valid_roles": list(error.valid_roles),
-                },
-            ) from error
-        except UnplannableTargetRoleError as error:
-            raise HTTPException(
-                status_code=422,
-                detail={
-                    "message": str(error),
-                    "plannable_roles": list(error.plannable_roles),
-                },
-            ) from error
+    """Plan one route from the submitted resume text and job description.
 
-    signals = extract_signals(payload.resume_text, payload.jd_text)
-    enriched_signals = _enrich_with_velocity(signals)
-    if target_role is not None:
-        enriched_signals = adapt_signals_for_role(
-            enriched_signals, target_role
-        ).signals
-    result = optimize_roadmap(enriched_signals, payload.budget_hours)
+    The pipeline lives in ``data.roadmap_pipeline`` because Stage 14C plans the
+    same route twice for a single request, and the response shape here is the
+    optimizer's own: ``{budget_hours, roadmap}``, unchanged.
+
+    ``completed_skills`` are the learner's own assertions and are appended to the
+    resume text by the server, using the same join ``POST /skill-completion``
+    uses. That is what keeps a completion and every later re-plan — a moved time
+    dial, a changed role — planned from one skill state instead of two. With the
+    field absent, which is every request that predates this, the plan is built
+    from ``resume_text`` exactly as before.
+    """
+    try:
+        result = plan_roadmap(
+            resume_text=resume_text_with_assertions(
+                payload.resume_text, payload.completed_skills
+            ),
+            jd_text=payload.jd_text,
+            budget_hours=payload.budget_hours,
+            target_role=payload.target_role,
+        )
+    except UnknownTargetRoleError as error:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": str(error),
+                "valid_roles": list(error.valid_roles),
+            },
+        ) from error
+    except UnplannableTargetRoleError as error:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": str(error),
+                "plannable_roles": list(error.plannable_roles),
+            },
+        ) from error
+
     return RoadmapResponse(
         budget_hours=result["budget_hours"],
         roadmap=result["roadmap"],
     )
+
+
+@app.post("/skill-completion", response_model=SkillCompletionResponse)
+def create_skill_completion(payload: SkillCompletionRequest) -> SkillCompletionResponse:
+    """Compare one route against itself around a learner-asserted completion.
+
+    The learner asserts a skill is complete. This plans the route from their own
+    text, appends the asserted skill, plans again through the same pipeline
+    ``POST /roadmap`` uses, and measures the gap-closure delta between the two
+    with the Stage 14A engine. Both plans are returned so the comparison can be
+    read against them.
+
+    Nothing is verified and nothing is scored about a person: the completion is
+    self-reported, the delta is model-internal, and ``completion_source`` /
+    ``verification_status`` say so on every response. A blank skill, a skill
+    already asserted, or a skill the job description records no signal for is a
+    422 rather than an estimate.
+    """
+    try:
+        result = build_skill_completion_comparison(
+            resume_text=payload.resume_text,
+            jd_text=payload.jd_text,
+            budget_hours=payload.budget_hours,
+            skill=payload.skill,
+            completed_skills=payload.completed_skills,
+            target_role=payload.target_role,
+        )
+    except UnknownTargetRoleError as error:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": str(error),
+                "valid_roles": list(error.valid_roles),
+            },
+        ) from error
+    except UnplannableTargetRoleError as error:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": str(error),
+                "plannable_roles": list(error.plannable_roles),
+            },
+        ) from error
+    except CompletionInputError as error:
+        raise HTTPException(
+            status_code=422,
+            detail={"message": str(error)},
+        ) from error
+
+    return SkillCompletionResponse(**result)
 
 
 @app.post("/cohort-analysis")
@@ -341,3 +409,44 @@ def get_curriculum_recommendations(role: str) -> dict[str, object]:
             status_code=500,
             detail={"message": str(error)},
         ) from error
+
+
+
+@app.get('/calibration/{role}')
+def get_calibration(role: str) -> dict[str, object]:
+    try:
+        normalized_role = validate_target_role(role)
+    except UnknownTargetRoleError as error:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                'message': str(error),
+                'valid_roles': list(error.valid_roles),
+            },
+        ) from error
+    except UnplannableTargetRoleError as error:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                'message': str(error),
+                'plannable_roles': list(error.plannable_roles),
+            },
+        ) from error
+
+    calibration_records = []
+    not_available = ['calibration_records']
+    provenance = {
+        'boundary': 'MODEL-INTERNAL CALIBRATION (gap-closure delta). NOT a real learner outcome.',
+        'measure': 'model_internal_gap_closure_delta',
+        'engine': 'backend.engines.signal_engine',
+        'not_a_measure_of': list(CALIBRATION_NOT_AVAILABLE),
+        'note': 'This is a deterministic model-internal gap-closure delta. No learner-specific before/after record is available.',
+    }
+
+    return {
+        'role': normalized_role,
+        'calibration_records': [],
+        'provenance': provenance,
+        'not_available': not_available,
+        'is_synthetic': False,
+    }

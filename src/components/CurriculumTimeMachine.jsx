@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { RailContext, WorkspaceRail as SharedRail, WorkspaceShell } from './workspaceShell'
 import {
   CTM_DEFAULT_ROLE,
   CTM_ROLES,
@@ -189,66 +190,49 @@ function WorkspaceHead({ role, onRoleChange, resources }) {
   )
 }
 
-function RailContext({ resources }) {
+/** What the workspace is currently reading, in the shared rail's context card. */
+function CtmRailContext({ resources }) {
   const record = resources.record.data
   const intelligence = resources.intelligence.data
   const slices = intelligence?.slices?.slices ?? []
 
   return (
-    <div className="ctm-railcontext">
-      <p className="ctm-railcontext-label">Reading</p>
-      {slices.length > 0 ? (
-        <ul className="ctm-railcontext-list">
-          {slices.map((slice) => (
-            <li key={slice.timeSlice} className="ctm-num">
-              {slice.timeSlice}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="ctm-railcontext-empty">No slice recorded</p>
-      )}
-      <p className="ctm-railcontext-meta">
-        {record?.corpus?.artifact ? (
-          <>
-            {formatDate(record.corpus.dateMin)} to {formatDate(record.corpus.dateMax)}
-          </>
-        ) : (
-          'Curriculum record unavailable'
-        )}
-      </p>
-    </div>
+    <RailContext
+      label="Reading"
+      chips={slices.map((slice) => slice.timeSlice)}
+      empty="No slice recorded"
+      meta={
+        record?.corpus?.artifact
+          ? `${formatDate(record.corpus.dateMin)} to ${formatDate(record.corpus.dateMax)}`
+          : 'Curriculum record unavailable'
+      }
+    />
   )
 }
 
-function WorkspaceRail({ view, onChange, resources }) {
+/* The five views, mapped onto the shared shell's item contract. The rail owns the
+   shape; this file owns what the Curriculum Time Machine means. */
+const RAIL_GROUPS = [
+  {
+    items: VIEWS.map((entry) => ({
+      id: entry.id,
+      label: entry.label,
+      note: entry.kicker,
+      icon: <entry.icon />,
+    })),
+  },
+]
+
+function CtmRail({ view, onChange, resources }) {
   return (
-    <aside className="ctm-rail">
-      <nav className="ctm-railnav" aria-label="Curriculum workspace views">
-        {VIEWS.map((entry) => {
-          const Icon = entry.icon
-          const active = entry.id === view
-          return (
-            <button
-              key={entry.id}
-              type="button"
-              className={`ctm-railbtn${active ? ' is-active' : ''}`}
-              aria-current={active ? 'page' : undefined}
-              onClick={() => onChange(entry.id)}
-            >
-              <span className="ctm-railbtn-ic" aria-hidden="true">
-                <Icon />
-              </span>
-              <span className="ctm-railbtn-text">
-                <span className="ctm-railbtn-label">{entry.label}</span>
-                <span className="ctm-railbtn-kicker">{entry.kicker}</span>
-              </span>
-            </button>
-          )
-        })}
-      </nav>
-      <RailContext resources={resources} />
-    </aside>
+    <SharedRail
+      label="Curriculum"
+      navLabel="Curriculum workspace views"
+      groups={RAIL_GROUPS}
+      activeId={view}
+      onSelect={onChange}
+      context={<CtmRailContext resources={resources} />}
+    />
   )
 }
 
@@ -527,22 +511,18 @@ export default function CurriculumTimeMachine() {
 
   return (
     <div className="ctm">
-      {/* Same shell as the Evidence subpage: sidebar and main column are siblings
-          in one grid, so the rail and the banner start at the same horizontal
-          content boundary and the banner lives inside the main column. */}
-      <div className="ctm-shell">
-        <WorkspaceRail view={view} onChange={setView} resources={resources} />
+      {/* One application shell, shared with Career Bridge, Cohort and Evidence:
+          the rail and the content column are siblings in one grid, so every
+          workspace starts its content at the same horizontal boundary. */}
+      <WorkspaceShell rail={<CtmRail view={view} onChange={setView} resources={resources} />}>
+        <WorkspaceHead role={role} onRoleChange={setRole} resources={resources} />
 
-        <main className="ctm-main">
-          <WorkspaceHead role={role} onRoleChange={setRole} resources={resources} />
+        <CanvasFrame view={view} actions={<RetryButton onRetry={reload} />}>
+          {canvas}
+        </CanvasFrame>
 
-          <CanvasFrame view={view} actions={<RetryButton onRetry={reload} />}>
-            {canvas}
-          </CanvasFrame>
-
-          <AuditPanel resources={resources} open={auditOpen} onToggle={() => setAuditOpen((open) => !open)} />
-        </main>
-      </div>
+        <AuditPanel resources={resources} open={auditOpen} onToggle={() => setAuditOpen((open) => !open)} />
+      </WorkspaceShell>
 
       {drawer ? (
         <WorkspaceDrawer

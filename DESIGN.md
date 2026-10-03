@@ -89,7 +89,7 @@ in §2 is load-bearing, and it does not survive inversion.
 
 ## 3. Color
 
-The system runs on **three scoped token sets**, not one. This is the single most
+The system runs on **four scoped token sets**, not one. This is the single most
 important structural rule in this document.
 
 - **`src/styles.css` `:root`** — the marketing site. Neutral-cool grays with a
@@ -103,10 +103,21 @@ important structural rule in this document.
   so it gets its own scope rather than reaching into `:root`. Its values are
   **not** new values — every one is copied from the `--cb-*` table in 3.2, so the
   two workspaces read as one product.
+- **`src/components/evidence.css` `.ev-page`** — the Evidence workspace (`--ev-*`).
+  Same rule, same reason: it is a workspace, not marketing, so it gets its own scope
+  rather than reaching into `:root`. Its values are **not** new values — every one is
+  copied from the `--cb-*` table in 3.2, so all three workspaces read as one product.
+- **`src/components/cohortDashboard.css` `.cohort`** — the Institution / Cohort
+  workspace (`--cohort-*`). Same rule, same reason: an institutional workspace
+  reporting a roster comparison, not marketing. Its values are **not** new values —
+  every one is copied from the `--cb-*` table in 3.2, so all four workspaces read as
+  one product.
 
 Never mix the scopes. A `--cb-*` token inside `src/styles.css` is a bug. A `:root`
-token inside `careerBridge.css` or `ctm.css` is a bug. A `--ctm-*` token outside
-`ctm.css` is a bug.
+token inside `careerBridge.css`, `ctm.css`, `evidence.css`, or
+`cohortDashboard.css` is a bug. A `--ctm-*` token outside `ctm.css` is a bug, an
+`--ev-*` token outside `evidence.css` is a bug, and a `--cohort-*` token outside
+`cohortDashboard.css` is a bug.
 
 ### 3.1 Global palette (marketing)
 
@@ -213,6 +224,34 @@ case — small text needs 4.5:1, and these land at 3.3–3.5:1. The same applies
 - Any new trend or status color must reach **4.5:1** on its own tint. Verify it
   before shipping, do not eyeball it.
 
+### 3.5 Evidence palette (product workspace)
+
+The Evidence workspace (`.ev-page` in `evidence.css`) defines its own `--ev-*`
+scope. Every value is copied verbatim from the `--cb-*` table in 3.2 — it
+introduces no new color.
+
+| `--ev-*` token | Value | Mirrors |
+|---|---|---|
+| `--ev-paper` | `#f8f7f3` | `--cb-paper` |
+| `--ev-card` | `#ffffff` | `--cb-card` |
+| `--ev-ink` | `#15131c` | `--cb-ink` |
+| `--ev-ink-2` | `#4c4859` | `--cb-ink-2` |
+| `--ev-muted` | `#8d8794` | `--cb-muted` |
+| `--ev-violet` | `#5b46d8` | `--cb-violet` |
+| `--ev-violet-deep` | `#4433b0` | `--cb-violet-deep` |
+| `--ev-lilac` | `#a79bf0` | `--cb-lilac` |
+| `--ev-violet-soft` | `#e7e2fb` | `--cb-violet-soft` |
+| `--ev-violet-pale` | `#f2effc` | `--cb-violet-pale` |
+| `--ev-line` | `#e5e2e4` | `--cb-line` |
+| `--ev-line-soft` | `#ece9e6` | `--cb-line-soft` |
+| `--ev-rise` | `#1e7a4f` | `--cb-rise` |
+| `--ev-rise-bg` | `#e6f1eb` | `--cb-rise-bg` |
+| `--ev-fall` | `#c2503b` | `--cb-fall` |
+| `--ev-fall-bg` | `#f8e9e5` | `--cb-fall-bg` |
+
+The contrast restrictions from 3.4 apply unchanged. In particular `--ev-muted` is
+metadata only, never body copy a user must read to act.
+
 ---
 
 ## 4. Typography
@@ -305,6 +344,54 @@ move the budget slider and watch the roadmap re-rank.
 | Career Bridge hero art | `1580px` native |
 | Subpage lead | `52ch` |
 
+### The shared subpage shell
+
+Every workspace subpage — Career Bridge, Cohort Dashboard, Curriculum Time
+Machine, Evidence — renders through one shell. It is defined once in
+`src/components/workspaceShell.css` and exported from
+`src/components/workspaceShell.jsx` as `WorkspaceShell`, `WorkspaceRail` and
+`RailContext`. A subpage must not re-declare the grid, the rail, the item shape or
+the contextual card; it composes them.
+
+```css
+/* workspaceShell.css — the geometry every subpage shares */
+.ws-shell {
+  display: grid;
+  grid-template-columns: clamp(220px, 16vw, 240px) minmax(0, 1fr);
+  gap: clamp(28px, 2.6vw, 32px);
+  padding: clamp(28px, 3.4vw, 40px);
+}
+```
+
+| Rule | Value | Why |
+|---|---|---|
+| Rail width | `clamp(220px, 16vw, 240px)` | Wide enough for an icon tile, a label and a descriptor |
+| Shell gap | `clamp(28px, 2.6vw, 32px)` | Separates two functional regions, not two cards |
+| Outer padding | `clamp(28px, 3.4vw, 40px)` | The tool's own margin from the viewport edge |
+| Rail item height | `46px`, radius `--ws-radius-tile` (`8px`) | A row, not a card |
+| Rail active marker | `3px` inset left bar | Reads without a fill change |
+| Collapse | `≤880px` → stacked; `≤720px` → horizontal rail | The shared rail owns this, not each page |
+
+**Token aliasing is mandatory.** The shell names no colour and no font family of
+its own. Each page scopes an alias layer that points the shell's `--ws-*` tokens at
+that page's own documented tokens:
+
+```css
+.career-bridge { --ws-paper: var(--cb-paper); /* …one line per token… */ }
+.cohort       { --ws-paper: var(--cohort-paper); /* … */ }
+.ctm-page     { --ws-violet: var(--ctm-violet); /* … */ }
+.ev-page      { --ws-violet: var(--ev-violet); /* … */ }
+```
+
+A page that adds a shell token must add it to its alias block, not to
+`workspaceShell.css`. This keeps §3's four palettes as the single source of colour
+truth while the geometry stays identical everywhere.
+
+**Every rail item carries an icon, a label and a descriptor.** The descriptor is
+what turns a list into a sequence a reader can anticipate; a rail of labels alone
+is a table of contents. Active state uses `--ws-radius` geometry and the existing
+interaction tokens, not a page-specific fill.
+
 ### Grid patterns
 
 | Pattern | Definition |
@@ -337,10 +424,57 @@ for summary cards, `8px` for rows, `4px 7px` for resource links.
 A single fixed navbar serves every route. There is no per-page header.
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│ [logo]              [link] [link] [link]        [Get Started] │
-└──────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│ [logo]     [link] [link] [group ▾] [link] [link]      [Get Started] │
+└────────────────────────────────────────────────────────────────────────┘
 ```
+
+The primary bar is exactly, in this order:
+
+```
+SkillBridge │ Home │ Career Bridge │ Institutional Intelligence ▾ │ Evidence │ Multiplier Effect │ Get Started
+```
+
+Five peers share one line and **one vertical centre**. `.nav-center > *` fixes a
+single item height and centres each item on that row, so a `<button>` trigger and
+its `<a>` siblings cannot drift apart; labels are `white-space: nowrap` so no
+label wraps and shifts its baseline; and the trigger's caret sits *beside* its
+label in a row, not stacked under it in the column that carries the active dot.
+Spacing is one `gap` on `.nav-center` — no per-item margins.
+
+**Institutional Intelligence is a group, not a page.** It holds the two
+institutional surfaces, and it is what stops the bar from becoming a row of peers:
+
+| Group entry | Subtitle | Route |
+|---|---|---|
+| Cohort Dashboard | See where a cohort stands | `/cohort-dashboard` |
+| Curriculum Time Machine | Turn industry + cohort gaps into curriculum insight | `/curriculum-time-machine` |
+
+**The popover is click-toggled and never hover-driven.** A hover menu closes the
+instant the pointer leaves the trigger to travel downward, which is exactly the
+motion a reader makes to reach a dropdown underneath it. The rules are:
+
+| Action | Result |
+|---|---|
+| Click the trigger | Opens; clicking it again toggles closed |
+| Move from trigger into the popover | Stays open — no pointer handlers on the wrapper at all |
+| Move inside the popover | Stays open |
+| Click an entry | Navigates normally; `aria-current="page"` marks the active one |
+| Press outside | Closes (document `pointerdown` against the wrapper) |
+| Press `Escape` | Closes |
+| Navigate anywhere | Closes |
+
+`.nav-group` is the positioned wrapper around trigger **and** popover, so both are
+one interactive region and the popover anchors directly below its trigger. The
+8px of visual separation is bridged by a transparent `.nav-pop::before` band, so
+there is no strip of page a pointer can cross and fall out of.
+
+The popover carries a small `Cohort Dashboard → identified gaps → Curriculum Time
+Machine` line so the relationship between the two destinations is legible before
+either is opened. Either entry shows the `.nav-dot` when it is the active route.
+
+Every route has exactly one entry point. Do not remove a peer from this bar
+without removing its route: a route with no entry point is a route nobody finds.
 
 | Property | Value |
 |---|---|
@@ -447,6 +581,59 @@ Note the two distinct hover idioms, both intentional:
 
 Selected rows always pair the tint with a border-color change, so selection is
 not conveyed by background alone.
+
+### Quiet controls — `.cb-assert`
+
+One exception to "all buttons are pills", and it exists because of what the
+control records. `.cb-assert` marks a skill the learner says they completed,
+which is a claim about themselves rather than a request the service can carry
+out, so it is deliberately the quietest control in the panel.
+
+| Property | Value | Why |
+|---|---|---|
+| Shape | pill, `999px` | Same as every other button; the quietness comes from weight, not shape |
+| Border | `1px solid --cb-line` | `1px`, not the `1.5px` of a real button: this is a claim, not a call to action |
+| Colour | transparent bg, `--cb-muted` text | No fill and no violet, so it never reads as the view's primary action |
+| Type | `11px` / `600` | Smallest interactive type in the workspace |
+| Hover | `--cb-ink-2` text + `--cb-lilac` border + `--cb-violet-pale` bg | The fill-and-border idiom, shared with `.cb-route` |
+| `:focus-visible` | `2px solid --cb-violet`, `2px` offset | Same ring as every control |
+| `:disabled` | dashed border, `not-allowed` | Reads as "held by another action", not broken |
+
+Placement rule: a row that already owns a `<button>` (`.cb-route`) gets this as a
+**sub-row on its own line**, inset to the name column, never nested inside the row
+button. Nesting a control in a button is invalid HTML as well as louder than a
+claim deserves.
+
+The asserted state replaces the button with a `.cb-chip-asserted` pill reading
+`✓ Completed`, built on the existing `--cb-low-*` pair — it is the same low-priority
+settled chip `.cb-chip` already uses, so it needs no new colour. The checkmark is
+redundant with the word beside it on purpose.
+
+### Prose pattern — a figure that is not a measurement
+
+Any number describing something the learner asserted rather than something the
+service measured must sit inside a block that states its standing in the same
+block. Three existing pieces, used together:
+
+1. `.cb-assert-panel` — a section inside `.cb-panel`, not a new card: `--cb-card`
+   bg, `1px --cb-line` border with a `3px --cb-lilac` left rule, `12px` radius.
+2. `.cb-assert-source` — the provenance sentence, with the claim's standing in
+   `<strong>` so it is the only bold line in the panel.
+3. `.cb-view-aside` — the existing scope note, reused unchanged, carrying the
+   boundary wording.
+
+`.cb-assert-figures` is a four-column grid of `8px`-radius `--cb-paper` tiles at
+`--cb-line-soft` borders, collapsing to two columns at `640px`. Values use
+`font-variant-numeric: tabular-nums` so a re-measure does not shift the column.
+Labels are `9.5px` uppercase, values `--cb-font-display` `14px`.
+
+### Error states on a surface that already has them
+
+`.cb-status` has three states. `.is-loading` / `.is-updating` carry the sweeping
+`2px` rule; `.is-error` switches the dashed neutral surface to a **solid**
+`--cb-fall` border over `--cb-fall-bg`. Text stays `--cb-ink`, because
+`--cb-fall` on `--cb-fall-bg` is 3.95:1 and this is `13.5px` type — below AA for
+normal text. No new token: the pair already exists for falling trend marks.
 
 ---
 
@@ -572,6 +759,33 @@ Rendered as a small text pill, not a `<label>`-dropzone: violet text, `--cb-lila
 border, `border-radius: 999px`, `padding: 3px 8px`, `10.5px`. Hover fills
 `--cb-violet-pale`.
 
+### Select
+
+A **native `<select>`**, never a custom listbox. The target-role set is two
+entries plus an explicit "no role", so a popup implementation would cost more
+than it returns, and the native control is already keyboard- and
+screen-reader-correct.
+
+```css
+.cb-select { width: 100%; margin-top: 6px; padding: 9px 10px;
+             border: 1px solid var(--cb-line); border-radius: 8px;
+             background: var(--cb-paper); color: var(--cb-ink);
+             font-size: 13px; line-height: 1.4; }
+.cb-select:hover { border-color: var(--cb-lilac); }
+.cb-select:focus-visible { border-color: var(--cb-violet);
+                           outline: 2px solid var(--cb-violet); outline-offset: 2px; }
+```
+
+It reuses the textarea's field treatment exactly — same border, radius, padding
+and paper fill — so a row of mixed inputs reads as one control family rather than
+two. `font-size: 16px` and `min-height: 44px` at ≤640px, matching §9's mobile
+rules. The label sits above it, the hint below it, both already specified.
+
+The field is a label + control + hint triple (`.cb-field`), and it is placed
+*inside* an existing input card rather than taking a new cell in the 3-up summary
+row. The approved input row is 3 columns with a shared row height; a fourth cell
+would break both.
+
 ### Binding rules for any new input
 
 - Focus ring is mandatory and must come from `:focus-visible` (see §14).
@@ -580,6 +794,8 @@ border, `border-radius: 999px`, `padding: 3px 8px`, `10.5px`. Hover fills
 - Inputs on mobile are `font-size: 16px` minimum to prevent iOS focus-zoom.
 - File inputs get a loading state and an error state before they ship.
 - Do not clear a user's input on error. Preserve and annotate.
+- A control that changes a real service request needs a settle delay (350ms) and
+  a `pending` state; it must not fire a request per input event.
 
 ---
 
@@ -651,6 +867,49 @@ The border-top is removed on open and the radii are **not** rounded on the top
 corners, so the toggle and panel read as one object. Content fades in with
 `cb-evidence-in` (`0.28s`).
 
+### Provenance and scope patterns
+
+Three patterns carry "how solid is this number" and "what does this screen not
+cover". They are the reason a workspace can show a partial answer honestly
+instead of showing a blank.
+
+**Provenance pill** (`.cb-proof-flag`) — a recorded measurement and an explicitly
+synthetic one are both labelled in words, and the synthetic variant is
+`border-style: dashed`. Dashed vs solid is the redundant, non-color signal:
+
+```css
+.cb-proof-flag { flex: none; align-self: flex-start; margin-top: 7px;
+                 padding: 3px 7px; border: 1px solid var(--cb-line);
+                 border-radius: 999px; background: var(--cb-paper);
+                 color: var(--cb-ink-2); font-size: 9.5px; font-weight: 600; }
+.cb-proof-flag.is-synthetic { border-style: dashed; border-color: var(--cb-ink-2); }
+```
+
+**Scope note** (`.cb-view-aside`) — a left-ruled `--cb-paper` paragraph stating
+what the figures below cover and what they do not. It sits *above* the list, so
+a reader meets the limit before the numbers:
+
+```css
+.cb-view-aside { margin: 0 0 12px; padding: 8px 10px;
+                 border-left: 3px solid var(--cb-line);
+                 background: var(--cb-paper);
+                 font-size: 12px; line-height: 1.5; color: var(--cb-ink-2); }
+```
+
+**Figure note** (`.cb-fact-note`) — the same caveat at fact scale, under the one
+figure it qualifies.
+
+**Section label** (`.cb-view-section-label`) — used with `.cb-fact-label` when one
+view carries more than one kind of evidence, so the reader can tell the role
+figures from the planned-skill figures. Spacing only; the type is `.cb-fact-label`'s:
+
+```css
+.cb-view-section-label { margin: 18px 0 8px; }
+```
+
+Added in Stage 11 for Market Insights, which now shows recorded role demand above
+the per-skill velocity list. First use: `Market Insights` in Real mode.
+
 **Binding rules for data surfaces**
 - Encode meaning redundantly: color + shape + text. Never color alone.
 - Tabular numerals for any value that changes in place.
@@ -662,6 +921,15 @@ corners, so the toggle and panel read as one object. Content fades in with
   (`13px`, `--muted`, `1.6`) is the reference empty state.
 - The 3-up summary, 0.38/0.62 split, and 3-up proof grid are the only dashboard
   grids. Do not introduce a fourth.
+- **A field the source does not return is stated, never blanked, never invented.**
+  Distinguish the two failure cases in words: "Not provided by the service" means
+  the capability does not exist in the API, "Not recorded" means the field exists
+  but this record holds no value for it.
+- **A destination the source cannot fill stays in the navigation, marked, and
+  explains itself when opened.** Marking a capability as unavailable is not the
+  same as hiding it — a user needs to know it was considered.
+- Never rank or average across skills where only some have a recorded value. A
+  missing measurement is not a small one; count and state the gap instead.
 
 ---
 
@@ -956,7 +1224,9 @@ something. Otherwise it is a sorted list — and a sorted list is the right answ
 more often than it seems.
 
 **Never invent social proof, urgency, or metrics.** Every number on screen traces
-to `src/data/careerBridgeMock.js` or is computed from it.
+to a checked-in data module (`src/data/careerBridgeMock.js`, `src/data/evidenceData.js`)
+or to a served API record (`/roadmap`, `/proofs`, `/velocity`). A figure that is
+illustrative must be labelled as illustrative on the surface that shows it.
 
 ---
 
@@ -965,7 +1235,8 @@ to `src/data/careerBridgeMock.js` or is computed from it.
 ### Do
 
 - Reach for an existing token before introducing a value.
-- Use `--cb-*` inside Career Bridge and `:root` tokens everywhere else.
+- Use each workspace's own scope (`--cb-*`, `--ctm-*`, `--ev-*`) inside it, and
+  `:root` tokens everywhere else.
 - Encode state with color **and** shape **and** text.
 - Use `tabular-nums` for anything that changes in place.
 - Separate detail subsections with a hairline divider, not a nested card.
@@ -1006,7 +1277,8 @@ to `src/data/careerBridgeMock.js` or is computed from it.
 3. **Extending the system is a documented change.** To add a token, radius,
    shadow, or duration:
    - add it to the correct scope in `src/styles.css`,
-     `src/components/careerBridge.css`, or `src/components/ctm.css`,
+     `src/components/workspaceShell.css`, `src/components/careerBridge.css`,
+     `src/components/ctm.css`, or `src/components/evidence.css`,
    - add it to the matching table in this document,
    - record its contrast ratio in §3.4 if it carries meaning.
 4. **Redesigning an existing pattern is out of scope** for a feature task. This
@@ -1021,13 +1293,110 @@ to `src/data/careerBridgeMock.js` or is computed from it.
 | Concern | File |
 |---|---|
 | Global tokens, marketing styles, responsive, reduced motion | `src/styles.css` |
+| Shared subpage shell geometry, rail, contextual card | `src/components/workspaceShell.css` |
+| Shared shell composition (`WorkspaceShell`, `WorkspaceRail`, `RailContext`) | `src/components/workspaceShell.jsx` |
+| Top navigation and the Institutional Intelligence group | `src/components/Navbar.jsx`, `src/styles.css` |
 | Workspace tokens, panels, rows, chips, slider, data surfaces | `src/components/careerBridge.css` |
 | CTM workspace tokens, rank nodes, slice panels, path, disclosure | `src/components/ctm.css` |
+| Evidence workspace tokens, proof panels, charts, chips | `src/components/evidence.css` |
+| Cohort workspace tokens, roster composer, dual-series comparison bars, gap map | `src/components/cohortDashboard.css` |
+| Cohort roster comparison: coverage, market baseline share, gap, provenance | `/cohort-analysis` via `src/data/cohortSource.js` |
+| Evidence page copy, illustrative examples, methodology reference | `src/data/evidenceData.js` |
+| Served proof metrics and caveats B/C/E | `/proofs` via `src/data/careerBridgeSource.js` |
 | Fonts | `index.html` (Google Fonts link) |
 | Route definitions | `src/App.jsx` |
 | Hero card field geometry constants | `src/components/HeroCardField.jsx` |
 | Roadmap, hours, priority, trend data | `src/data/careerBridgeMock.js` |
 | Approved hero artwork | `public/references/` |
+| Plannable target roles and their labels | `CAREER_BRIDGE_TARGET_ROLES` in `src/data/careerBridgeSource.js` |
+| Recorded role demand: posting counts, skill frequency, classification, velocity score, corpus bounds | `/market-demand` via `src/data/careerBridgeSource.js` |
+| Fresh signals: individual live postings, their own tags and dates, source attribution | `/market-demand` → `fresh_signals`, `live`, `live_data_last_updated` |
+| Live postings that back the fresh signals layer | `backend/data/live_postings.csv`, written by `backend/ml/scraper_daily.py` |
+
+### The two market layers
+
+`GET /market-demand` publishes two datasets that are deliberately never combined.
+
+| | Recorded role demand | Fresh signals |
+|---|---|---|
+| Source | Finalized Notebook 1–5 artifacts under `backend/data/artifacts` | `backend/data/live_postings.csv`, appended by a daily job |
+| Nature | One prepared static baseline | A small sample of real postings, listed individually |
+| Refresh | Manual, by re-running the notebooks | Daily, via `.github/workflows/daily_scrape.yml` |
+| What it may support | Posting counts, skill frequency, classification, a recorded velocity score | A title, company, location, the source's own tags, the source's own date |
+| What it may never support | Anything about the learner | An opening count, demand share, growth figure, salary, ranking, or trend |
+
+Rules that keep the layers apart, all of them load-bearing:
+
+- **A live row never changes a prepared figure.** No posting count, frequency,
+  classification or velocity score is derived from `live_postings.csv`.
+- **A live tag is never resolved into a prepared skill.** The overlap between the
+  two vocabularies is real and carries no meaning; a tag the artifacts do not
+  record stays a tag on one posting.
+- **`live_data_last_updated` is the newest posting date the live file records.**
+  It is an observed date, not a claim about when a scrape ran, and it is `null`
+  when there is no live file. The corpus's own `date_min`/`date_max` are artifact
+  coverage and are never presented as freshness.
+- **Sample-derived metrics stay unavailable.** `not_available` names the seven
+  figures the response refuses to publish, and the UI states the reason rather
+  than estimating around it.
+- **The empty state is real.** With no live file the section renders "No live
+  data available yet" and the prepared baseline above it is unchanged.
+
+The UI reuses the patterns already documented in §10 — `cb-view-section-label`
+for the heading, `cb-view-aside` for the scope statement, `cb-view-list-wide` for
+the rows, and `cb-view-empty` for the empty state — rather than introducing a
+parallel vocabulary. `MARKET_SIGNALS_SHOWN = 6` is a display cap only: the caption
+always states "Showing N of M recorded", and rows are never re-ordered into an
+implied ranking because the source supplies no ordering to preserve.
+
+
+### Change log
+
+| Change | Pattern added | Section |
+|---|---|---|
+| Career Bridge Real mode sources target role from the service's plannable roles | `.cb-field`, `.cb-select`, `.cb-state-tag` | §9 |
+| Real mode states what each figure does and does not cover | `.cb-proof-flag`, `.cb-view-aside`, `.cb-fact-note`, `.cb-tile-roles` | §10 |
+| One Real-mode view carries two kinds of evidence, each with its own label | `.cb-view-section-label` | §10 |
+| Fresh Signals separates recent live postings from the prepared baseline in the same view | `.cb-view-section-label`, `.cb-view-aside`, `.cb-view-empty`, `.cb-view-list-wide` | §10 |
+| One shell geometry for all four workspace subpages | `.ws-shell`, `.ws-rail`, `.ws-item`, `.ws-context`, `--ws-*` alias tokens | §5 |
+| Primary navigation groups the two institutional surfaces instead of listing them as peers | `.nav-group`, `.nav-pop`, `.nav-pop-item` | §6 |
+| Multiplier Effect restored as a peer; all five items share one vertical centre | `.nav-center > *`, `.nav-group-btn .nav-label-wrap` | §6 |
+| Popover is click-toggled with a pointer-safe bridge, never hover-driven | `.nav-pop::before`, `.nav-pop` | §6 |
+| Cohort's workflow sequence lives only in the rail; the horizontal flow bar and preview cards are removed | `.cohort-loop`, `.cohort-loop-chain`, `.cohort-loop-stop` | §5, §10 |
+
+None of these additions introduces a colour, radius, shadow or duration outside the
+documented set. The shell adds geometry and an alias layer only; the Institutional
+Intelligence group and the Institutional Loop are composed from existing tokens, so
+§3.4 is unchanged.
+
+### Source attribution is a link, not a label
+
+Remote OK's terms ask that it be named as a source and linked with a plain follow
+link so traffic returns. The Fresh Signals section therefore renders
+`https://remoteok.com` as a real anchor and **must not** carry `rel="nofollow"`.
+The existing `rel="noopener noreferrer"` is correct and stays; `nofollow` would
+violate the terms the feature depends on. This is the one place in the workspace
+where an SEO token is the wrong default.
+
+### Unsourced capabilities, stated rather than filled
+
+A capability the service cannot source keeps its place in the workspace and names
+what is missing, instead of showing an empty or invented version of itself.
+
+| Capability | What the service actually holds | What the UI says |
+|---|---|---|
+| Closest-fit roles | Nothing that measures a learner against a role. `POST /roadmap` takes the target role from the caller and plans it; every curriculum route takes a role alone. | Role Explorer states that no endpoint returns a fit between the resume and a role, and that ranking the roles would mean inventing the comparison. |
+| Recommended resources | No courses, documents or links | Resources stays in the nav tagged `Not in Real mode`. |
+| Recorded role demand | Per-role posting counts, per-role skill frequency, the Notebook 2 classification, and a recorded velocity score, from the prepared static corpus | Market Insights labels the corpus as prepared and static, names the artifact and its recorded coverage bounds, and states the sort key. No direction is read into a velocity score's sign. |
+| Live market counts, share, growth or trend | Nothing. `live_postings.csv` is a keyword-filtered sample of one job board's feed, too small to support any of them, and `backend/ml/scraper_daily.py` never aggregates it. | Fresh Signals publishes the postings one by one and states that the sample is too small for an opening count, a share, a growth figure or a trend. `not_available` names them in the response. |
+| Posting experience level | Remote OK documents an `experience` field but populates it on no current record | Published as null and rendered "Experience not reported". It is never inferred from a title, a tag, or a company. |
+| Live location text | Provided by the source, but some records ship mis-encoded non-Latin text (Remote OK returns doubly-encoded Arabic for some postings) | Reproduced verbatim. It is the source's value; the UI does not silently repair or transliterate it. |
+
+Recorded market demand describes the corpus, never the learner: a role is never
+presented as a fit, and a posting count is never presented as a score.
+
+Fresh signals describe postings, never the market: a single posting is shown as
+one posting, and the sample is never presented as a census.
 
 ---
 

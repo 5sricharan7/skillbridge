@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "node ./node_modules/vite/bin/vite.js build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --import ./tools/registerTestResolver.mjs --test src/**/*.test.js"
   },
   "dependencies": {
     "gsap": "^3.12.5",

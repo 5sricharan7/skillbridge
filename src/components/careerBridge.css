@@ -90,209 +90,40 @@
 
 /* Application shell — global top nav, then sidebar + main content --------- */
 
-/* The shell starts directly below the fixed 80px navbar. The sidebar is sticky
-   at that offset and runs the full viewport height, so it stays beside every
-   section of content; the main column holds the hero and all of it. */
-/* The shell spans the full viewport rather than a centred 1480px container, so
-   the workspace fills the application window the way the reference does. Gutter
-   responsibility moves into each column: the sidebar pads itself on both sides,
-   the main column carries a modest inset. */
-.cb-shell {
-  display: grid;
-  grid-template-columns: clamp(216px, 16vw, 244px) minmax(0, 1fr);
-  align-items: start;
-  width: 100%;
-  margin: 0;
-  padding: 0;
+/* ---------------------------------------------------------------- shell bridge
+
+   Career Bridge no longer owns a sidebar. The rail, the grid, the item shape
+   and the contextual card are the shared application shell
+   (`workspaceShell.css`), so all four workspaces present the same navigation.
+
+   What this scope still owns is its palette. The `--ws-*` block below is an
+   alias layer and nothing else: it points the shell's tokens at this page's own
+   documented `--cb-*` values, so the shell renders in Career Bridge's colours
+   without ever naming them itself. */
+.career-bridge {
+  --ws-paper: var(--cb-paper);
+  --ws-card: var(--cb-card);
+  --ws-ink: var(--cb-ink);
+  --ws-ink-2: var(--cb-ink-2);
+  --ws-muted: var(--cb-muted);
+  --ws-violet: var(--cb-violet);
+  --ws-violet-deep: var(--cb-violet-deep);
+  --ws-lilac: var(--cb-lilac);
+  --ws-violet-soft: var(--cb-violet-soft);
+  --ws-violet-pale: var(--cb-violet-pale);
+  --ws-line: var(--cb-line);
+  --ws-line-soft: var(--cb-line-soft);
+  --ws-font-display: var(--cb-font-display);
+  --ws-font-body: var(--cb-font-body);
 }
 
-/* Column padding is deliberately tight and near-symmetric so the 230px sidebar
-   spends its width on navigation rather than on gutters. The shell column width
-   is unchanged. */
-.cb-sidebar {
-  position: sticky;
-  top: 80px;
-  height: calc(100vh - 80px);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  padding: 20px 14px 20px 16px;
-  border-right: 1px solid var(--cb-line-soft);
-}
-
-.cb-sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.cb-sidebar-group {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.cb-sidebar-group.is-separated {
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid var(--cb-line-soft);
-}
-
-.cb-sidebar-label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--cb-muted);
-  padding: 0 11px 8px;
-}
-
-.cb-sidebar-link {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  width: 100%;
-  min-height: 40px;
-  padding: 0 11px;
-  border: 1px solid transparent;
-  border-radius: 9px;
-  font-family: var(--cb-font-body);
-  font-size: 12.5px;
-  font-weight: 600;
-  text-align: left;
-  color: var(--cb-ink-2);
-  background: transparent;
-  cursor: pointer;
-  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
-}
-
-.cb-sidebar-ic {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 16px;
-  height: 16px;
-  color: var(--cb-muted);
-  transition: color 0.18s ease, transform 0.18s ease;
-}
-
-.cb-sidebar-ic svg {
-  width: 15px;
-  height: 15px;
-}
-
-.cb-sidebar-link:hover {
-  background: var(--cb-violet-pale);
-  color: var(--cb-ink);
-}
-
-.cb-sidebar-link:hover .cb-sidebar-ic {
-  color: var(--cb-violet);
-  transform: translateX(1px);
-}
-
-.cb-sidebar-link.is-active {
-  background: var(--cb-violet-pale);
-  border-color: var(--cb-violet-soft);
-  color: var(--cb-violet);
-}
-
-.cb-sidebar-link.is-active .cb-sidebar-ic {
-  color: var(--cb-violet);
-  transform: translateX(2px);
-}
-
-.cb-sidebar-link:disabled {
-  color: var(--cb-muted);
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.cb-sidebar-link:disabled:hover {
-  background: transparent;
-}
-
-.cb-sidebar-link:focus-visible {
-  outline: 2px solid var(--cb-violet);
-  outline-offset: 2px;
-}
-
-/* Sidebar promotional card — presentational, quiet, no destination. */
-.cb-promo {
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 10px 11px;
-  border: 1px solid var(--cb-violet-soft);
-  border-radius: 12px;
-  background: var(--cb-violet-pale);
-}
-
-.cb-promo-ic {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 24px;
-  height: 24px;
-  border-radius: 7px;
-  background: var(--cb-card);
-  border: 1px solid var(--cb-violet-soft);
-  color: var(--cb-violet);
-}
-
-.cb-promo-ic svg {
-  width: 13px;
-  height: 13px;
-}
-
-.cb-promo-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  line-height: 1.25;
-}
-
-.cb-promo-sm {
-  font-size: 10.5px;
-  color: var(--cb-muted);
-}
-
-.cb-promo-lg {
-  font-family: var(--cb-font-display);
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--cb-violet);
-}
-
-.cb-promo-arrow {
-  display: inline-flex;
-  margin-left: auto;
-  flex: none;
-  color: var(--cb-violet);
-  opacity: 0.75;
-}
-
-.cb-promo-arrow svg {
-  width: 13px;
-  height: 13px;
-}
-
-.cb-main-col {
-  min-width: 0;
-  padding: 20px clamp(20px, 2vw, 28px) 24px;
-}
-
-/* The hero band now owns the page gutters, so the content column sits flush
-   inside the shell rather than repeating the same padding twice. */
-.cb-main-col > .cb-inner {
+/* The shell already owns the page gutter, so the inner container sits flush
+   inside the content column instead of repeating the same padding twice. */
+.ws-main > .cb-inner {
   padding: 0;
   width: 100%;
 }
+
 
 /* Input row ---------------------------------------------------------------- */
 
@@ -588,11 +419,6 @@
   font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
-}
-
-/* In the sidebar the tag follows the label, so it cannot steal the right edge. */
-.cb-sidebar-link .cb-state-tag {
-  margin-left: 8px;
 }
 
 .cb-mode-row {
@@ -1205,6 +1031,308 @@
   font-weight: 600;
   color: var(--cb-ink-2);
   white-space: nowrap;
+}
+
+/* Learner-asserted completion ------------------------------------------------
+   Stage 14C. The action sits on its own line under the stop rather than inside
+   the row: the row is a `<button>` that selects the skill, and a control nested
+   in it would be invalid HTML as well as louder than a claim deserves.
+
+   It is styled as the quietest control in the panel — no fill, no violet, a
+   hairline outline and the muted ink — because pressing it records what the
+   learner said, not something the service measured. Nothing here is a new
+   colour, radius, shadow or duration: every value is already in this file's
+   token scope or an existing pattern. */
+
+.cb-route-item {
+  position: relative;
+}
+
+/* Inset past the rank node so the action aligns with the stop's name rather
+   than sitting under the rail's dot. */
+.cb-route-assert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px 7px 43px;
+  min-height: 24px;
+}
+
+.cb-assert {
+  font-family: var(--cb-font-body);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--cb-muted);
+  background: transparent;
+  border: 1px solid var(--cb-line);
+  border-radius: 999px;
+  padding: 4px 10px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.cb-assert:hover:not(:disabled) {
+  color: var(--cb-ink-2);
+  border-color: var(--cb-lilac);
+  background: var(--cb-violet-pale);
+}
+
+.cb-assert:focus-visible {
+  outline: 2px solid var(--cb-violet);
+  outline-offset: 2px;
+}
+
+.cb-assert:disabled {
+  color: var(--cb-muted);
+  border-style: dashed;
+  cursor: not-allowed;
+}
+
+/* The asserted state reuses the chip shape and the low-priority tint, so it reads
+   as settled rather than as a new state the workspace has to explain. The
+   checkmark is redundant with the word beside it, so the label carries the
+   meaning if the glyph does not render. */
+.cb-chip-asserted {
+  color: var(--cb-low-text);
+  background: var(--cb-low-bg);
+  border: 1px solid var(--cb-low-line);
+  flex: none;
+}
+
+.cb-assert-done {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin: 0;
+  min-width: 0;
+}
+
+.cb-assert-done-source {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--cb-ink-2);
+  white-space: nowrap;
+}
+
+.cb-assert-done-note {
+  font-size: 11px;
+  color: var(--cb-muted);
+}
+
+/* The comparison panel. It reuses the panel recipe and the scope-note pattern
+   rather than inventing a card, so it sits in the route panel as a section of
+   it. */
+.cb-assert-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--cb-line);
+  border-left: 3px solid var(--cb-lilac);
+  border-radius: 12px;
+  background: var(--cb-card);
+}
+
+.cb-assert-title {
+  margin: 0;
+  font-family: var(--cb-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cb-ink);
+}
+
+/* The skill is the subject of the whole panel, so it carries the emphasis and
+   nothing else in the heading competes with it. */
+.cb-assert-skill {
+  color: var(--cb-violet);
+}
+
+.cb-assert-figures {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.cb-assert-figure {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid var(--cb-line-soft);
+  border-radius: 8px;
+  background: var(--cb-paper);
+}
+
+.cb-assert-figure dt {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cb-muted);
+}
+
+/* Tabular figures so re-measuring a value does not shift the column. */
+.cb-assert-figure dd {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  min-width: 0;
+  font-family: var(--cb-font-display);
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--cb-ink);
+}
+
+/* The verdict is a word first. The tick sits inside a tinted pill so the pair
+   reads as one state, and it is `aria-hidden` in the markup, so removing the
+   whole style leaves "Consistent" — still a complete answer. */
+.cb-assert-figure.is-consistent dd {
+  color: var(--cb-low-text);
+}
+
+.cb-assert-figure.is-inconsistent dd {
+  color: var(--cb-fall);
+}
+
+.cb-assert-tick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--cb-low-bg);
+  color: var(--cb-low-text);
+}
+
+.cb-assert-tick svg {
+  width: 9px;
+  height: 9px;
+}
+
+/* The provenance block: two label/value pairs on one line each. It reuses the
+   figure tile's shape at a lower weight, because it is the reason the figures
+   above can be read at all rather than another result. */
+.cb-assert-provenance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 8px 9px;
+  border: 1px solid var(--cb-line-soft);
+  border-radius: 8px;
+  background: var(--cb-paper);
+}
+
+.cb-assert-provenance-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cb-assert-provenance dt {
+  font-size: 11px;
+  color: var(--cb-muted);
+}
+
+.cb-assert-provenance dd {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--cb-ink-2);
+  overflow-wrap: anywhere;
+}
+
+/* The unavailable half of the panel. Deliberately the quietest block in it: a
+   hairline top edge instead of a tile border, muted ink, and the unavailable
+   mark in the body weight rather than the display weight the measured figures
+   use. Nothing here is coloured as an error — an absence is not a failure, and
+   `.cb-status.is-error` is what a failed request looks like. */
+.cb-assert-observed {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding-top: 9px;
+  border-top: 1px solid var(--cb-line-soft);
+}
+
+.cb-assert-observed-label {
+  margin: 0;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cb-muted);
+}
+
+.cb-assert-observed-rows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+}
+
+.cb-assert-observed-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cb-assert-observed-row dt {
+  font-size: 11px;
+  color: var(--cb-muted);
+}
+
+.cb-assert-observed-row dd {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--cb-ink-2);
+  overflow-wrap: anywhere;
+}
+
+.cb-assert-observed-note {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--cb-muted);
+  overflow-wrap: anywhere;
+}
+
+.cb-assert-gap-note,
+.cb-assert-source {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--cb-ink-2);
+}
+
+.cb-assert-gap-note {
+  color: var(--cb-muted);
+}
+
+/* The provenance sentence is the reason the figures can be read at all, so it
+   is the one line in the panel set in the body weight. */
+.cb-assert-source strong {
+  font-weight: 700;
+  color: var(--cb-ink);
+}
+
+.cb-assert-panel .cb-view-aside {
+  margin: 0;
 }
 
 .cb-trend-arrow {
@@ -2328,7 +2456,10 @@
    `backwards`, so once it finishes each element falls back to its normal styles
    and nothing can be left stranded invisible. All timing is transform/opacity. */
 
-.cb-shell {
+/* Career Bridge is the route the reader usually lands on, so it keeps its
+   one-shot settle. The rule is scoped to this page rather than moved into the
+   shared shell: an entrance animation is a page's choice, not the shell's. */
+.career-bridge .ws-shell {
   animation: cb-shell-in 0.3s ease-out backwards;
 }
 
@@ -2435,51 +2566,9 @@
     grid-template-columns: 1fr;
   }
 
-  /* The sidebar becomes a horizontal strip of the same four destinations rather
-     than disappearing, so application navigation survives on small screens. */
-  .cb-shell {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .cb-sidebar {
-    position: static;
-    height: auto;
-    overflow: visible;
-    padding: 14px clamp(16px, 4vw, 28px) 0;
-    border-right: none;
-    border-bottom: 1px solid var(--cb-line-soft);
-  }
-
-  .cb-sidebar-group {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .cb-sidebar-group.is-separated {
-    margin-top: 8px;
-    padding-top: 8px;
-  }
-
-  .cb-sidebar-label {
-    padding: 0 0 2px;
-    width: 100%;
-  }
-
-  .cb-sidebar-link {
-    min-height: 34px;
-    width: auto;
-  }
-
-  .cb-promo {
-    display: none;
-  }
-
-  /* Once the shell is a single column the column padding is the only thing
-     keeping content off the viewport edge, so it must not collapse to zero. */
-  .cb-main-col {
-    padding: 16px clamp(16px, 4vw, 28px) 20px;
-  }
+  /* The rail, the grid and the page gutter are the shared shell's job at this
+     width: it becomes a single column and turns the rail into a horizontal
+     strip, so application navigation survives on small screens. */
 
   .cb-view-split {
     grid-template-columns: 1fr;
@@ -2582,8 +2671,15 @@
     padding: 4px 2px;
   }
 
-  .cb-sidebar-link {
-    min-height: 40px;
+  /* Secondary control, so it grows to the same 32px as `.cb-tile-action`
+     rather than the 44px of a primary action. */
+  .cb-assert {
+    min-height: 32px;
+    padding: 6px 12px;
+  }
+
+  .cb-route-assert {
+    padding-bottom: 9px;
   }
 
   .cb-resources {
@@ -2592,6 +2688,21 @@
 
   .cb-detail-facts {
     grid-template-columns: 1fr;
+  }
+
+  /* Six figures on one row leaves each label under ~60px, which wraps
+     "Expected gap-closure magnitude" to three lines. Three columns keeps every
+     label on its own line at this width. */
+  .cb-assert-figures {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* The provenance and unavailable rows stack to one pair per line rather than
+     sitting side by side, so neither label is squeezed to two words. */
+  .cb-assert-provenance,
+  .cb-assert-observed-rows {
+    flex-direction: column;
+    gap: 5px;
   }
 }
 
@@ -2619,6 +2730,17 @@
   align-items: center;
   gap: 10px;
   color: var(--cb-muted);
+}
+
+/* The service said no, rather than the page still waiting on it. The three
+   existing `.is-error` states had no rule, so they inherited the dashed neutral
+   surface and an error read as a progress note; this gives them the existing
+   fall pair. Text stays `--cb-ink`, because `--cb-fall` on `--cb-fall-bg` is
+   3.95:1 and this is 13.5px type, not large text. */
+.cb-status.is-error {
+  border-style: solid;
+  border-color: var(--cb-fall);
+  background: var(--cb-fall-bg);
 }
 
 /* A 2px rule rather than a spinner: it reads as progress, and it reserves the same

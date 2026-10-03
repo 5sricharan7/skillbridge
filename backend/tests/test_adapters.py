@@ -18,11 +18,12 @@ from backend.data.adapters import (
     validate_target_role,
 )
 from backend.data.loaders import load_cleaned_postings
+from backend.data.roadmap_pipeline import enrich_signals_with_velocity
 from backend.engines.optimizer import build_learning_graph
 from backend.engines.optimizer import optimize_roadmap
 from backend.engines.skill_catalog import SKILL_CATALOG
 from backend.engines.signal_engine import extract_signals
-from backend.main import _enrich_with_velocity, app
+from backend.main import app
 from fastapi.testclient import TestClient
 
 
@@ -379,7 +380,7 @@ def test_legacy_three_field_request_matches_original_composition() -> None:
         "budget_hours": 20,
     }
     response = client.post("/roadmap", json=request)
-    expected_signals = _enrich_with_velocity(
+    expected_signals = enrich_signals_with_velocity(
         extract_signals(request["resume_text"], request["jd_text"])
     )
     expected = optimize_roadmap(expected_signals, request["budget_hours"])

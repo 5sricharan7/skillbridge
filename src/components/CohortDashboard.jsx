@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { navigate } from '../router'
+import { RailContext, WorkspaceRail, WorkspaceShell } from './workspaceShell'
 import {
   COHORT_DEFAULT_ROLE,
   COHORT_ROLES,
@@ -17,18 +18,16 @@ import {
   COHORT_STEPS,
   CohortIcon,
   ErrorPanel,
-  FlowBar,
   GapRow,
+  InstitutionalLoop,
   JsonEditor,
   LoadingPanel,
   MapIcon,
-  PreviewCards,
   RecordDisclosure,
   RosterIllustration,
   SearchIcon,
   StampIcon,
   Stat,
-  StepNav,
 } from './cohortStations'
 import './cohortDashboard.css'
 
@@ -462,6 +461,27 @@ function CurriculumStep({ analysis, onInspect }) {
   )
 }
 
+/* The four workflow steps, mapped onto the shared rail's item contract. This is
+   the page's ONE workflow navigation: the sequence is named once, in the rail,
+   and nowhere else. A step with no comparison behind it stays in the list and
+   reports itself when pressed, because a sequence a reader cannot see is a
+   sequence they cannot anticipate. */
+function railGroups(reached) {
+  return [
+    {
+      label: 'Workflow',
+      items: COHORT_STEPS.map((entry) => ({
+        id: entry.id,
+        num: entry.num,
+        label: entry.title,
+        note: entry.blurb,
+        icon: <entry.Icon />,
+        locked: !reached.includes(entry.id),
+      })),
+    },
+  ]
+}
+
 export default function CohortDashboard() {
   const [role, setRole] = useState(COHORT_DEFAULT_ROLE)
   const [roster, setRoster] = useState('')
@@ -556,44 +576,62 @@ export default function CohortDashboard() {
 
   return (
     <div className="cohort">
-      <div className="cohort-shell">
-        <main className="cohort-main">
-          <WorkspaceHead role={role} onRoleChange={changeRole} />
+      <WorkspaceShell
+        rail={
+          <WorkspaceRail
+            label="Institution & Cohort"
+            navLabel="Cohort workflow steps"
+            groups={railGroups(reached)}
+            activeId={step}
+            onSelect={selectStep}
+            onLocked={explainLocked}
+            context={
+              <RailContext
+                label="Submitted roster"
+                meta={
+                  hasData
+                    ? `${formatCount(data.cohortSize)} student records · sent once, never stored`
+                    : 'No roster submitted yet. Nothing is stored.'
+                }
+              />
+            }
+          />
+        }
+      >
+        <WorkspaceHead role={role} onRoleChange={changeRole} />
 
-          <FlowBar active={step} reached={reached} onSelect={selectStep} onLocked={explainLocked} />
+        {step === 'roster' ? (
+          <form id="cohort-form" onSubmit={submit} noValidate>
+            <RosterStep
+              value={roster}
+              onChange={setRoster}
+              onExample={fillExample}
+              status={status}
+              error={error}
+              onRetry={retry}
+              message={notice?.text ?? null}
+              messageTone={notice?.tone ?? 'info'}
+            />
+          </form>
+        ) : null}
 
-          <div className="cohort-grid">
-            <StepNav active={step} reached={reached} onSelect={selectStep} onLocked={explainLocked} />
+        {step === 'pulse' && hasData ? <PulseStep analysis={data} /> : null}
+        {step === 'gaps' && hasData ? <GapMap analysis={data} /> : null}
+        {step === 'curriculum' && hasData ? <CurriculumStep analysis={data} onInspect={goToCurriculum} /> : null}
 
-            <div className="cohort-workspace">
-              {step === 'roster' ? (
-                <form id="cohort-form" onSubmit={submit} noValidate>
-                  <RosterStep
-                    value={roster}
-                    onChange={setRoster}
-                    onExample={fillExample}
-                    status={status}
-                    error={error}
-                    onRetry={retry}
-                    message={notice?.text ?? null}
-                    messageTone={notice?.tone ?? 'info'}
-                  />
-                </form>
-              ) : null}
+        {hasData ? (
+          <AuditPanel analysis={data} open={auditOpen} onToggle={() => setAuditOpen((open) => !open)} />
+        ) : null}
 
-              {step === 'pulse' && hasData ? <PulseStep analysis={data} /> : null}
-              {step === 'gaps' && hasData ? <GapMap analysis={data} /> : null}
-              {step === 'curriculum' && hasData ? <CurriculumStep analysis={data} onInspect={goToCurriculum} /> : null}
-
-              {hasData ? (
-                <AuditPanel analysis={data} open={auditOpen} onToggle={() => setAuditOpen((open) => !open)} />
-              ) : null}
-            </div>
-          </div>
-
-          <PreviewCards reached={reached} onSelect={selectStep} onLocked={explainLocked} />
-        </main>
-      </div>
+        {/* The one panel that explains why this page and the Curriculum Time
+            Machine are two ends of one product. It is a disclosure rather than a
+            bar: one row until opened. */}
+        <InstitutionalLoop
+          analysis={hasData ? data : null}
+          roleLabel={data?.roleLabel ?? COHORT_ROLES.find((entry) => entry.id === role)?.label ?? role}
+          onOpen={goToCurriculum}
+        />
+      </WorkspaceShell>
     </div>
   )
 }

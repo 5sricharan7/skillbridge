@@ -46,6 +46,30 @@
  *   `detail.valid_roles` or `detail.plannable_roles`; that is surfaced as
  *   `UnsupportedTargetRoleError` rather than being retried or hidden.
  *
+ * POST /skill-completion  Stage 14C. request { resume_text: string, jd_text: string,
+ *                                    budget_hours: number, skill: string,
+ *   completed_skills?: string[], target_role?: string }
+ *                          response { skill, completion_source: 'learner_asserted',
+ *   verification_status: 'not_verified', before_score, after_score, delta,
+ *   predicted_gain, gap_closed, gap_status, gap_status_note,
+ *   matches_predicted_gain, gap_weight, before_roadmap[], after_roadmap[],
+ *   before_budget_hours, after_budget_hours, target_role, asserted_skills[],
+ *   assertion_count, provenance{}, not_a_measure_of[], is_synthetic: false }
+ *   Note: the service appends `skill` to `resume_text` plus `completed_skills`
+ *   itself and plans both sides through the same pipeline POST /roadmap uses, so
+ *   the caller sends the learner's own text and the skills asserted so far and
+ *   never composes a second "after" text of its own. Both plans come back, so the
+ *   route the learner saw and the route the service re-planned stay comparable.
+ *   The figures are the Stage 14A gap-closure delta between those two plans.
+ *   `completed_skills` accumulate, so each completion is measured against the
+ *   context that came before it rather than against the original text.
+ *
+ *   This route exists because a learner may assert a completion. It does not
+ *   verify one: `verification_status` is `not_verified` on every response and
+ *   there is no field for a learner's improvement, mastery, employability,
+ *   placement or hiring outcome, because this repository holds no learner record
+ *   such a figure could be measured from.
+ *
  * GET  /velocity/{skill}   -> { skill: string,
  *                               trend: 'rising'|'declining'|'stable'|'insufficient_data',
  *                               percentage_change: number|null,
@@ -76,18 +100,35 @@
  *                     per-role recorded posting counts, per-role skill frequency
  *                     and artifact classification, the recorded velocity score,
  *                     and the dataset bounds and artifact names
- *                     (GET /curriculum-intelligence/{role})
+ *                     (GET /curriculum-intelligence/{role});
+ *                     the before and after plans around one learner-asserted
+ *                     completion, and the model-internal delta between them
+ *                     (POST /skill-completion)
  * Not recorded        job-description share, salary, prerequisites, topics,
- *                     resources, per-skill resume analysis, and any measure of how
- *                     well this learner fits a role. None of these is invented:
- *                     the UI states that a field is not available.
+ *                     resources, per-skill resume analysis, any measure of how
+ *                     well this learner fits a role, and any verified learner
+ *                     outcome — mastery, improvement, employability, placement or
+ *                     hiring — because a learner assertion is the only one this
+ *                     repository holds. None of these is invented: the UI states
+ *                     that a field is not available.
  *
- * Role comparison, audited at Stage 11. The only route that accepts a resume and
- * a job description is POST /roadmap, and it takes the target role from the
+ * Role comparison, audited at Stage 11. The only route that plans from a resume
+ * and a job description is POST /roadmap, and it takes the target role from the
  * caller and returns a plan for it: it never compares roles. Every curriculum
  * route takes a role alone, so none of them can score this learner against a
  * role. Closest-fit is therefore unsourced, is stated as unsourced in the UI, and
  * no role is ever presented as a fit for the learner.
+ *
+ * Revisited at Stage 14C, precisely. SkillBridge still holds nothing that scores
+ * a learner against a role, and nothing here changes that. What it does hold is
+ * its own signal engine, so it can compare its own model-internal signals before
+ * and after a learner-asserted skill completion — the same engine, the same two
+ * texts, one plan each — and report the gap-closure delta between them. That is
+ * a model-internal comparison of two results, not a verified learner or
+ * employability score: the completion is the learner's own assertion, nothing
+ * checks it, and the delta is arithmetic on the engine's score for a text. Every
+ * broader provenance limitation above still stands, and none of them is relaxed
+ * by a comparison the learner asked for.
  */
 
 import {
@@ -101,6 +142,7 @@ import {
   getRoadmapHours,
 } from './careerBridgeMock'
 import { PROOF_A_DATA, PROOF_B_DATA, PROOF_C_DATA, PROOF_E_DATA } from './evidenceData'
+import { CompletionRequestError, normalizeCompletionResult } from './careerBridgeCompletion'
 
 export { CAREER_BRIDGE_BANDS, CAREER_BRIDGE_DEFAULT_BUDGET, CAREER_BRIDGE_MAX_BUDGET, CAREER_BRIDGE_MIN_BUDGET }
 
@@ -112,13 +154,13 @@ export const ROADMAP_BUDGET_RANGE = {
 
 /* ------------------------------------------------------------------ mode */
 
-const RAW_MODE = String(import.meta.env.VITE_CAREER_BRIDGE_MODE ?? '').trim().toLowerCase()
+const RAW_MODE = String(import.meta.env?.VITE_CAREER_BRIDGE_MODE ?? '').trim().toLowerCase()
 
 /** 'api' unless the environment explicitly asks for 'mock'. */
 export const CAREER_BRIDGE_MODE = RAW_MODE === 'mock' ? 'mock' : 'api'
 export const IS_API_MODE = CAREER_BRIDGE_MODE === 'api'
 
-const RAW_API_BASE = String(import.meta.env.VITE_CAREER_BRIDGE_API ?? '').trim()
+const RAW_API_BASE = String(import.meta.env?.VITE_CAREER_BRIDGE_API ?? '').trim()
 export const API_BASE = RAW_API_BASE.replace(/\/+$/, '')
 
 /* ----------------------------------------------------------------- roles
@@ -154,7 +196,7 @@ export function targetRoleLabel(role) {
   return CAREER_BRIDGE_TARGET_ROLES.find((entry) => entry.id === role)?.label ?? ''
 }
 
-const CONFIGURED_TARGET_ROLE = String(import.meta.env.VITE_CAREER_BRIDGE_TARGET_ROLE ?? '').trim()
+const CONFIGURED_TARGET_ROLE = String(import.meta.env?.VITE_CAREER_BRIDGE_TARGET_ROLE ?? '').trim()
 export const API_TARGET_ROLE = isSupportedTargetRole(CONFIGURED_TARGET_ROLE.toLowerCase())
   ? CONFIGURED_TARGET_ROLE.toLowerCase()
   : null
@@ -638,7 +680,7 @@ const apiSource = {
     return records
   },
 
-  async loadRoadmap({ budgetHours, resumeText, jdText, targetRole, signal }) {
+  async loadRoadmap({ budgetHours, resumeText, jdText, targetRole, completedSkills, signal }) {
     if (typeof resumeText !== 'string' || !resumeText.trim()) {
       throw new CareerBridgeApiError('Extract a resume before generating a roadmap.', {
         path: '/roadmap',
@@ -662,6 +704,13 @@ const apiSource = {
       budget_hours: budgetHours,
     }
     if (role) body.target_role = role
+    /* Skills the learner asserted complete. The service appends them to the
+       resume text itself, so a completion and every later re-plan are planned
+       from one skill state rather than two. */
+    const asserted = Array.isArray(completedSkills)
+      ? completedSkills.filter((name) => typeof name === 'string' && name.trim())
+      : []
+    if (asserted.length) body.completed_skills = asserted
 
     const payload = await request('/roadmap', {
       method: 'POST',
@@ -731,6 +780,107 @@ export function loadRoadmap(options) {
 /** Real mode always submits to the API; it never follows the configured mock source. */
 export function submitRoadmap(options) {
   return apiSource.loadRoadmap(options)
+}
+
+/* ------------------------------------------------- learner-asserted completion
+
+   Stage 14C. One POST that re-plans the route around a skill the learner says
+   they completed, and returns both plans plus the model-internal delta between
+   them. The service plans both sides, so the two results are comparable by
+   construction and this loader never composes an "after" text of its own.
+
+   The assertion is the learner's and stays that way: the response is validated
+   for `completion_source` / `verification_status` in `normalizeCompletionResult`,
+   which refuses a payload claiming anything else. A failure is a failure — no
+   retry, no mock fallback, and no synthesised delta. */
+
+const SKILL_COMPLETION_PATH = '/skill-completion'
+
+function completionRequestInputs(resumeText, jdText) {
+  if (typeof resumeText !== 'string' || !resumeText.trim()) {
+    throw new CompletionRequestError('Extract a resume before marking a skill complete.', {
+      path: SKILL_COMPLETION_PATH,
+    })
+  }
+  if (typeof jdText !== 'string' || !jdText.trim()) {
+    throw new CompletionRequestError('Add a job description before marking a skill complete.', {
+      path: SKILL_COMPLETION_PATH,
+    })
+  }
+}
+
+/** One plan from a completion response, in the same shape `loadRoadmap` returns. */
+function completionRoadmap(rows, { budgetHours, targetRole, velocities }) {
+  const items = (Array.isArray(rows) ? rows : []).map((item, index) =>
+    normalizeApiRoadmapItem(item, index, velocities),
+  )
+
+  return {
+    budgetHours,
+    availableHours: budgetHours,
+    band: getBudgetBand(budgetHours),
+    items,
+    committedHours: items.reduce((total, item) => total + (Number(item.hours) || 0), 0),
+    source: 'api',
+    targetRole,
+  }
+}
+
+export async function submitSkillCompletion(options) {
+  const { resumeText, jdText, budgetHours, targetRole, skill, completedSkills = [], signal } = options ?? {}
+
+  completionRequestInputs(resumeText, jdText)
+
+  if (typeof skill !== 'string' || !skill.trim()) {
+    throw new CompletionRequestError('Choose a recommended skill to mark complete.', {
+      path: SKILL_COMPLETION_PATH,
+    })
+  }
+
+  /* An unsupported role is omitted rather than sent to produce a 422 the learner
+   * cannot act on — the same rule the roadmap request already follows. */
+  const role = isSupportedTargetRole(targetRole) ? targetRole : null
+  const budget = Number(budgetHours)
+
+  const body = {
+    resume_text: resumeText,
+    jd_text: jdText,
+    budget_hours: budget,
+    skill,
+    completed_skills: completedSkills.filter((name) => typeof name === 'string' && name.trim()),
+  }
+  if (role) body.target_role = role
+
+  const payload = await request(SKILL_COMPLETION_PATH, {
+    method: 'POST',
+    signal,
+    body,
+    requestedRole: role ?? '',
+  })
+
+  if (!payload || typeof payload !== 'object' || !Array.isArray(payload.after_roadmap)) {
+    throw new CompletionRequestError(
+      'The service returned an incomplete completion comparison. Please try again.',
+      { path: SKILL_COMPLETION_PATH, kind: 'malformed' },
+    )
+  }
+
+  const afterBudget = Number.isFinite(payload.after_budget_hours) ? payload.after_budget_hours : budget
+  const beforeBudget = Number.isFinite(payload.before_budget_hours) ? payload.before_budget_hours : afterBudget
+
+  /* Trend and demand are not in the comparison response either, so both plans
+     take them from the service's own per-skill velocity history, as the roadmap
+     request does. A velocity failure leaves a plan with unrecorded demand rather
+     than failing the comparison. */
+  const velocities = await apiSource.loadVelocities(
+    [...payload.before_roadmap, ...payload.after_roadmap].map((item) => item?.skill),
+    { signal },
+  )
+
+  return normalizeCompletionResult(payload, {
+    before: completionRoadmap(payload.before_roadmap, { budgetHours: beforeBudget, targetRole: role, velocities }),
+    after: completionRoadmap(payload.after_roadmap, { budgetHours: afterBudget, targetRole: role, velocities }),
+  })
 }
 
 export function loadVelocity(skillName, options) {

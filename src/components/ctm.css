@@ -229,13 +229,16 @@
   flex: 1 1 420px;
 }
 
+/* Eyebrow / label / status. These are small uppercase markers and machine-readable
+   status values — "not_covered", "no_industry_record", "unmatched_curriculum" —
+   and they must never be sized like a headline. `.ctm-placement-stage` and
+   `.ctm-matrix-status` belong to this group, not to the banner rule below. */
 .ctm-kicker,
 .ctm-view-kicker,
 .ctm-label,
 .ctm-flow-kicker,
 .ctm-placement-stage,
-.ctm-matrix-status,
-.ctm-railcontext-label {
+.ctm-matrix-status {
   margin: 0;
   font-size: 10px;
   font-weight: 600;
@@ -244,7 +247,8 @@
   color: var(--ctm-muted);
 }
 
-/* Sized for the banner, in family with the Evidence hero headline. */
+/* Sized for the banner, in family with the Evidence hero headline. This is the
+   ONE display type size in the workspace and it belongs to the banner alone. */
 .ctm-topline {
   margin: 6px 0 0;
   font-family: var(--ctm-font-display);
@@ -336,7 +340,6 @@
 }
 
 .ctm-role:focus-visible,
-.ctm-railbtn:focus-visible,
 .ctm-tile:focus-visible,
 .ctm-ghost-btn:focus-visible,
 .ctm-jump-btn:focus-visible,
@@ -362,165 +365,30 @@
    same content boundary. The banner is a child of the main column, never a
    full-width strip above it. */
 
-.ctm-shell {
-  display: grid;
-  grid-template-columns: clamp(210px, 16vw, 244px) minmax(0, 1fr);
-  gap: clamp(14px, 1.8vw, 24px);
-  align-items: start;
-  width: min(100%, 1560px);
-  margin: 0 auto;
-  padding: 0 clamp(16px, 3.2vw, 44px) 56px;
+/* ------------------------------------------------------------- shell bridge
+
+   The rail, the grid, the item shape and the contextual card are the shared
+   application shell (`workspaceShell.css`). The `--ws-*` block is an alias
+   layer and nothing else: it points the shell's tokens at this page's own
+   documented `--ctm-*` values, so the shell renders in CTM's colours without
+   ever naming them itself. */
+.ctm {
+  --ws-paper: var(--ctm-paper);
+  --ws-card: var(--ctm-card);
+  --ws-ink: var(--ctm-ink);
+  --ws-ink-2: var(--ctm-ink-2);
+  --ws-muted: var(--ctm-muted);
+  --ws-violet: var(--ctm-violet);
+  --ws-violet-deep: var(--ctm-violet-deep);
+  --ws-lilac: var(--ctm-lilac);
+  --ws-violet-soft: var(--ctm-violet-soft);
+  --ws-violet-pale: var(--ctm-violet-pale);
+  --ws-line: var(--ctm-line);
+  --ws-line-soft: var(--ctm-line-soft);
+  --ws-font-display: var(--ctm-font-display);
+  --ws-font-body: var(--ctm-font-body);
 }
 
-.ctm-main {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(14px, 1.8vh, 22px);
-}
-
-.ctm-rail {
-  position: sticky;
-  top: 80px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-  padding: 12px 10px 16px;
-  background: var(--ctm-card);
-  border: 1px solid var(--ctm-line);
-  border-radius: var(--ctm-radius);
-}
-
-.ctm-railnav {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.ctm-railbtn {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 46px;
-  padding: 6px 10px;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  background: transparent;
-  font-family: var(--ctm-font-body);
-  text-align: left;
-  color: var(--ctm-ink-2);
-  cursor: pointer;
-  transition: background 0.18s var(--ctm-ease), color 0.18s var(--ctm-ease), border-color 0.18s var(--ctm-ease);
-}
-
-/* The active marker is a drawn edge, so it survives a forced-colours mode where
-   the background tint would vanish. */
-.ctm-railbtn::before {
-  content: '';
-  position: absolute;
-  left: -11px;
-  top: 50%;
-  width: 3px;
-  height: 0;
-  border-radius: 0 3px 3px 0;
-  background: var(--ctm-violet);
-  transform: translateY(-50%);
-  transition: height 0.24s var(--ctm-ease);
-}
-
-.ctm-railbtn:hover {
-  background: var(--ctm-violet-pale);
-  color: var(--ctm-ink);
-}
-
-.ctm-railbtn.is-active {
-  background: var(--ctm-violet-pale);
-  border-color: var(--ctm-violet-soft);
-  color: var(--ctm-violet);
-}
-
-.ctm-railbtn.is-active::before {
-  height: 24px;
-}
-
-.ctm-railbtn-ic {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
-  color: var(--ctm-muted);
-  background: var(--ctm-paper);
-  transition: color 0.18s var(--ctm-ease);
-}
-
-.ctm-railbtn-ic svg {
-  width: 16px;
-  height: 16px;
-}
-
-.ctm-railbtn.is-active .ctm-railbtn-ic {
-  color: var(--ctm-violet);
-  background: var(--ctm-violet-soft);
-}
-
-.ctm-railbtn-text {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.ctm-railbtn-label {
-  font-size: 12.5px;
-  font-weight: 600;
-  line-height: 1.25;
-}
-
-.ctm-railbtn-kicker {
-  font-size: 10.5px;
-  line-height: 1.25;
-  color: var(--ctm-muted);
-}
-
-.ctm-railcontext {
-  margin-top: auto;
-  padding: 10px;
-  border-radius: 10px;
-  background: var(--ctm-paper);
-  border: 1px solid var(--ctm-line-soft);
-}
-
-.ctm-railcontext-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin: 6px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.ctm-railcontext-list li {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--ctm-ink-2);
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: var(--ctm-violet-soft);
-}
-
-.ctm-railcontext-empty,
-.ctm-railcontext-meta {
-  margin: 6px 0 0;
-  font-size: 11px;
-  line-height: 1.45;
-  color: var(--ctm-muted);
-}
 
 .ctm-view {
   min-width: 0;
@@ -900,6 +768,7 @@ button.ctm-tile:hover {
 }
 
 .ctm-unresolved-row {
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -919,6 +788,7 @@ button.ctm-tile:hover {
   font-size: 13px;
   font-weight: 600;
   color: var(--ctm-ink);
+  overflow-wrap: anywhere;
 }
 
 .ctm-ghost-btn {
@@ -1312,6 +1182,9 @@ button.ctm-tile:hover {
 }
 
 .ctm-matrix-col {
+  /* `min-width: 0` lets a long coverageStatus ("unmatched_curriculum") wrap
+     inside its own column instead of widening the grid past its track. */
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -1346,10 +1219,15 @@ button.ctm-tile:hover {
   font-size: 11.5px;
   font-weight: 600;
   color: var(--ctm-ink);
+  overflow-wrap: anywhere;
 }
 
+/* The machine value. It is a status key, not a headline: 10px, uppercase, muted,
+   and it wraps mid-token rather than pushing the card wider. */
 .ctm-matrix-status {
   letter-spacing: 0.06em;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .ctm-tablewrap {
@@ -1438,6 +1316,7 @@ button.ctm-tile:hover {
   font-size: 11.5px;
   line-height: 1.45;
   color: var(--ctm-ink-2);
+  overflow-wrap: anywhere;
 }
 
 .ctm-placement-muted {
@@ -1448,6 +1327,8 @@ button.ctm-tile:hover {
 .ctm-placement-skill {
   margin-top: 3px;
   padding: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
   border: 0;
   background: transparent;
   font-family: var(--ctm-font-body);
@@ -2304,33 +2185,6 @@ button.ctm-tile:hover {
 }
 
 @media (max-width: 1024px) {
-  /* The rail collapses to its icons; the labels move into the title attribute so
-     the control is never unlabelled. */
-  .ctm-shell {
-    grid-template-columns: 66px minmax(0, 1fr);
-  }
-
-  .ctm-rail {
-    padding: 10px 8px;
-  }
-
-  .ctm-railbtn {
-    justify-content: center;
-    padding: 6px 4px;
-  }
-
-  .ctm-railbtn::before {
-    left: -9px;
-  }
-
-  .ctm-railbtn-text {
-    display: none;
-  }
-
-  .ctm-railcontext {
-    display: none;
-  }
-
   .ctm-matrix {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2346,49 +2200,6 @@ button.ctm-tile:hover {
 }
 
 @media (max-width: 760px) {
-  /* The rail becomes a horizontal strip so the canvas gets the whole width. */
-  .ctm-shell {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .ctm-rail {
-    position: static;
-    overflow-x: auto;
-  }
-
-  .ctm-railnav {
-    flex-direction: row;
-    min-width: min-content;
-  }
-
-  .ctm-railbtn {
-    min-height: 38px;
-  }
-
-  .ctm-railbtn::before {
-    left: 50%;
-    top: auto;
-    bottom: -11px;
-    width: 0;
-    height: 3px;
-    border-radius: 3px 3px 0 0;
-    transform: translateX(-50%);
-    transition: width 0.24s var(--ctm-ease);
-  }
-
-  .ctm-railbtn.is-active::before {
-    width: 22px;
-    height: 3px;
-  }
-
-  .ctm-railbtn-text {
-    display: flex;
-  }
-
-  .ctm-railbtn-ic {
-    display: none;
-  }
-
   /* A bottom sheet: full width, anchored to the bottom of the viewport. */
   .ctm-scrim {
     align-items: flex-end;

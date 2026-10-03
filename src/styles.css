@@ -186,13 +186,25 @@ canvas {
   line-height: 1;
 }
 
+/* The nav group is centred on wide desktop and becomes a normal flex child below
+   1200px, where an absolutely-positioned centre would collide with the logo or the
+   CTA rather than yield. Either way the five items sit on one shared centre line
+   and the gap — never the label size — is the responsive variable. */
 .nav-center {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: clamp(18px, 2.6vw, 34px);
+  justify-content: center;
+  gap: clamp(20px, 2.3vw, 36px);
+  /* One size for the whole group, declared here rather than on `.nav-link`, so the
+     Institutional Intelligence <button> — which is not a `.nav-link` and would
+     otherwise fall back to the 16px body size and full-ink colour — is guaranteed
+     to match the four anchors beside it. */
+  font-size: 15.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 .nav-center .nav-link {
@@ -202,11 +214,14 @@ canvas {
   align-items: center;
   gap: 5px;
   padding: 6px 0;
-  font-size: 14.5px;
+  font-size: 15.5px;
   font-weight: 500;
   color: var(--ink-2);
   letter-spacing: 0.01em;
   transition: color 0.2s ease;
+  /* Five peers share one line now, so a label must never wrap: a wrapped label
+     grows the item's box and its baseline stops matching its neighbours. */
+  white-space: nowrap;
 }
 
 .nav-center .nav-link:hover {
@@ -236,13 +251,33 @@ canvas {
   background: var(--indigo);
 }
 
-/* Multiplier Effect Navigation Item — Sleek Continuous Signal */
+/* ------------------------------ Multiplier Effect nav item: the multiplier stack */
+
+/* Five layers, all scoped to this one class. Every one of them is painted with
+   position/absolute, transform, text-shadow or background-clip, so none of them
+   adds height, width or margin to the 80px bar: the item's box is byte-identical
+   in all five states, which is what keeps it on one centre line with its peers.
+
+   1. gradient sweep .... a 260% indigo gradient clipped to the glyphs, whose
+                          background-position travels right-to-left, so a highlight
+                          passes across the text instead of the text changing colour
+   2. soft glow .......... two indigo text-shadows that open up on hover
+   3. lift ............... translateY(-1px) + scale(1.045)
+   4. growing underline .. ::after scaleX(0) -> scaleX(1) from the centre
+   5. radial pulse ....... ::before ring, scale + fade, 420ms, once per hover
+
+   The travelling node on the track below is the resting-state signal and is
+   unchanged. The gradient clip is @supports-guarded: without background-clip:text
+   the transparent fill would make the label invisible, so the fallback keeps the
+   plain indigo of layer 0. */
+
 .nav-link.nav-link-multiplier {
   color: var(--indigo);
   font-weight: 600;
 }
 
-.nav-link.nav-link-multiplier:hover {
+.nav-link.nav-link-multiplier:hover,
+.nav-link.nav-link-multiplier:focus-visible {
   color: var(--indigo-deep);
 }
 
@@ -251,13 +286,118 @@ canvas {
   font-weight: 700;
 }
 
-.nav-label-wrap {
+/* -- layer 3: lift + scale ---------------------------------------------------- */
+.nav-link.nav-link-multiplier .nav-label-wrap {
   position: relative;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
+  transition:
+    transform 0.34s cubic-bezier(0.34, 1.32, 0.64, 1),
+    text-shadow 0.34s ease;
 }
 
+.nav-link.nav-link-multiplier:hover .nav-label-wrap,
+.nav-link.nav-link-multiplier:focus-visible .nav-label-wrap {
+  transform: translateY(-1px) scale(1.045);
+}
+
+/* -- layer 2: soft glow ------------------------------------------------------- */
+.nav-link.nav-link-multiplier:hover .nav-label-wrap,
+.nav-link.nav-link-multiplier:focus-visible .nav-label-wrap,
+.nav-link.nav-link-multiplier.is-active .nav-label-wrap {
+  text-shadow:
+    0 0 10px rgba(91, 70, 216, 0.42),
+    0 0 22px rgba(91, 70, 216, 0.22);
+}
+
+/* -- layer 1: gradient sweep across the glyphs -------------------------------- */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .nav-link.nav-link-multiplier .nav-label-wrap {
+    background-image: linear-gradient(
+      100deg,
+      var(--indigo) 0%,
+      var(--indigo-deep) 34%,
+      #8f7ff0 50%,
+      var(--indigo-deep) 66%,
+      var(--indigo) 100%
+    );
+    background-size: 260% 100%;
+    background-position: 100% 0;
+    background-repeat: no-repeat;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    transition:
+      background-position 0.42s cubic-bezier(0.32, 0.72, 0.24, 1),
+      transform 0.34s cubic-bezier(0.34, 1.32, 0.64, 1);
+  }
+
+  .nav-link.nav-link-multiplier:hover .nav-label-wrap,
+  .nav-link.nav-link-multiplier:focus-visible .nav-label-wrap {
+    background-position: 0% 0;
+  }
+}
+
+/* -- layer 4: underline growing outward from the centre ----------------------- */
+.nav-link.nav-link-multiplier .nav-label-wrap::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  width: 100%;
+  height: 1.5px;
+  margin-left: -50%;
+  border-radius: 1px;
+  background: linear-gradient(90deg, rgba(91, 70, 216, 0), var(--indigo) 22%, var(--indigo) 78%, rgba(91, 70, 216, 0));
+  box-shadow: 0 0 7px rgba(91, 70, 216, 0.65);
+  transform: scaleX(0);
+  transform-origin: center;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 0.38s cubic-bezier(0.22, 0.68, 0.24, 1),
+    opacity 0.26s ease;
+}
+
+.nav-link.nav-link-multiplier:hover .nav-label-wrap::after,
+.nav-link.nav-link-multiplier:focus-visible .nav-label-wrap::after,
+.nav-link.nav-link-multiplier.is-active .nav-label-wrap::after {
+  transform: scaleX(1);
+  opacity: 1;
+}
+
+/* -- layer 5: radial pulse ----------------------------------------------------- */
+.nav-link.nav-link-multiplier .nav-label-wrap::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border-radius: 50%;
+  border: 1px solid rgba(91, 70, 216, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.nav-link.nav-link-multiplier:hover .nav-label-wrap::before,
+.nav-link.nav-link-multiplier:focus-visible .nav-label-wrap::before {
+  animation: nav-multiply-pulse 0.42s cubic-bezier(0.22, 0.68, 0.24, 1) 1;
+}
+
+@keyframes nav-multiply-pulse {
+  0% {
+    transform: scale(0.32);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(2.35);
+    opacity: 0;
+  }
+}
+
+/* -- resting signal: 1.5px indigo track, node travelling end to end ----------- */
 .nav-signal-line {
   position: absolute;
   bottom: -2px;
@@ -299,10 +439,241 @@ canvas {
     left: calc(100% - 5px);
     opacity: 1;
   }
-  90%, 100% {
+  90%,
+  100% {
     left: 100%;
     opacity: 0;
   }
+}
+
+.nav-label-wrap {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ------------------------------------------- Institutional Intelligence group */
+
+/* The one expandable control in the bar. It wraps the trigger and its popover so
+   that both are inside one positioned box: the popover anchors to the trigger,
+   and a pointer travelling from the trigger down into the popover stays within
+   this element the whole way. The wrapper carries no pointer handlers, so
+   nothing closes on the way down; only the document-level press check and
+   Escape close it. */
+.nav-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* One consistent item box for every top-level entry, group trigger included.
+   `.nav-center .nav-link` below already fixes padding and the 5px label-to-dot
+   gap, but a <button> also carries UA line-height and vertical padding, so it
+   renders taller than its <a> siblings and its label sits high on the line.
+   Declaring the height here and centring with `align-items: center` on the row
+   is what makes all five items share one vertical centre. */
+.nav-center > * {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  /* Spacing is surrendered before text is. A shrinking label ellipsises or clips
+     "Institutional Intelligence" and "Multiplier Effect"; a shrinking gap does
+     neither, so this is what stops flex from truncating the nav. */
+  flex-shrink: 0;
+}
+
+.nav-group-btn {
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  color: var(--ink-2);
+  line-height: inherit;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+}
+
+.nav-group-btn:hover {
+  color: var(--ink);
+}
+
+/* The trigger's label is text + caret SIDE BY SIDE on one baseline, where every
+   other item's label is alone. `.nav-label-wrap` is a column so the dot can sit
+   under it; here the row direction is what keeps the trigger the same height as
+   the links beside it. */
+.nav-group-btn .nav-label-wrap {
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+}
+
+.nav-caret {
+  width: 11px;
+  height: 11px;
+  flex: none;
+  /* Optical centring: the caret's own glyph sits a shade above the text's
+     x-height midpoint in an 11px box. */
+  transform: translateY(1px);
+  transition: transform 0.2s ease;
+}
+
+.nav-group-btn[aria-expanded='true'] .nav-caret {
+  transform: translateY(1px) rotate(180deg);
+}
+
+/* The popover. It is a raised panel, not a dropdown list: one warm surface, a
+   hairline border, and the documented workspace shadow (DESIGN.md §8). Its
+   width is capped well below the bar so it reads as a compact feature panel
+   rather than as a menu stretching across the navigation.
+
+   Anchored directly below the trigger and centred on it, so it reads as
+   belonging to that control rather than to the bar. */
+.nav-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  width: 340px;
+  padding: 14px;
+  background: var(--card, #fff);
+  border: 1px solid var(--line-soft, #ece9e6);
+  border-radius: 16px;
+  box-shadow: 0 16px 32px rgba(91, 70, 216, 0.05), 0 4px 12px rgba(16, 16, 16, 0.04);
+  animation: nav-pop-in 0.18s ease-out backwards;
+}
+
+/* The 8px of visual separation between trigger and panel is a real gap in the
+   layout, so this transparent band sits in it. It has no paint of its own and
+   covers exactly the space between the trigger's bottom edge and the panel's top
+   edge, which means there is no strip of page a pointer can cross and fall out
+   of. `.nav-group` is the interactive region and this band belongs to it. */
+.nav-pop::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -9px;
+  height: 9px;
+}
+
+@keyframes nav-pop-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.nav-pop-eyebrow {
+  margin: 0 0 10px;
+  padding-left: 2px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--muted, #8d8794);
+}
+
+.nav-pop-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav-pop-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  text-decoration: none;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.nav-pop-item:hover {
+  background: var(--violet-pale, #f2effc);
+  border-color: var(--violet-soft, #e7e2fb);
+}
+
+.nav-pop-item.is-active {
+  background: var(--violet-pale, #f2effc);
+  border-color: var(--violet-soft, #e7e2fb);
+}
+
+.nav-pop-item-label {
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.nav-pop-item.is-active .nav-pop-item-label {
+  color: var(--indigo-deep);
+}
+
+.nav-pop-item-note {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+/* The relationship the popover exists to express: one cohort's identified gaps
+   are the input to the curriculum view. Decorative only — both routes are named
+   as links directly above, so announcing this again would be noise. */
+.nav-pop-loop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  margin: 12px 0 0;
+  padding: 10px 8px 8px;
+  border-top: 1px solid var(--line-soft, #ece9e6);
+  border-radius: 9px;
+  background: var(--violet-pale, #f2effc);
+  text-align: center;
+}
+
+.nav-pop-loop-step {
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.nav-pop-loop-link {
+  position: relative;
+  padding-left: 12px;
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  line-height: 1.3;
+  color: var(--muted, #8d8794);
+}
+
+/* The downward connector between the two stages, drawn rather than typed. */
+.nav-pop-loop-link::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--violet-soft, #e7e2fb);
 }
 
 /* --------------------------------------------------------------------------
@@ -1893,6 +2264,52 @@ canvas {
 /* Responsive                                                          */
 /* ------------------------------------------------------------------ */
 
+/* Five peers plus a group trigger is the widest the bar has to hold, and
+   `.nav-center` is absolutely centred, so it cannot reflow out of the way — at
+   this width the labels step down instead. One type size and one gap govern the
+   whole bar; no item gets an individual margin to dodge its neighbour. */
+@media (max-width: 1200px) {
+  .nav-center {
+    position: static;
+    transform: none;
+    flex: 1 1 auto;
+    gap: clamp(12px, 1.4vw, 20px);
+    margin-inline: clamp(10px, 1.8vw, 20px);
+  }
+}
+
+/* Still 15.5px labels at this width — only the gap yields further. Shrinking the
+   label to make a five-item row fit is what compressed the bar before. */
+@media (max-width: 1080px) {
+  .nav-center {
+    gap: clamp(8px, 1vw, 14px);
+    margin-inline: 10px;
+  }
+
+  /* At 15.5px the five labels measure ~556px, and logo + CTA measure ~309px, so
+     below ~1080px the bar runs out of room before the labels do. The padding is
+     the remaining variable: reclaiming 20px per side and 8px of CTA padding frees
+     the ~45px needed, so every route stays reachable at full size instead of the
+     type being made smaller to buy the space. */
+  .nav {
+    padding: 0 clamp(20px, 3vw, 32px);
+  }
+
+  .nav-cta {
+    padding: 9px 14px;
+  }
+}
+
+/* Collapse to the active route plus the CTA (DESIGN.md 6). This is the existing
+   mobile behaviour, moved up to 1000px: below that the five-item row cannot be
+   laid out at the approved 15.5px at any padding, and an overlapping label is the
+   one outcome worse than a shorter bar. */
+@media (max-width: 1000px) {
+  .nav-center .nav-link:not(.is-active) {
+    display: none;
+  }
+}
+
 @media (max-width: 1024px) {
   .impact,
   .roadmap,
@@ -1939,6 +2356,28 @@ canvas {
 @media (max-width: 720px) {
   :root {
     --section-pad: 64px 6vw;
+  }
+
+  /* The bar collapses to the active route plus the CTA (DESIGN.md §6), so the
+     popover's trigger is usually hidden at this width. When it is reachable it
+     must not be wider than the bar it hangs from, and it right-aligns instead
+     of centring so it cannot overhang the viewport edge. */
+  .nav-pop {
+    width: min(340px, calc(100vw - 48px));
+    left: auto;
+    right: -8px;
+    transform: none;
+  }
+
+  @keyframes nav-pop-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .hero {
@@ -1989,10 +2428,6 @@ canvas {
     padding: 0 6vw;
   }
 
-  .nav-center .nav-link:not(.is-active) {
-    display: none;
-  }
-
   .nav-cta {
     padding: 8px 14px;
     font-size: 13px;
@@ -2025,6 +2460,50 @@ canvas {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  /* The signal node is a continuous infinite loop, so under reduced motion it is
+     held still at rest rather than removed: the track it runs on stays, which
+     keeps the item reading as the same element it is at every other width. */
+  .nav-signal-node {
+    animation: none;
+    left: calc(50% - 7px);
+    opacity: 0.55;
+  }
+
+  /* Multiplier Effect keeps its identity, loses its motion. Dropped: the radial
+     pulse (layer 5), the gradient sweep's travel (layer 1), the lift/scale
+     (layer 3) and the glow's text-shadow. Kept: purple text, the full-width
+     underline and the resting node — a clean static highlight that still reads as
+     the special item, delivered without a single moving pixel. */
+  .nav-link.nav-link-multiplier:hover .nav-label-wrap,
+  .nav-link.nav-link-multiplier:focus-visible .nav-label-wrap,
+  .nav-link.nav-link-multiplier.is-active .nav-label-wrap {
+    transform: none;
+    text-shadow: none;
+  }
+
+  .nav-link.nav-link-multiplier .nav-label-wrap {
+    background-position: 50% 0;
+  }
+
+  .nav-link.nav-link-multiplier:hover .nav-label-wrap::before,
+  .nav-link.nav-link-multiplier:focus-visible .nav-label-wrap::before {
+    animation: none;
+    opacity: 0;
+  }
+
+  .nav-link.nav-link-multiplier:hover .nav-label-wrap::after,
+  .nav-link.nav-link-multiplier:focus-visible .nav-label-wrap::after,
+  .nav-link.nav-link-multiplier.is-active .nav-label-wrap::after {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+
+  /* The hover box-shadow on the node is a second pulse; hold it at rest. */
+  .nav-link.nav-link-multiplier:hover .nav-signal-node {
+    animation-duration: 3.8s;
+    box-shadow: 0 0 6px var(--indigo);
   }
 
   .hero-field,
