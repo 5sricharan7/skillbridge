@@ -4,3 +4,4 @@ job_id,job_title,company,location,experience_required,skills_list,posting_date
 1137400,Golang Kubernetes Engineer,Arango,,,"[""golang"", ""golang"", ""engineer""]",2026-09-16T19:00:02+00:00
 1137531,Associate Data Scientist,AlgaeCal,Vancouver,,"[""design"", ""python"", ""customer support"", ""marketing"", ""dev"", ""flutter"", ""exec"", ""data science"", ""ops"", ""stats"", ""sales"", ""medical"", ""ecommerce"", ""digital nomad""]",2026-10-16T00:00:56+00:00
 1137534,APAC Python,Kodland,,,"[""python"", ""teaching"", ""education"", ""customer support"", ""dev"", ""testing"", ""part time"", ""non tech"", ""digital nomad""]",2026-10-16T16:00:26+00:00
+1137606,AWS Cloud Solutions Architect,Cloudary SAS,,,"[""architecture"", ""design"", ""ansible"", ""infosec"", ""docker"", ""technical"", ""dev"", ""exec"", ""serverless"", ""cloud"", ""postgres"", ""sql"", ""api"", ""senior"", ""ops"", ""sales"", ""golang"", ""engineer"", ""digital nomad""]",2026-10-30T16:00:06+00:00
